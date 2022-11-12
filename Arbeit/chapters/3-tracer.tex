@@ -1,0 +1,141 @@
+\chapter{Tracer}
+Um ein Program analysieren zu können, wird der Ablauf eines Programmdurchlaufs
+aufgezeichnet. Dazu wurde ein Tracer implementiert, in welchem die 
+Channel-Operations durch Drop-In Replacements ersetzt werden. Diese 
+führen die eigentlichen Operationen aus und zeichnen gleichzeitig den 
+Trace auf.
+
+\extend{Tracer Einführung}
+
+\section{Trace}
+\draft{Trace} 
+Der Aufbau des Trace basiert auf~\cite{PPDP18}. Der Trace wird für jede Routine
+separat aufgezeichnet. Die Syntax des Traces in EBNF gibt sich 
+folgendermaßen:
+\begin{align*}
+  \begin{matrix*}[l]
+    T & = & ''\ [\ '',\ \{\ U\ \},\ ''\ ]\ ''; & \text{Trace}\\
+    U & = & ''\ [\ '',\ \{\ t\ \},\ ''\ ]\ ''; & \text{lokaler Trace} \\
+    t & = & signal(i)\ |\ wait(i)\ |\ pre(as)\ |\ post(i, j, a) & \text{Event}\\
+      &   & |\ post(default)\ |\ close(x); & \\
+    a & = & x,\ (''\ !\ ''\ |\ ''\ ?\ ''); & \\
+    as & = & a\ |\ (\{\ a\ \}, [\ ''\ default\ ''\ ]); & \\
+  \end{matrix*}
+\end{align*}
+wobei $i$ die Id einer Routine, $j$ einen Zeitstempel und $x$ die Id eines 
+Channels darstellt. Die Events haben dabei folgende Bedeutung:
+\begin{itemize}
+  \item $signal(i)$: In der momentanen Routine wurde eine Fork-Operation ausgeführt,
+    d.h. eine neue Routine mit Id $i$ wurde erzeugt.
+  \item $wait(i)$: Die momentane Routine mit Id $i$ wurde soeben erzeugt. Dies ist 
+    in allen Routinen außer der Main-Routine das erste Event in ihrem lokalen Trace.
+  \item $pre(as)$: Die Routine ist an einer Send- oder Receive-Operation eines 
+    Channels oder an einem Select-Statement angekommen, dieses wurde aber noch nicht 
+    ausgeführt. Das Argument $as$ gibt dabei die Richtung und den Channel an. 
+    Ist $as = x!$, dann befindet sich der Trace vor einer Send-Operation, bei 
+    $as = x?$ vor einer Receive-Operation. Bei einem Select-Statement ist 
+    $as$ eine Liste aller Channels für die es einen 
+    Case in dem Statement gibt. Besitzt das Statement einen Default-Case, wird
+    dieser ebenfalls in diese List aufgenommen, also 
+    $as = [\ x_1?, \ldots, x_n?, default]$.
+  \item $post(i, j, a)$: Dieses Event wird in dem Trace gespeichert, nachdem 
+    eine Send- oder Receive-Operation erfolgreich abgeschlossen wurde. 
+    $i$ gibt dabei die Id und $j$ den momentanen Zeitstempel der sendenden Routine
+    an. $a$ gibt wieder an, ob es sich um eine Send- ($a = x!$) oder Receive-Operation 
+    ($a = x?$) auf dem Channel $x$ handelt. Durch die Speicherung der Id und des 
+    Zeitstempels der sendenden Routine bei einer Receive-Operation lassen sich 
+    die Send- und Receive-Operationen eindeutig zueinander Zuordnen.
+  \item $post(default)$: Wird in einem Select-Statement der Default-Case ausgeführt,
+    wird dies in dem Trace der entsprechenden Routine durch $post(default)$ 
+    gespeichert.
+  \item $close(x)$: Mit diesem Eintrag wird das schließen eines Channels $x$ 
+    in dem Trace aufgezeichnet.
+\end{itemize}
+
+Man betrachte als Beispiel das folgende Programm in Go mit dem dazugehörigen 
+Trace.
+\lstinputlisting{code/03-tracer/example_code.go}
+Dieser ergibt den folgenden Trace:
+\begin{align*}
+  [&[signal(2)\ signal(3)\ signal(4)\ signal(5)\ pre(3?, default)\ post(default)]\\
+   &[wait(2)\ pre(1!)\ post(2, 1, 1!)]\\
+   &[wait(3)\ pre(1?)\ post(2, 1, 1?)\ pre(1!)\ post(3, 2, 1!)]\\
+   &[wait(4)\ pre(2!)\ post(4, 1, 2!)\ pre(1?)\ post(3, 2, 1?)]\\
+   &[wait(5)\ pre(2?)\ post(4, 1, 2?)]]
+\end{align*}
+Aus diesem lässt sich der Ablauf der einzelnen Operationen auf den Channels
+eindeutig nachverfolgen.
+
+\section{Tracer}
+\draft{Tracer}
+Um die beschriebenen Traces erzeugen zu können wird ein Tracer verwendet. 
+Eine Implementierung des Tracers findet sich in~\cite{GoChan}. Dabei werden 
+Channel-Operationen in einem Go Programm durch spezielle Funktionen ersetzt, 
+welche sowohl die eigentliche Operation ausführen, als auch die Aufzeichnung 
+der Operationen in dem Trace vornehmen. Die Channels selber werden durch 
+Structs $Chan$ ersetzt, welche neben dem eigentlichen Channel $ch$ die Id des Channels, 
+sowie Variablen zur Speicherung der Sender Id ($sender$) und des Zeitstempels 
+($ts$) von 
+Send-Operationen enthält. Zusätzlich werden einige globale Variablen gespeichert.
+Dabei handelte es sich um 
+\begin{itemize}
+  \item $nr$: Anzahl der Routinen, welche bereits erzeugt wurden
+  \item $nc$: Anzahl der Channels, welche bereits erzeugen wurden
+  \item $traces$: Object zur Speicherung der Traces
+  \item $counter$: Object zur Speicherung der Timestamps für die Routinen
+\end{itemize}
+Im folgenden Bezeichne $trace_i$ den Trace der $i$-ten Routine und $counter_i$ 
+den Zeitstempel der $i$-ten Routine. $c$ bezeichnet den 
+Index der Routine, 
+von welcher eine Operation ausgeführt wird.\\
+Die folgende Auflistung zeigt welche Operationen ersetzt werden, und was
+durch diese Ersetzung geschieht. $traces_i + [\ Events\ ]$ bezeichne dabei, 
+dass $Events$ in $traces_i$ eingefügt wird. $spawn\ p$ beschreibt die Erzeugung 
+einer neuen Routine und Ausführung von $p$ auf dieser Routine.\\
+\begin{align*}
+  \begin{matrix*}[l]
+    instr(\text{\textvisiblespace}) &=& \text{\textvisiblespace}\\
+    instr(a : p) &=& instr(a) : instr(p)\\
+    instr(x := make(chan\ i)) & = & x := Chan\{c: make(chan i, 0),\ id: nc\};\\
+                             &  & nc = nc + 1;\\
+    instr(x := make(chan\ i, s)) & = & x := Chan\{c: make(chan i, s),\ id: nc\};\\
+                             &  & nc = nc + 1;\\
+    instr(spawn\ p) & = & nr = nr + 1;\ trace_c + [\ spawn(nr)\ ];\\
+                   &   & spawn\ instr(p);\ trace_{nr} + [\ wait(nr)\ ] \\
+    instr( x \leftarrow i ) & = & counter_c = counter_c + 1;\ trace_c + [\ pre(x.id!)\ ];\\
+      & & ch.sender.push(c);\\
+      & & ch.ts.push(counter_c);\\
+      & & x.ch \leftarrow i;\ trace_c + [\ post(c,\ counter_c,\ x.id!)\ ]\\
+    instr( \leftarrow x) & = & counter_c = counter_c + 1;\ trace_c + [\ pre(x.id?)\ ];\\
+      & & \leftarrow x.ch;\\
+      & & trace_c + [\ post(x.sender.pop(),\ x.ts.pop(),\ x.id?) \ ];\\
+    instr( v := \leftarrow x) & = & counter_c = counter_c + 1;\ trace_c + [\ pre(x.id?)\ ];\\
+      & & temp := \leftarrow x.ch;\\
+      & & trace_c + [\ post(x.sender.pop(),\ x.ts.pop(),\ x.id?) \ ];\\
+      & & v = temp;\\
+    instr( close(x) ) & = & close(x.ch);\ trace_c + [\ close(x.id)\ ];\\
+    instr(select\ \{case\ (v := \leftarrow x_i\\ 
+      |\ \leftarrow x_i) \Rightarrow p_i\}_{i \in \{1, \ldots, n\}}) & = & trace_c +
+      [\ pre(x_1.id, \ldots, x_n.id)\ ];\\
+      & & select\ \{case (instr(v := \leftarrow x_i)\ |\ instr(\leftarrow x_i))\\
+      & & \Rightarrow (trace_c + [post(x_i.sender.pop(),\ x_i.ts.pop(),\ x_i.id?)];\\
+      & & instr(p_i))\}_{i\in\{1, \ldots, n\}} \\
+    instr(select\ \{(case\ (v := \leftarrow x_i\\ 
+      |\ \leftarrow x_i) \Rightarrow p_i)\ |\ p\}_{i \in \{1, \ldots, n\}}) & = & trace_c +
+      [\ pre(x_1.id, \ldots, x_n.id)\ ];\\
+      & & select\ \{(case (instr(v := \leftarrow x_i)\ |\ instr(\leftarrow x_i))\\
+      & & \Rightarrow (trace_c + [post(x_i.sender.pop(),\ x_i.ts.pop(),\ x_i.id?)];\\
+      & & instr(p_i))) |\ trace_c + [post(default)];\ instr(p)\}_{i\in\{1, \ldots, n\}} \\
+    \text{Für alle anderen } a:\ instr(a) &=& a 
+  \end{matrix*}
+\end{align*}
+\todo{Größer als eine Seite, an verlauf anpassen}
+
+
+\extend{Tracer}
+
+
+
+
+\section{Instrumenter}
+\todo{Tracer schreiben}

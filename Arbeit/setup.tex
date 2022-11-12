@@ -44,6 +44,7 @@
     \usepackage{subfig}  % divide figure, e.g. 1(a), 1(b)...
     \usepackage{amsmath}  % |
     \usepackage{amsthm}   % | math, bmatrix etc
+    \usepackage{mathtools} % |
     \usepackage{amsfonts} % |
     \usepackage{calc}  % calculate within LaTeX
     \usepackage[unicode=true,bookmarks=true,bookmarksnumbered=true,
@@ -130,6 +131,23 @@
 
 
     % ------------------- algorithm ---------------------
+    \usepackage{listings}
+    \lstset{
+    % frame=single,
+    basicstyle=\footnotesize,
+    % keywordstyle=\color{red},
+    % numbers=left,
+    numbersep=5pt,
+    showstringspaces=false, 
+    % stringstyle=\color{blue},
+    tabsize=4,
+    language=Go,
+    captionpos=b,
+    linewidth=\textwidth,
+    xleftmargin=0.2\textwidth,
+    xrightmargin=0.2\textwidth
+}
+
     % Command to align comments in algorithm
     \newcommand{\alignedComment}[1]{\Comment{\parbox[t]{.35\linewidth}{#1}}}
     % define a foreach command in algorithms
@@ -141,7 +159,7 @@
 
     % set distance between items in a list, for more details see the
     % enumitem package: https://www.ctan.org/pkg/enumitem
-    \setlist{itemsep=.5em}
+    \setlist{itemsep=0em}
     
     % use ra in your tables to increase the space between rows
     % 1.3 should be fine
