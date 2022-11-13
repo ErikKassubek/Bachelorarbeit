@@ -3,7 +3,13 @@ Um ein Program analysieren zu können, wird der Ablauf eines Programmdurchlaufs
 aufgezeichnet. Dazu wurde ein Tracer implementiert, in welchem die 
 Channel-Operations durch Drop-In Replacements ersetzt werden. Diese 
 führen die eigentlichen Operationen aus und zeichnen gleichzeitig den 
-Trace auf.
+Trace auf. Die Ersetzung durch die Drop-In Replacements kann dabei automatisch 
+durch einen Instrumenter erfolgen, welche mit Hilfe des Abstract Syntax Tress 
+die Ersetzungen vornimmt.\\
+Die Idee einen Abstract Syntax Tree 
+auf Go Programmen zu verwenden, um dadurch Funktionen in den Code zu 
+integrieren durch welche ein Trace aufgezeichnet wird sind nicht neu. Beispiele 
+dazu finden sich in~\cite{GoAt1} und~\cite{GoVis}.  
 
 \extend{Tracer Einführung}
 
@@ -94,17 +100,14 @@ dass $Events$ in $traces_i$ eingefügt wird. $spawn\ p$ beschreibt die Erzeugung
 einer neuen Routine und Ausführung von $p$ auf dieser Routine.\\
 \begin{align*}
   \begin{matrix*}[l]
-    instr(\text{\textvisiblespace}) &=& \text{\textvisiblespace}\\
     instr(a : p) &=& instr(a) : instr(p)\\
-    instr(x := make(chan\ i)) & = & x := Chan\{c: make(chan i, 0),\ id: nc\};\\
-                             &  & nc = nc + 1;\\
     instr(x := make(chan\ i, s)) & = & x := Chan\{c: make(chan i, s),\ id: nc\};\\
                              &  & nc = nc + 1;\\
+    instr(x := make(chan\ i)) & = & instr(x := make(chan\ i, 0))\\
     instr(spawn\ p) & = & nr = nr + 1;\ trace_c + [\ spawn(nr)\ ];\\
                    &   & spawn\ instr(p);\ trace_{nr} + [\ wait(nr)\ ] \\
     instr( x \leftarrow i ) & = & counter_c = counter_c + 1;\ trace_c + [\ pre(x.id!)\ ];\\
-      & & ch.sender.push(c);\\
-      & & ch.ts.push(counter_c);\\
+      & & ch.sender.push(c);\ ch.ts.push(counter_c);\\
       & & x.ch \leftarrow i;\ trace_c + [\ post(c,\ counter_c,\ x.id!)\ ]\\
     instr( \leftarrow x) & = & counter_c = counter_c + 1;\ trace_c + [\ pre(x.id?)\ ];\\
       & & \leftarrow x.ch;\\
@@ -129,13 +132,24 @@ einer neuen Routine und Ausführung von $p$ auf dieser Routine.\\
     \text{Für alle anderen } a:\ instr(a) &=& a 
   \end{matrix*}
 \end{align*}
-\todo{Größer als eine Seite, an verlauf anpassen}
-
-
 \extend{Tracer}
 
-
-
-
 \section{Instrumenter}
-\todo{Tracer schreiben}
+\draft{Instrumenter}
+Um den Trace zu erzeugen, müssen verschiedene Operationen durch Funktionen
+des Tracers ersetzt werden. Soll der Tracer auf ein Programm angewendet werden, 
+welches bereits ohne ihn implementiert worden ist, bedeutet dies einen signifikanten 
+Arbeitsaufwand. Da sich der Tracer auch negativ auf die Laufzeit des Programms 
+auswirken kann, ist es in vielen Situationen nicht erwünscht, ihn in den 
+eigentlichen Release-Code einzubauen, sondern eher in eine eigenständige 
+Implementierung, welche nur für den Tracer verwendet werden. Um dies zu
+automatisieren wurde ein zusätzliches Programm implementiert, welches in der 
+Lage ist, den Tracer in normalen Go-Code einzufügen. Die Implementierung, 
+welche ebenfalls in~\cite{GoChan} zur Verfügung steht arbeitet dabei mit einem 
+Abstract Syntax Tree. Bei dem Durchlaufen dieses Baums werden die 
+entsprechenden Operationen in dem Programm erkannt, und durch ihre entsprechenden 
+Tracer-Funktionen ersetzt bzw.\ ergänzt. 
+
+
+\section{Laufzeit / Overhead}
+\todo{Laufzeit}
