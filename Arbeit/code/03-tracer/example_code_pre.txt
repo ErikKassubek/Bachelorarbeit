@@ -1,0 +1,20 @@
+func main() {
+	x := make(chan int) 
+	y := make(chan int) 
+	a := make(chan int)
+
+	var v sync.RWMutex 
+
+	go func() {
+		v.Lock()
+		x <- 1
+		v.Unlock()
+	}()
+	go func() { y <- 1; <-x }() 
+	go func() { <-y }()         
+
+	select {
+	case <-a:
+	default:
+	}
+}

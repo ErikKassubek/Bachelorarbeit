@@ -1,21 +1,24 @@
 \chapter{Tracer}
 Um ein Program analysieren zu können, wird der Ablauf eines Programmdurchlaufs
-aufgezeichnet. Dazu wurde ein Tracer implementiert, in welchem die 
-Channel-Operations durch Drop-In Replacements ersetzt werden. Diese 
+aufgezeichnet. Dazu wurde ein Tracer implementiert, durch welchem die 
+Channel- und Lock-Operationen, sowie andere Operationen wie Select und das 
+erzeugen einer neuen Routine, ersetzt, bzw. erweitert werden. Diese 
 führen die eigentlichen Operationen aus und zeichnen gleichzeitig den 
 Trace auf. Die Ersetzung durch die Drop-In Replacements kann dabei automatisch 
 durch einen Instrumenter erfolgen, welche mit Hilfe des Abstract Syntax Tress 
 die Ersetzungen vornimmt.\\
-Die Idee einen Abstract Syntax Tree 
-auf Go Programmen zu verwenden, um dadurch Funktionen in den Code zu 
-integrieren durch welche ein Trace aufgezeichnet wird sind nicht neu. Beispiele 
-dazu finden sich in~\cite{GoAt1} und~\cite{GoVis}.  
+Anders als in vielen anderen Programmen, welche den Trace von Go-Programmen
+analysieren, wie z.B.~\cite{GoAt2} oder~\cite{GoVis} wird dabei der Tracer 
+selbst implementiert und basiert nicht auf dem Go-Runtime-Tracer~\cite{GoRunTrace}. 
+Dies ermöglicht es, den Tracer genau auf die benötigten Informationen zuzuschneiden
+und so einen geringeren negativen Einfluss auf die Laufzeit des Programms zu erreichen.
 
 \extend{Tracer Einführung}
 
 \section{Trace}
 \draft{Trace} 
-Der Aufbau des Trace basiert auf~\cite{PPDP18}. Der Trace wird für jede Routine
+Der Aufbau des Trace basiert auf~\cite{PPDP18}. Er wird aber um Informationen 
+über Locks erweitert. Der Trace wird für jede Routine
 separat aufgezeichnet. Die Syntax des Traces in EBNF gibt sich 
 folgendermaßen:
 \begin{align*}
@@ -23,19 +26,22 @@ folgendermaßen:
     T & = & ''\ [\ '',\ \{\ U\ \},\ ''\ ]\ ''; & \text{Trace}\\
     U & = & ''\ [\ '',\ \{\ t\ \},\ ''\ ]\ ''; & \text{lokaler Trace} \\
     t & = & signal(i)\ |\ wait(i)\ |\ pre(as)\ |\ post(i, j, a) & \text{Event}\\
-      &   & |\ post(default)\ |\ close(x); & \\
+      &   & |\ post(default)\ |\ close(x)\ |\ lock(y, b, c) & \\
+      &   & |\ unlock(y); & \\
     a & = & x,\ (''\ !\ ''\ |\ ''\ ?\ ''); & \\
     as & = & a\ |\ (\{\ a\ \}, [\ ''\ default\ ''\ ]); & \\
+    b & = & ''-''\ |\ ''t''\ |\ ''r''\ |\ ''tr'' & \\
+    c & = & ''0''\ |\ ''1''
   \end{matrix*}
 \end{align*}
-wobei $i$ die Id einer Routine, $j$ einen Zeitstempel und $x$ die Id eines 
-Channels darstellt. Die Events haben dabei folgende Bedeutung:
+wobei $i$ die Id einer Routine, $j$ einen Zeitstempel, $x$ die Id eines 
+Channels und $y$ die Id eines Locks darstellt. Die Events haben dabei folgende Bedeutung:
 \begin{itemize}
-  \item $signal(i)$: In der momentanen Routine wurde eine Fork-Operation ausgeführt,
+  \item \texttt{signal(i)}: In der momentanen Routine wurde eine Fork-Operation ausgeführt,
     d.h. eine neue Routine mit Id $i$ wurde erzeugt.
-  \item $wait(i)$: Die momentane Routine mit Id $i$ wurde soeben erzeugt. Dies ist 
+  \item \texttt{wait(i)}: Die momentane Routine mit Id $i$ wurde soeben erzeugt. Dies ist 
     in allen Routinen außer der Main-Routine das erste Event in ihrem lokalen Trace.
-  \item $pre(as)$: Die Routine ist an einer Send- oder Receive-Operation eines 
+  \item \texttt{pre(as)}: Die Routine ist an einer Send- oder Receive-Operation eines 
     Channels oder an einem Select-Statement angekommen, dieses wurde aber noch nicht 
     ausgeführt. Das Argument $as$ gibt dabei die Richtung und den Channel an. 
     Ist $as = x!$, dann befindet sich der Trace vor einer Send-Operation, bei 
@@ -44,112 +50,64 @@ Channels darstellt. Die Events haben dabei folgende Bedeutung:
     Case in dem Statement gibt. Besitzt das Statement einen Default-Case, wird
     dieser ebenfalls in diese List aufgenommen, also 
     $as = [\ x_1?, \ldots, x_n?, default]$.
-  \item $post(i, j, a)$: Dieses Event wird in dem Trace gespeichert, nachdem 
+  \item \texttt{post(i, j, a)}: Dieses Event wird in dem Trace gespeichert, nachdem 
     eine Send- oder Receive-Operation erfolgreich abgeschlossen wurde. 
     $i$ gibt dabei die Id und $j$ den momentanen Zeitstempel der sendenden Routine
     an. $a$ gibt wieder an, ob es sich um eine Send- ($a = x!$) oder Receive-Operation 
     ($a = x?$) auf dem Channel $x$ handelt. Durch die Speicherung der Id und des 
     Zeitstempels der sendenden Routine bei einer Receive-Operation lassen sich 
     die Send- und Receive-Operationen eindeutig zueinander Zuordnen.
-  \item $post(default)$: Wird in einem Select-Statement der Default-Case ausgeführt,
+  \item \texttt{post(default)}: Wird in einem Select-Statement der Default-Case ausgeführt,
     wird dies in dem Trace der entsprechenden Routine durch $post(default)$ 
     gespeichert.
-  \item $close(x)$: Mit diesem Eintrag wird das schließen eines Channels $x$ 
+  \item \texttt{close(x)}: Mit diesem Eintrag wird das schließen eines Channels $x$ 
     in dem Trace aufgezeichnet.
+  \item \texttt{lock(y, b, c)}: Der Beanspruchungsversuch eines Locks mit Id j wurde beendet. 
+    $b$ gibt dabei die Art der Beanspruchung an. Bei $b = r$ war es eine R-Lock
+    Operation, bei $b = t$ eine Try-Lock Operation und bei $b = tr$ ein Try-R-Lock
+    Operation. Bei einer normalen Lock-Operation ist $b = -$. Bei einer 
+    Try-Lock Operation kann es passieren, dass die Operation beendet wird, 
+    ohne das das Lock gehalten wird. In diesem Fall wird $c$ auf $0$, und 
+    sonst auf $1$ gesetzt. 
 \end{itemize}
 
-Man betrachte als Beispiel das folgende Programm in Go mit dem dazugehörigen 
-Trace.
-\lstinputlisting{code/03-tracer/example_code.go}
+Man betrachte als Beispiel das folgende Programm in Go:
+\lstinputlisting{code/03-tracer/example_code_pre.txt}
+Erweitert man diesen mit dem Tracer, erhält man folgendes Programm:
+\lstinputlisting{code/03-tracer/example_code_post.txt}
 Dieser ergibt den folgenden Trace:
 \begin{align*}
-  [&[signal(2)\ signal(3)\ signal(4)\ signal(5)\ pre(3?, default)\ post(default)]\\
-   &[wait(2)\ pre(1!)\ post(2, 1, 1!)]\\
-   &[wait(3)\ pre(1?)\ post(2, 1, 1?)\ pre(1!)\ post(3, 2, 1!)]\\
-   &[wait(4)\ pre(2!)\ post(4, 1, 2!)\ pre(1?)\ post(3, 2, 1?)]\\
-   &[wait(5)\ pre(2?)\ post(4, 1, 2?)]]
+  [&[signal(2),\ signal(3),\ signal(4),\ pre(3?, default),\ post(default)]\\
+  &[wait(2),\ lock(1, -, 1),\ pre(1!),\ post(2, 2, 1!),\ unlock(1)]\\
+  &[wait(3),\ pre(2!),\ post(3, 1, 2!),\ pre(1?),\ post(2, 2, 1?)]\\
+  &[wait(4),\ pre(2?),\ post(3, 1, 2?)]]
 \end{align*}
-Aus diesem lässt sich der Ablauf der einzelnen Operationen auf den Channels
+Aus diesem lässt sich der Ablauf des Programms
 eindeutig nachverfolgen.
-
-\section{Tracer}
-\draft{Tracer}
-Um die beschriebenen Traces erzeugen zu können wird ein Tracer verwendet. 
-Eine Implementierung des Tracers findet sich in~\cite{GoChan}. Dabei werden 
-Channel-Operationen in einem Go Programm durch spezielle Funktionen ersetzt, 
-welche sowohl die eigentliche Operation ausführen, als auch die Aufzeichnung 
-der Operationen in dem Trace vornehmen. Die Channels selber werden durch 
-Structs $Chan$ ersetzt, welche neben dem eigentlichen Channel $ch$ die Id des Channels, 
-sowie Variablen zur Speicherung der Sender Id ($sender$) und des Zeitstempels 
-($ts$) von 
-Send-Operationen enthält. Zusätzlich werden einige globale Variablen gespeichert.
-Dabei handelte es sich um 
-\begin{itemize}
-  \item $nr$: Anzahl der Routinen, welche bereits erzeugt wurden
-  \item $nc$: Anzahl der Channels, welche bereits erzeugen wurden
-  \item $traces$: Object zur Speicherung der Traces
-  \item $counter$: Object zur Speicherung der Timestamps für die Routinen
-\end{itemize}
-Im folgenden Bezeichne $trace_i$ den Trace der $i$-ten Routine und $counter_i$ 
-den Zeitstempel der $i$-ten Routine. $c$ bezeichnet den 
-Index der Routine, 
-von welcher eine Operation ausgeführt wird.\\
-Die folgende Auflistung zeigt welche Operationen ersetzt werden, und was
-durch diese Ersetzung geschieht. $traces_i + [\ Events\ ]$ bezeichne dabei, 
-dass $Events$ in $traces_i$ eingefügt wird. $spawn\ p$ beschreibt die Erzeugung 
-einer neuen Routine und Ausführung von $p$ auf dieser Routine.\\
-\begin{align*}
-  \begin{matrix*}[l]
-    instr(a : p) &=& instr(a) : instr(p)\\
-    instr(x := make(chan\ i, s)) & = & x := Chan\{c: make(chan i, s),\ id: nc\};\\
-                             &  & nc = nc + 1;\\
-    instr(x := make(chan\ i)) & = & instr(x := make(chan\ i, 0))\\
-    instr(spawn\ p) & = & nr = nr + 1;\ trace_c + [\ spawn(nr)\ ];\\
-                   &   & spawn\ instr(p);\ trace_{nr} + [\ wait(nr)\ ] \\
-    instr( x \leftarrow i ) & = & counter_c = counter_c + 1;\ trace_c + [\ pre(x.id!)\ ];\\
-      & & ch.sender.push(c);\ ch.ts.push(counter_c);\\
-      & & x.ch \leftarrow i;\ trace_c + [\ post(c,\ counter_c,\ x.id!)\ ]\\
-    instr( \leftarrow x) & = & counter_c = counter_c + 1;\ trace_c + [\ pre(x.id?)\ ];\\
-      & & \leftarrow x.ch;\\
-      & & trace_c + [\ post(x.sender.pop(),\ x.ts.pop(),\ x.id?) \ ];\\
-    instr( v := \leftarrow x) & = & counter_c = counter_c + 1;\ trace_c + [\ pre(x.id?)\ ];\\
-      & & temp := \leftarrow x.ch;\\
-      & & trace_c + [\ post(x.sender.pop(),\ x.ts.pop(),\ x.id?) \ ];\\
-      & & v = temp;\\
-    instr( close(x) ) & = & close(x.ch);\ trace_c + [\ close(x.id)\ ];\\
-    instr(select\ \{case\ (v := \leftarrow x_i\\ 
-      |\ \leftarrow x_i) \Rightarrow p_i\}_{i \in \{1, \ldots, n\}}) & = & trace_c +
-      [\ pre(x_1.id, \ldots, x_n.id)\ ];\\
-      & & select\ \{case (instr(v := \leftarrow x_i)\ |\ instr(\leftarrow x_i))\\
-      & & \Rightarrow (trace_c + [post(x_i.sender.pop(),\ x_i.ts.pop(),\ x_i.id?)];\\
-      & & instr(p_i))\}_{i\in\{1, \ldots, n\}} \\
-    instr(select\ \{(case\ (v := \leftarrow x_i\\ 
-      |\ \leftarrow x_i) \Rightarrow p_i)\ |\ p\}_{i \in \{1, \ldots, n\}}) & = & trace_c +
-      [\ pre(x_1.id, \ldots, x_n.id)\ ];\\
-      & & select\ \{(case (instr(v := \leftarrow x_i)\ |\ instr(\leftarrow x_i))\\
-      & & \Rightarrow (trace_c + [post(x_i.sender.pop(),\ x_i.ts.pop(),\ x_i.id?)];\\
-      & & instr(p_i))) |\ trace_c + [post(default)];\ instr(p)\}_{i\in\{1, \ldots, n\}} \\
-    \text{Für alle anderen } a:\ instr(a) &=& a 
-  \end{matrix*}
-\end{align*}
 \extend{Tracer}
+
 
 \section{Instrumenter}
 \draft{Instrumenter}
 Um den Trace zu erzeugen, müssen verschiedene Operationen durch Funktionen
-des Tracers ersetzt werden. Soll der Tracer auf ein Programm angewendet werden, 
-welches bereits ohne ihn implementiert worden ist, bedeutet dies einen signifikanten 
-Arbeitsaufwand. Da sich der Tracer auch negativ auf die Laufzeit des Programms 
+des Tracers ersetzt bzw. erweitert werden. Wie man an dem Beispiel 
+unschwer erkennen kann, besitzt die Version mit dem Tracer einen deutlich längeren
+Programmcode, was bei der Implementierung zu einer größeren Arbeitslast 
+führen kann. Da sich der Tracer auch negativ auf die Laufzeit des Programms 
 auswirken kann, ist es in vielen Situationen nicht erwünscht, ihn in den 
 eigentlichen Release-Code einzubauen, sondern eher in eine eigenständige 
 Implementierung, welche nur für den Tracer verwendet werden. Um dies zu
 automatisieren wurde ein zusätzliches Programm implementiert, welches in der 
 Lage ist, den Tracer in normalen Go-Code einzufügen. Die Implementierung, 
-welche ebenfalls in~\cite{GoChan} zur Verfügung steht arbeitet dabei mit einem 
+welche ebenfalls in~\cite{GoChan} zur Verfügung steht, arbeitet mit einem 
 Abstract Syntax Tree. Bei dem Durchlaufen dieses Baums werden die 
 entsprechenden Operationen in dem Programm erkannt, und durch ihre entsprechenden 
-Tracer-Funktionen ersetzt bzw.\ ergänzt. 
-
-
-\section{Laufzeit / Overhead}
-\todo{Laufzeit}
+Tracer-Funktionen ersetzt bzw.\ ergänzt. Neben dem Ersetzen der verschiedenen 
+Operationen werden außerdem einige Funktionen hinzugefügt. Zu Begin der 
+Main-Funktion des Programms wird der Tracer initialisiert. Zusätzlich
+wird eine zusätzliche Go-Routine gestartet, in welcher ein Timer läuft. 
+Ist dieser abgelaufen, wird der Trace ausgegeben \todo{(bzw. die Analyse gestartet)}, 
+auch wenn das Programm noch nicht vollständig durchlaufen ist. Dies führt dazu,
+dass auch Programme, in welchen ein Deadlock aufgetreten ist, analysiert 
+werden können. 
+\extend{Instrumenter}

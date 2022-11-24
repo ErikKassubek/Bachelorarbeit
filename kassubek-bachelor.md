@@ -64,7 +64,7 @@ MS: The above conditions ought to be implemented in PPDP18 where the happens-bef
 
 # Plan of attack
 
-1. Review of PPDP18 and its implementation (https://github.com/KaiSta/gopherlyzer-GoScout)
+1. Review of PPDP18 and its implementation (c)
 
 2. Compare PPDP18 and GFuzz
 

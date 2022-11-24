@@ -1,0 +1,45 @@
+func main() {
+	tracer.Init()
+	defer tracer.PrintTrace()
+
+	x := tracer.NewChan[int](0)
+	y := tracer.NewChan[int](0)
+	a := tracer.NewChan[int](0)
+
+	v := tracer.NewRWLock()
+
+	func() {
+		GoChanRoutineIndex := tracer.SpawnPre()
+		go func() {
+			tracer.SpawnPost(GoChanRoutineIndex)
+			v.Lock(); x.Send(1); v.Unlock()
+		}()
+	}()
+
+	func() {
+		GoChanRoutineIndex := tracer.SpawnPre()
+		go func() {
+			tracer.SpawnPost(GoChanRoutineIndex)
+			{
+				x.Receive(); x.Send(1)
+			}
+		}()
+	}()
+
+	func() {
+		GoChanRoutineIndex := tracer.SpawnPre()
+		go func() {
+			tracer.SpawnPost(GoChanRoutineIndex)
+			y.Send(1); x.Receive()
+		}()
+	}()
+
+	tracer.PreSelect(true, a.GetIdPre(true))
+	select {
+	case sel_XVlBzgba := <-a.GetChan():
+		a.PostSelect(true, sel_XVlBzgba)
+	default:
+		tracer.PostDefault()
+	}
+	time.Sleep(4 * time.Second)
+}
