@@ -37,7 +37,7 @@ func main() {
 	tracer.PreSelect(true, a.GetIdPre(true))
 	select {
 	case sel_XVlBzgba := <-a.GetChan():
-		a.PostSelect(true, sel_XVlBzgba)
+		a.Post(true, sel_XVlBzgba)
 	default:
 		tracer.PostDefault()
 	}
