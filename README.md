@@ -37,8 +37,8 @@ Ausblick.
 ### 2022-11-28
 
 1. Tracing "non-blocking vs blocking"
-Source-code Instrumentierung
-Vergleich zu GFuzz Instrumentierung.
+ - Source-code Instrumentierung
+ - Vergleich zu GFuzz Instrumentierung.
 
 2. Instrumentierung Performanz.
   - Laufzeit Overhead
