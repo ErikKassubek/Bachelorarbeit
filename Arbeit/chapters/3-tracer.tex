@@ -1,4 +1,4 @@
-\chapter{Tracer}
+\chapter{Tracer}\label{Chap:Tracer}
 Um ein Program analysieren zu können, wird der Ablauf eines Programmdurchlaufs
 aufgezeichnet. Dazu wurde ein Tracer implementiert, durch welchem die 
 Channel- und Lock-Operationen, sowie andere Operationen wie Select und das 
@@ -15,54 +15,61 @@ und so einen geringeren negativen Einfluss auf die Laufzeit des Programms zu err
 
 \extend{Tracer Einführung}
 
-\section{Trace}
+\section{Trace}\label{Chap:Tracer-Sec:Trace}
 \draft{Trace} 
 Der Aufbau des Trace basiert auf~\cite{PPDP18}. Er wird aber um Informationen 
 über Locks erweitert. Der Trace wird für jede Routine
-separat aufgezeichnet. Die Syntax des Traces in EBNF gibt sich 
+separat aufgezeichnet. Anders als in~\cite{PPDP18} wird hingegen ein 
+Program-Counter für alle Routinen und nicht ein separater counter für jede 
+Routine verwendet. Dies ermöglicht es bessere Rückschlüsse über den genauen 
+Ablauf des Programms zu ziehen.  
+Die Syntax des Traces in EBNF gibt sich 
 folgendermaßen:
 \begin{align*}
   \begin{matrix*}[l]
     T & = & ''\ [\ '',\ \{\ U\ \},\ ''\ ]\ ''; & \text{Trace}\\
     U & = & ''\ [\ '',\ \{\ t\ \},\ ''\ ]\ ''; & \text{lokaler Trace} \\
-    t & = & signal(i)\ |\ wait(i)\ |\ pre(as)\ |\ post(i, j, a) & \text{Event}\\
-      &   & |\ post(default)\ |\ close(x)\ |\ lock(y, b, c) & \\
-      &   & |\ unlock(y); & \\
+    t & = & signal(t, i)\ |\ wait(t, i)\ |\ pre(t, as)\ |\ post(t, i, x!) & \text{Event}\\
+      &   & |\ post(t, i, x?, t') |\ post(t, default)\ |\ close(t, x)\  & \\
+      &   & |\ lock(t, y, b, c) |\ unlock(t, y); & \\
     a & = & x,\ (''\ !\ ''\ |\ ''\ ?\ ''); & \\
     as & = & a\ |\ (\{\ a\ \}, [\ ''\ default\ ''\ ]); & \\
     b & = & ''-''\ |\ ''t''\ |\ ''r''\ |\ ''tr'' & \\
     c & = & ''0''\ |\ ''1''
   \end{matrix*}
 \end{align*}
-wobei $i$ die Id einer Routine, $j$ einen Zeitstempel, $x$ die Id eines 
+wobei $i$ die Id einer Routine, $t$ einen globalen Zeitstempel, $x$ die Id eines 
 Channels und $y$ die Id eines Locks darstellt. Die Events haben dabei folgende Bedeutung:
 \begin{itemize}
-  \item \texttt{signal(i)}: In der momentanen Routine wurde eine Fork-Operation ausgeführt,
+  \item \texttt{signal(t, i)}: In der momentanen Routine wurde
+    eine Fork-Operation ausgeführt,
     d.h. eine neue Routine mit Id $i$ wurde erzeugt.
-  \item \texttt{wait(i)}: Die momentane Routine mit Id $i$ wurde soeben erzeugt. Dies ist 
+  \item \texttt{wait(t, i)}: Die momentane Routine mit Id $i$ wurde soeben erzeugt. Dies ist 
     in allen Routinen außer der Main-Routine das erste Event in ihrem lokalen Trace.
-  \item \texttt{pre(as)}: Die Routine ist an einer Send- oder Receive-Operation eines 
+  \item \texttt{pre(t, as)}: Die Routine ist an einer Send- oder Receive-Operation eines 
     Channels oder an einem Select-Statement angekommen, dieses wurde aber noch nicht 
     ausgeführt. Das Argument $as$ gibt dabei die Richtung und den Channel an. 
     Ist $as = x!$, dann befindet sich der Trace vor einer Send-Operation, bei 
     $as = x?$ vor einer Receive-Operation. Bei einem Select-Statement ist 
     $as$ eine Liste aller Channels für die es einen 
     Case in dem Statement gibt. Besitzt das Statement einen Default-Case, wird
-    dieser ebenfalls in diese List aufgenommen, also 
-    $as = [\ x_1?, \ldots, x_n?, default]$.
-  \item \texttt{post(i, j, a)}: Dieses Event wird in dem Trace gespeichert, nachdem 
-    eine Send- oder Receive-Operation erfolgreich abgeschlossen wurde. 
-    $i$ gibt dabei die Id und $j$ den momentanen Zeitstempel der sendenden Routine
-    an. $a$ gibt wieder an, ob es sich um eine Send- ($a = x!$) oder Receive-Operation 
-    ($a = x?$) auf dem Channel $x$ handelt. Durch die Speicherung der Id und des 
+    dieser ebenfalls in diese List aufgenommen.
+  \item \texttt{post(t, i, x!)}: Dieses Event wird in dem Trace gespeichert, nachdem 
+    eine Send-Operation auf $x$ erfolgreich abgeschlossen wurde. 
+    $i$ gibt dabei die Id der sendenden Routine
+    an.
+  \item \texttt{post(t, i, x?, t')}: Dieses Event wird in dem Trace gespeichert, nachdem 
+    eine Receive-Operation des Channels $x$ erfolgreich abgeschlossen wurde. 
+    $i$ gibt dabei die Id der sendenden Routine an. $t'$ gibt den Zeitstempel an,
+    welcher bei dem Pre-Event der sendenden Routine galt. Durch die Speicherung der Id und des 
     Zeitstempels der sendenden Routine bei einer Receive-Operation lassen sich 
-    die Send- und Receive-Operationen eindeutig zueinander Zuordnen.
-  \item \texttt{post(default)}: Wird in einem Select-Statement der Default-Case ausgeführt,
-    wird dies in dem Trace der entsprechenden Routine durch $post(default)$ 
+    die Send- und Receive-Operationen eindeutig zueinander zuordnen.
+  \item \texttt{post(t, default)}: Wird in einem Select-Statement der Default-Case ausgeführt,
+    wird dies in dem Trace der entsprechenden Routine durch $post(t, default)$ 
     gespeichert.
-  \item \texttt{close(x)}: Mit diesem Eintrag wird das schließen eines Channels $x$ 
+  \item \texttt{close(t, x)}: Mit diesem Eintrag wird das schließen eines Channels $x$ 
     in dem Trace aufgezeichnet.
-  \item \texttt{lock(y, b, c)}: Der Beanspruchungsversuch eines Locks mit Id j wurde beendet. 
+  \item \texttt{lock(t, y, b, c)}: Der Beanspruchungsversuch eines Locks mit Id j wurde beendet. 
     $b$ gibt dabei die Art der Beanspruchung an. Bei $b = r$ war es eine R-Lock
     Operation, bei $b = t$ eine Try-Lock Operation und bei $b = tr$ ein Try-R-Lock
     Operation. Bei einer normalen Lock-Operation ist $b = -$. Bei einer 
@@ -73,21 +80,21 @@ Channels und $y$ die Id eines Locks darstellt. Die Events haben dabei folgende B
 
 Man betrachte als Beispiel das folgende Programm in Go:
 \lstinputlisting{code/03-tracer/example_code_pre.txt}
-Erweitert man diesen mit dem Tracer, erhält man folgendes Programm:
-\lstinputlisting{code/03-tracer/example_code_post.txt}
+% Erweitert man diesen mit dem Tracer, erhält man folgendes Programm:
+% \lstinputlisting{code/03-tracer/example_code_post.txt}
 Dieser ergibt den folgenden Trace:
 \begin{align*}
-  [&[signal(2),\ signal(3),\ signal(4),\ pre(3?, default),\ post(default)]\\
-  &[wait(2),\ lock(1, -, 1),\ pre(1!),\ post(2, 2, 1!),\ unlock(1)]\\
-  &[wait(3),\ pre(2!),\ post(3, 1, 2!),\ pre(1?),\ post(2, 2, 1?)]\\
-  &[wait(4),\ pre(2?),\ post(3, 1, 2?)]]
+  [&[signal(1, 2),\ signal(2, 3),\ signal(3, 4),\ pre(4, 3?, default),\ post(5, default)]\\
+  &[wait(8, 2),\ lock(9, 1, -, 1),\ pre(10, 2!),\ post(16, 2, 2!),\ unlock(17, 1)]\\
+  &[wait(11, 3),\ pre(12, 3!),\ post(13, 3, 3!),\ pre(14, 2?),\ post(15, 2, 2?, 10)]\\
+  &[wait(6, 4),\ pre(7, 3?),\ post(18, 3, 3?, 12)]]
 \end{align*}
 Aus diesem lässt sich der Ablauf des Programms
 eindeutig nachverfolgen.
 \extend{Tracer}
 
 
-\section{Instrumenter}
+\section{Instrumenter}\label{Chap:Tracer-Sec:Instrumenter}
 \draft{Instrumenter}
 Um den Trace zu erzeugen, müssen verschiedene Operationen durch Funktionen
 des Tracers ersetzt bzw. erweitert werden. Wie man an dem Beispiel 
@@ -109,5 +116,14 @@ wird eine zusätzliche Go-Routine gestartet, in welcher ein Timer läuft.
 Ist dieser abgelaufen, wird der Trace ausgegeben \todo{(bzw. die Analyse gestartet)}, 
 auch wenn das Programm noch nicht vollständig durchlaufen ist. Dies führt dazu,
 dass auch Programme, in welchen ein Deadlock aufgetreten ist, analysiert 
-werden können. 
+werden können.
 \extend{Instrumenter}
+
+\section{Laufzeit}\label{Chap:Tracer-Sec:Laufzeit}
+\extend{Laufzeit}
+\begin{figure}[h!]
+\includegraphics[width=0.5\textwidth]{img/tracer/Runtime_Instrumenter.eps}
+\caption{Laufzeit des Instrumenters}\label{Chap:Tracer-Sec:Laufzeit-Img"LaufzeitTracer}
+\extend{Bessere Beschreibung}
+\end{figure} 
+
