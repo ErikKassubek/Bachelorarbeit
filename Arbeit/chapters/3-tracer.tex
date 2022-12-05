@@ -79,7 +79,6 @@ Channels und $y$ die Id eines Locks darstellt. Die Events haben dabei folgende B
   \item \texttt{unlock(t, y)}: Das Lock mit id $y$ wurde zum Zeitpunkt 
     $t$ wieder freigegeben. 
 \end{itemize}
-\todo{Pre von select hinzugefügen}
 Um diesen Trace zu erzeugen, werden die Standartoperation aud Go durch Elemente
 des Tracers ersetzt. Die Funktionsweisen dieser Ersetzungen sind im folgenden 
 angegeben. Dabei werden nur solche Ersetzungen angegeben, welche direkt 
@@ -108,9 +107,13 @@ Beispiel $signal(t, i))$, in den Trace der Routine mit id $id$ eingeführt wird
 und $[+]^i$ bedeute, das in die Liste der Traces ein neuer, leerer Trace 
 eingefügt wird, welcher für die Speicherung des Traces der Routine $i$ 
 verwendet wird. 
-$\{a|b\}$ bedeutet, dass ein Wert je nach Situation auf $a$ oder $b$ gesetzt 
+$\langle a|b\rangle$ bedeutet, dass ein Wert je nach Situation auf $a$ oder $b$ gesetzt 
 wird. Welcher Wert dabei verwendet wird, ist aus der obigen Beschreibung der 
-Trace-Elemente erkennbar.
+Trace-Elemente erkennbar. $\text{e}_1$ bis $\text{e}_n$ bezeichnet die Selektoren in einem Select statement.
+$\text{e}_i^*$ bezeichnet dabei einen Identifier für einen Selektor, der sowohl die 
+Id des beteiligten Channels beinhaltet, als auch die Information, ob es sich um ein 
+Send oder Receive handelt und $\text{e}_i^m$ die Message, die in einem Case 
+empfangen wurde. 
 \begin{tabular}{lcl}
   go B & $\Rightarrow$ & nr := atomicInc(nR); ts := atomicInc(c); [ signal(ts, nr) ]$^\text{nr}$;\\
     & & [+]$^\text{nr}$; go \{ ts' := atomicInc(c); [ wait(ts, nr) ]$^\text{id}$; B\};\\
@@ -120,17 +123,22 @@ Trace-Elemente erkennbar.
     & & \{i, id\_send, ts\_send\} := <-c; ts' := atomicInc(c);\\
     & & [ post(ts', ch.id, false, id\_send, ts\_send) ]$^\text{id}$; return i;\\
   close(ch) & $\Rightarrow$ & ts := atomicInc(c); close(ch); [ close(ts, ch.id) ]$^\text{id}$\\
-  select(e$_\text{i} \leadsto \text{B}_\text{i}$) & $\Rightarrow$ & \\
+  select(e$_\text{i} \leadsto \text{B}_\text{i}$) & $\Rightarrow$ & ts := atomicInc(c); [ pre(ts, e$_1^*$, $\ldots$, e$_n^*$, false) ]$^\text{id}$;\\
+    & & select(e$_\text{i} \leadsto$ \{ ts' := atomicInc(c);\\
+    & & [ $\langle \text{post(ts, e$_\text{i}$.ch, false, e$_\text{i}^\text{m}$.id\_send, e$_\text{i}^\text{m}$.ts\_send)}\ |$ \\
+    & & post(ts, e$_\text{i}$.ch, true, id) $\rangle$ ]$^\text{id}$ B$_\text{i}$\}) \\
+  select(e$_\text{i} \leadsto \text{B}_\text{i}$ | B$_\text{def}$) & $\Rightarrow$ & ts := atomicInc(c); [ pre(ts, e$_1^*$, $\ldots$, e$_n^*$, false) ]$^\text{id}$;\\
+    & & select(e$_\text{i} \leadsto$ \{ ts' := atomicInc(c);\\
+    & & [ $\langle \text{post(ts, e$_\text{i}$.ch, false, e$_\text{i}^\text{m}$.id\_send, e$_\text{i}^\text{m}$.ts\_send)}\ |$ \\
+    & & post(ts, e$_\text{i}$.ch, true, id) $\rangle$ ]$^\text{id}$ B$_\text{i}$\} |\\
+    & & ts' := atomicInc(c); [ default(ts) ]$^\text{id}$; B$_\text{def}$) \\
   mu.(Try)Lock() & $\Rightarrow$ & ts := atomicInc(c); mu.(Try)Lock();\\
-    & & [ lock(ts, mu.id, \{-|t\}, \{0|1\}) ]$^\text{id}$;\\
+    & & [ lock(ts, mu.id, $\langle \text{-|t}\rangle$, $\langle \text{0|1}\rangle$) ]$^\text{id}$;\\
   mu.Unlock() & $\Rightarrow$ & ts := atomicInc(c); mu.Unlock(); [ unlock(ts, mu.id) ]$^\text{id}$;\\
   rmu.(Try)(R)Lock() & $\Rightarrow$ & ts := atomicInc(c); rmu.(Try)(R)Lock();\\
-    & & [ lock(ts, rmu.id, \{-|t|r|tr\}, \{0|1\}) ]$^\text{id}$;\\
+    & & [ lock(ts, rmu.id, $\langle \text{-|t|r|tr}\rangle$, $\langle \text{0|1}\rangle$) ]$^\text{id}$;\\
   rmu.Unlock() & $\Rightarrow$ & ts := atomicInc(c); rmu.Unlock(); [ unlock(ts, rmu.id) ]$^\text{id}$;
 \end{tabular}
-\todo{Select case hinzugefügen, nach möglichkeit mit und ohne default in einem}
-
-
 
 Man betrachte als Beispiel das folgende Programm in Go:
 \lstinputlisting{code/03-tracer/example_code_pre.txt}
