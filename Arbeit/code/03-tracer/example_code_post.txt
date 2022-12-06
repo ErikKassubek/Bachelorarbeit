@@ -1,25 +1,25 @@
 func main() {
-	tracer.Init()
-	defer tracer.PrintTrace()
+	goChan.Init()
+	defer goChan.RunAnalyzer()
 
-	x := tracer.NewChan[int](0)
-	y := tracer.NewChan[int](0)
-	a := tracer.NewChan[int](0)
+	x := goChan.NewChan[int](0)
+	y := goChan.NewChan[int](0)
+	a := goChan.NewChan[int](0)
 
-	v := tracer.NewRWLock()
+	v := goChan.NewRWLock()
 
 	func() {
-		GoChanRoutineIndex := tracer.SpawnPre()
+		GoChanRoutineIndex := goChan.SpawnPre()
 		go func() {
-			tracer.SpawnPost(GoChanRoutineIndex)
+			goChan.SpawnPost(GoChanRoutineIndex)
 			v.Lock(); x.Send(1); v.Unlock()
 		}()
 	}()
 
 	func() {
-		GoChanRoutineIndex := tracer.SpawnPre()
+		GoChanRoutineIndex := goChan.SpawnPre()
 		go func() {
-			tracer.SpawnPost(GoChanRoutineIndex)
+			goChan.SpawnPost(GoChanRoutineIndex)
 			{
 				x.Receive(); x.Send(1)
 			}
@@ -27,19 +27,19 @@ func main() {
 	}()
 
 	func() {
-		GoChanRoutineIndex := tracer.SpawnPre()
+		GoChanRoutineIndex := goChan.SpawnPre()
 		go func() {
-			tracer.SpawnPost(GoChanRoutineIndex)
+			goChan.SpawnPost(GoChanRoutineIndex)
 			y.Send(1); x.Receive()
 		}()
 	}()
 
-	tracer.PreSelect(true, a.GetIdPre(true))
+	goChan.PreSelect(true, a.GetIdPre(true))
 	select {
 	case sel_XVlBzgba := <-a.GetChan():
 		a.Post(true, sel_XVlBzgba)
 	default:
-		tracer.PostDefault()
+		goChan.PostDefault()
 	}
 	time.Sleep(4 * time.Second)
 }

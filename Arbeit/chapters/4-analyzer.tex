@@ -1,0 +1,36 @@
+\chapter{Analyze}\label{Chap:Analyze}
+Das folgende Kapitel soll sich nun mit der Analyze des in Kap~\ref{Chap:Tracer} erstellten 
+Trace befassen. Sie befasst sich dabei mit der erkennung potentieller Deadlocks 
+durch die vorkommenden Mutexe und Routinen. \extend{Mehr zur Einführung}
+
+\section{Deadlock durch Mutext}\label{Chan:Analyze-Sec:Mutex}
+Als erstes sollen Deadlocks betrachtet werden, welche nur von (RW-)Mutexen erzeugt werden.
+Dabei wird vor allem zyklischen Locking betrachtet, bei dem sich mehrere Routinen 
+gegenseitig blockieren. Doppeltes Locking, also das Locking eines Locks in der selben Routine 
+ohne, dass es zwischenzeitlich wieder freigegeben wird, wird nicht gesondert betrachtet, 
+da eine solche Situation, wenn sie in dem Ausführungspfad auftritt, immer zu einem tatsächlichen 
+Deadlock führt, und daher in einem Trace nur schwer erkennbar sind. Allerdings wird überprüft, 
+ob bei Abschluss des Programmdurchlaufs alle Locks wieder freigegeben wurden. Ist dies nicht 
+der Fall, kann dies auf einen tatsächlichen Deadlock hindeuten, welcher durch doppeltes 
+Locking erzeugt wurde.\\ \\
+Ein zyklisches Locking kann z.B. in der folgenden Situation auftreten. 
+\lstinputlisting{code/04-analyzer/zyclic-locking-example.txt}
+Routine 0 und Routine 1 können dabei gleichzeitig ausgeführt werden. Man betrachte den Fall, in dem 
+Zeile 7 und 14 gleichzeitig ausgeführt werden, also Lock \texttt{y} von Routine 0 und Lock \texttt{x} 
+von Routine 1 gehalten wird. In diesem Fall kann in keiner der Routinen die nächste Zeile augeführt werden,
+da das jeweilige Locks, welches beansprucht werden soll bereits durch die andere Routine gehalten wird. 
+Da sich diese Situation auch nicht von alleine auflößen kann, blockiert dass Programm, befindet sich also 
+in einem zyklischen Deadlock.\\\\
+Da soches Situtationen nur in ganz besonderen Situation auftreten (in dem obigen Beispiel müssen Zeilen 
+7 und 14 genau gleichzeitig ausgeführt werden, ohne dass Zeile 8 oder 15 ausgeführt werden), muss 
+ein Detektor, welcher vor solchen Situationen warnen soll, nicht nur tatsächliche Deadlocks, sondern
+vor allem potenzielle, also nicht tatsächlich aufgetretene Deadlocks erkenne. Die Erkennung der 
+potenziellen Deadlocks basiert hierbei auf iGoodLock~\cite{iGoodLock} und UNDEAD~\cite{Undead}. Dabei wird ein Lockgraph 
+aufgebaut. Dieser Speichert die in dem Programm vorkommenden Knoten, sowie ihre Abhängigkeiten. 
+Dies bedeutet, dass die Knoten des Graphen gerade die (RW-)Locks representieren. Es gibt dabei 
+genau dann eine gerichtete Kante von Knoten \texttt{x} nach \texttt{y}, wenn das Lock \texttt{y} beansprucht 
+wird, während das Lock \texttt{x} gerade von der selben Routine gehalten wird.\\
+Ein potenzieller Deadlock gibt sich nun, wenn in diesem Graph ein Kreis existert. Dabei muss darauf 
+geachtet werden, dass nicht alle Kanten durch die selbe Routine erzeugt wurden, und dass in 
+zwei, in dem Kreis hintereinander folgende Kanten der gemeinsame Knoten nicht beides mal durch eine 
+R-Lock Operation durch Kanten verbunden wurde. \todo{stimmt das, gegebenenfalls umformulieren}

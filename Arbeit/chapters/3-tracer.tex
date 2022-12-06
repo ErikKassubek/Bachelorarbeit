@@ -175,10 +175,11 @@ Tracer-Funktionen ersetzt bzw.\ ergänzt. Neben dem Ersetzen der verschiedenen
 Operationen werden außerdem einige Funktionen hinzugefügt. Zu Begin der 
 Main-Funktion des Programms wird der Tracer initialisiert. Zusätzlich
 wird eine zusätzliche Go-Routine gestartet, in welcher ein Timer läuft. 
-Ist dieser abgelaufen, wird der Trace ausgegeben \todo{(bzw. die Analyse gestartet)}, 
+Ist dieser abgelaufen, wird  die Analyse gestartet, 
 auch wenn das Programm noch nicht vollständig durchlaufen ist. Dies führt dazu,
 dass auch Programme, in welchen ein Deadlock aufgetreten ist, analysiert 
-werden können. 
+werden können. Endet das Programm in der vorgegebenen Zeit, wird der Analyzer 
+nach der Beendigung des Programms gestartet.
 \extend{Instrumenter}
 
 \section{Laufzeit}\label{Chap:Tracer-Sec:Laufzeit}
@@ -224,10 +225,6 @@ mit denen in Abb.~\ref{Chap:Tracer-Sec:Laufzeit-Img:LaufzeitTracer} gut
 Dies bestätigt dass der dominante Faktor für die Laufzeit des Programms 
 die Anzahl der Ersetzungen in dem AST ist, und die Laufzeit linear von dieser 
 abhängt.
-
-
-
-
 \extend{Laufzeit}
 
 
