@@ -188,7 +188,7 @@ werden. Es ist erwartbar,
 dass sich die Laufzeit linear in der Anzahl der Ersetzungen in dem AST, also 
 der Anzahl der Mutex- und Channel-Operationen verhält. Dies bestätigt sich auch durch 
 die Messung der Laufzeit des Programms (vgl. 
-Abb.~\ref{Chap:Tracer-Sec:Laufzeit-Img:LaufzeitInstrumenter})\\
+Abb.~\ref{Chap:Tracer-Sec:Laufzeit-Img:Laufzeit_Instrumenter})\\
 \begin{minipage}{0.45\textwidth}
   \centering  
   \includegraphics[width=\textwidth]{img/tracer/Runtime_Instrumenter.eps}
@@ -222,13 +222,13 @@ Projekt und der Verteilung der Mutex- und Channel-Operationen in dem Code ab.\\
   goker & $9783$ & $103$ & $4928$ & $0.09 \pm 0.03$ \\ \hline
   \end{tabular}
   \caption{Laufzeit des Instrumenters für ausgewählte Programme}
-  \label{Chap:Tracer-Sec:Laufzeit-Tab:LaufzeitInstrumenter}
+  \label{Chap:Tracer-Sec:Laufzeit-Tab:LaufzeitTracer}
 \end{table}
 Zusätzlich wurde die Messung auch mit drei tatsächlichen Programmen 
 durchgeführt. Die dort gemessenen Werte befinden sich in 
-Tabelle~\ref{Chap:Tracer-Sec:Laufzeit-Tab:LaufzeitInstrumenter}. Gerade in 
+Tabelle~\ref{Chap:Tracer-Sec:Laufzeit-Tab:LaufzeitTracer}. Gerade in 
 Abhängigkeit von der Anzahl der Ersetzungen, stimmen die hier gemessenen Werte
-mit denen in Abb.~\ref{Chap:Tracer-Sec:Laufzeit-Img:LaufzeitInstrumenter} gut 
+mit denen in Abb.~\ref{Chap:Tracer-Sec:Laufzeit-Img:LaufzeitTracer} gut 
 überein, während es bei den anderen Parametern größere Abweichungen gibt.
 Dies bestätigt dass der dominante Faktor für die Laufzeit des Programms 
 die Anzahl der Ersetzungen in dem AST ist, und die Laufzeit linear von dieser 
@@ -237,14 +237,12 @@ abhängt.
 Hierbei wird nur die Laufzeit des eigentlichen Tracers, nicht aber der anschließenden 
 Analyse betrachtet. Um den Overhead in Abhängigkeit von der Größe des Projektes messen 
 zu können, wird das selbe Testprogramm betrachtet, welches bereits in der Messung 
-für den Instrumenter verwendet wurde. Abb. \ref{Chap:Trace-Sec:Laufzeit-Img:LaufzeitTracer}
+für den Instrumenter verwendet wurde. Abb. \ref{Chap:Tracer-Sec:Laufzeit-Tab:LaufzeitTracer}
 zeigt den gemessenen Overhead. Der durchschnittliche Overhead über alle gemessenen Werte 
 liegt dabei bei $14 \pm 2\ \%$. Da der Overhead aber linear davon abhängt, 
 wie größ der Anteil der Mutex- und Channel-Operationen im Verhältniss zu 
 der Größe bzw. der Laufzeit des gesammten Programms ist, kann dieser Wert abhängig 
-von dem tatsächlichen Programm start schwanken. Dies wird unteranderem klar, wenn man 
-den Overhead für ht-cat ($9 \pm 3\ \%$) und go-dsp ($60\pm 18\ \%$) welche $51 \pm 21$ 
-Prozentpunkte außeinander liegen. 
+von dem tatsächlichen Programm start schwanken.
 \extend{Laufzeit}
 
 
