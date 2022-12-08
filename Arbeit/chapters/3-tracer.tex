@@ -19,7 +19,7 @@ und so einen geringeren negativen Einfluss auf die Laufzeit des Programms zu err
 \draft{Trace} 
 Der Aufbau des Trace basiert auf~\cite{PPDP18}. Er wird aber um Informationen 
 über Locks erweitert. Der Trace wird für jede Routine
-separat aufgezeichnet. Anders als in~\cite{PPDP18} wird hingegen ein 
+separat aufgezeichnet. Außerdem wird, anders als in~\cite{PPDP18} ein globaler
 Program-Counter für alle Routinen und nicht ein separater Counter für jede 
 Routine verwendet. Dies ermöglicht es bessere Rückschlüsse über den genauen 
 Ablauf des Programms zu ziehen.  
@@ -85,8 +85,9 @@ angegeben. Dabei werden nur solche Ersetzungen angegeben, welche direkt
 für die Erzeugung
 des Traces notwendig sind. Zusätzlich werden noch 
 weitere Ersetzungen durchgeführt, wie z.B. die Ersetzung der Erzeugung von 
-Mutexen und Channel von den Standardvarianten zu den Varianten des Tracers. 
-Diese werden in der Übersicht zur Vereinfachung nicht betrachte. Auch werden 
+Mutexen und Channel von den Standardvarianten zu den Varianten des Tracers.
+Hierbei wird auch die Größe jedes Channels gespeichert.
+Dies werden in der Übersicht zur Vereinfachung nicht betrachte. Auch werden 
 in der Übersicht nur die Elemente betrachtet, die für die Durchführung der 
 Operation und dem Aufbau des Traces benötigt werden. Hilfselemente, wie z.B. 
 Mutexe, welche verhindern, dass mehrere Routinen gleichzeitig auf die selbe 
@@ -146,13 +147,15 @@ Man betrachte als Beispiel das folgende Programm in Go:
 % \lstinputlisting{code/03-tracer/example_code_post.txt}
 Dieser ergibt den folgenden Trace:
 \begin{align*}
+  [&(1: 0), (2: 0), (3: 0)]\\
   [&[signal(1, 2),\ signal(2, 3),\ signal(3, 4),\ pre(4, 3?, default),\ post(5, default)]\\
   &[wait(8, 2),\ lock(9, 1, -, 1),\ pre(10, 2!),\ post(16, 2, 2!),\ unlock(17, 1)]\\
   &[wait(11, 3),\ pre(12, 3!),\ post(13, 3, 3!),\ pre(14, 2?),\ post(15, 2, 2?, 10)]\\
   &[wait(6, 4),\ pre(7, 3?),\ post(18, 3, 3?, 12)]]
 \end{align*}
-Aus diesem lässt sich der Ablauf des Programms
-eindeutig nachverfolgen.
+Die erste Zeile gibt die Größe der Channels in dem Programm an. Die restlichen Zeichen 
+geben den eigentlichen Trace an, aus dem der Aublauf des Programms eindeutig rekonstruiert 
+werden kann.
 \extend{Tracer}
 
 
