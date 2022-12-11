@@ -8,8 +8,13 @@ durch die vorkommenden Mutexe und Routinen. \extend{Mehr zur Einführung}
 Als erstes sollen Deadlocks betrachtet werden, welche nur von (RW-)Mutexen erzeugt werden.
 Dabei wird vor allem zyklischen Locking betrachtet, bei dem sich mehrere Routinen 
 gegenseitig blockieren. 
-Ein solches zyklisches Locking kann z.B. in der folgenden Situation auftreten. 
-\lstinputlisting{code/04-analyzer/zyclic-locking-example.txt}
+Abb.~\ref{Chap:Analyze-Sec:Mutex-Fig:Zyclic} zeigt ein Beispiel, in welchem es zu zyklischem 
+Locking kommen kann.
+\begin{figure}[h!]
+  \lstinputlisting{code/04-analyzer/zyclic-locking-example.txt}
+  \caption{Beispielprogramm zyklisches Locking}
+  \label{Chap:Analyze-Sec:Mutex-Fig:Zyclic}
+\end{figure}
 Routine 0 und Routine 1 können dabei gleichzeitig ausgeführt werden. Man betrachte den Fall, in dem 
 Zeile 7 und 14 gleichzeitig ausgeführt werden, also Lock \texttt{y} von Routine 0 und Lock \texttt{x} 
 von Routine 1 gehalten wird. In diesem Fall kann in keiner der Routinen die nächste Zeile augeführt werden,
@@ -47,3 +52,59 @@ zwei, in dem Kreis hintereinander folgende Kanten der gemeinsame Knoten nicht be
 R-Lock Operation durch Kanten verbunden wurde. Die Erkennung solcher Zyklen geschieht nun durch 
 eine Tiefensuche auf dem erzeugen Baum. Wird ein solcher Zyklus erkannt, wird ebenfalls eine 
 Warnung ausgegeben.
+
+
+\section{Deadlock durch Channels}\label{Chap:Analyse-Sec:Channel}
+Im folgenden sollen Deadlocks betrachtet werden, welche durch die Verwendung von Channels entstehen. Dabei sollen verschiedene 
+Szenarien betrachtet werden, die auf das Auftreten von Deadlocks hinduten können. \todo{Betrachtete Szenatien beschreiben}
+\todo{Einschrenkungen beschreiben, z.B. nur unbuffered channels}
+
+\subsection{Hängende Channel-Operationen} 
+\todo{select}
+Ein Hinweis darauf, dass in einem Programmablauf potenziell ein Deadlock aufgetreten ist können hängende Channel-Operationen
+sein. Dabei handelt es sich um Channel Operationen, welche zwar gestartet, aber bis zur Terminierung des 
+Programms nie tatsächlich ausgeführt wurden. In dem Trace lassen sich solche Operationen daran erkennen, dass sie 
+zwar ein Pre- aber kein Post-Event besitzen. Ein Beispiel für solch eine hängende Channel-Operation findet sich in 
+Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:ExDangling}.
+\begin{figure}[h!]
+  \lstinputlisting{code/04-analyzer/example-dangling-channel.txt}
+  \caption{Beispielprogramm mit hängendem Channel}
+  \label{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:ExDangling}
+\end{figure}
+Man betrachtet den Fall, in dem 1 mit 3 synchronisiert. Da eine go-Routine automatisch abgebrochen wird, 
+wenn die Main-Routine terminiert, entsteht hierbei kein Deadlock. Anders ist es, wenn 1 mit 2 synchronisiert. 
+In diesem Fall wird die Main-Routine blockiert, ohne dass es eine Möglichkeit gibt, dass sie sich wieder 
+befreit. Es kommt also zu einem Deadlock. In beiden Fällen gibt es in dem Trace eine Receive-Information, 
+welche ein Pre- aber kein Post-Event und somit eine hängede Operation besitzt, welche zu einem Deadlock 
+führen kann. Durch eine einfache traversierung des Traces können solche Situationen erkannt werden. Dabei 
+werden nur normale Channel-Operation, allerdings keine Select-Operationen betrachtet.
+Es sei allerdings dazu gesagt, dass eine solche hängende Operation nicht immer zu einem Deadlock führen muss.
+Man betrachte dazu das Beispiel in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:ExDanglingWithout}.
+\begin{figure}[h!]
+  \lstinputlisting{code/04-analyzer/example-dangling-without.txt}
+  \caption{Hängender Channel ohne Deadlock}
+  \label{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:ExDanglingWithout}
+\end{figure}
+Da auf dem Channel \texttt{x} nie gesendet wird, kommtes es in Zeile~3 zu einer hängenden Channel-Operation. Da 
+dabei aber die Main-Routine nicht blockiert wird, kommt es nicht zu einem Deadlock und die Go-Routine 
+terminiert, sobald die Main-Routine terminiert. Solch eine Routine wird als leakende Routine bezeichnet. 
+Da es sich auch bei solch einer Situation in der Regel nicht um ein gewünschtes verhalten handelt, 
+machte es sinn, den Nutzer auch vor solchen Situationen zu warnen.\\\\
+Neben der Information, dass eine hängende Operation aufgetreten ist, ist es zur Beseitigung solcher 
+Situationen auch sinnvoll, die potenziellen Kommunikationspartner dieser Operationen anzugeben. 
+Die betrachtete Methode zur Bestimmung der pottenziellen Kommunikationspartner mittels Vectorclocks 
+basiert dabei auf \cite{PPDP18}. Sie wird nur ausgeführt, wenn eine hängende Channel-Operation gefunden wurde.
+Dabei werden zuerst die Vectoclocks für alle Elemente in den Traces 
+berechnet. Die Berechnung der Clocks basiert dabei auf der Methode von Fidge~\cite{Fidge}. Dabei werden die
+Clocks nur bei Post-Event verändert. Bei Pre- und anderen Events wird lediglich die vorherigen Vectorclocks
+übernommen. Im Anschluss wird jeder Send- oder Receive-Operation eine Pre- und eine Post-Operation 
+zugeordnet. Diese entsprechen den Vectorclocks der entsprechenden Routine zur Zeit der erzeugung 
+der entsprechenden Events. Für Operationen, welche nur Pre- aber keine Post-Events besitzen 
+werden alle Werte der Vectorclock auf den maximal möglichen Wert (max(int)) gestetzt. 
+Nun werden für alle Channel, für welche hängende Channel-Operation existieren mögliche 
+Kommunicationsparner gesucht. Man bezeichne zwei Vectoclocks $c_1$ und $c_2$ als unvergleichbar, wenn 
+$c_1 \not < c_2$ und $c_1 \not > c_2$, wobei $a < b$ genau dann wenn $\forall i a[i] < b[i]$. 
+Zwei Channel-Operationen sind nun gleichzeitig, und können somit alternative Kommunikationspartner
+bilden, wenn sowohl die Pre- als auch die Post-Vectoclocks unvergleichbar sind. In diesem Fall 
+wird eine Meldung über einen potenziellen alternativen Kommunikationspartner gefunden werden. 
+Die tatsächlich Bewertung und geg. Beseitigung dieser Situation wird dabei dem Nutzer überlassen.
