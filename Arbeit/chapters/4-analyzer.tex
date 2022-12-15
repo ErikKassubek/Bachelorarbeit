@@ -76,8 +76,7 @@ wenn die Main-Routine terminiert, entsteht hierbei kein Deadlock. Anders ist es,
 In diesem Fall wird die Main-Routine blockiert, ohne dass es eine Möglichkeit gibt, dass sie sich wieder 
 befreit. Es kommt also zu einem Deadlock. In beiden Fällen gibt es in dem Trace eine Receive-Information, 
 welche ein Pre- aber kein Post-Event und somit eine hängede Operation besitzt, welche zu einem Deadlock 
-führen kann. Durch eine einfache traversierung des Traces können solche Situationen erkannt werden. Dabei 
-werden nur normale Channel-Operation, allerdings keine Select-Operationen betrachtet.
+führen kann. Durch eine einfache traversierung des Traces können solche Situationen erkannt werden. 
 Es sei allerdings dazu gesagt, dass eine solche hängende Operation nicht immer zu einem Deadlock führen muss.
 Man betrachte dazu das Beispiel in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:ExDanglingWithout}.
 \begin{figure}[h!]
