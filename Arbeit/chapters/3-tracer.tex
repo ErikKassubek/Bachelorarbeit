@@ -151,15 +151,12 @@ Man betrachte als Beispiel das folgende Programm in Go:
 % \lstinputlisting{code/03-tracer/example_code_post.txt}
 Dieser ergibt den folgenden Trace:
 \begin{align*}
-  [&(1: 0), (2: 0), (3: 0)]\\
-  [&[signal(1, 2),\ signal(2, 3),\ signal(3, 4),\ pre(4, 3?, default),\ post(5, default)]\\
-  &[wait(8, 2),\ lock(9, 1, -, 1),\ pre(10, 2!),\ post(16, 2, 2!),\ unlock(17, 1)]\\
-  &[wait(11, 3),\ pre(12, 3!),\ post(13, 3, 3!),\ pre(14, 2?),\ post(15, 2, 2?, 10)]\\
-  &[wait(6, 4),\ pre(7, 3?),\ post(18, 3, 3?, 12)]]
+  [&[signal(1, 2),\ signal(2, 3),\ signal(3, 4),\ pre(4, a?, default),\ post(5, default)]\\
+  &[wait(8, 2),\ lock(9, 1, -, 1),\ pre(10, x!),\ post(16, 2, x!),\ unlock(17, 1)]\\
+  &[wait(11, 3),\ pre(12, y!),\ post(13, 3, y!),\ pre(14, x?),\ post(15, 2, x?, 10)]\\
+  &[wait(6, 4),\ pre(7, y?),\ post(18, 3, y?, 12)]]
 \end{align*}
-Die erste Zeile gibt die Größe der Channels in dem Programm an. Die restlichen Zeichen 
-geben den eigentlichen Trace an, aus dem der Aublauf des Programms eindeutig rekonstruiert 
-werden kann.
+Aus diesem lässt sich der Ablauf des Programms vollständig rekonstruieren.
 \extend{Tracer}
 
 

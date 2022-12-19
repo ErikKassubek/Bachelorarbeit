@@ -56,27 +56,27 @@ Warnung ausgegeben.
 
 \section{Deadlock durch Channels}\label{Chap:Analyse-Sec:Channel}
 Im folgenden sollen Deadlocks betrachtet werden, welche durch die Verwendung von Channels entstehen. Dabei sollen verschiedene 
-Szenarien betrachtet werden, die auf das Auftreten von Deadlocks hinduten können. \todo{Betrachtete Szenatien beschreiben}
-\todo{Einschrenkungen beschreiben, z.B. nur unbuffered channels}
+Szenarien betrachtet werden, die auf das Auftreten von Deadlocks hindeuten können. \todo{Betrachtete Szenatien beschreiben}
+\todo{Einschrenkungen beschreiben, z.B. nur unbuffered channels} \todo{select}
 
-\subsection{Hängende Channel-Operationen} 
-\todo{select}
-Ein Hinweis darauf, dass in einem Programmablauf potenziell ein Deadlock aufgetreten ist können hängende Channel-Operationen
-sein. Dabei handelt es sich um Channel Operationen, welche zwar gestartet, aber bis zur Terminierung des 
-Programms nie tatsächlich ausgeführt wurden. In dem Trace lassen sich solche Operationen daran erkennen, dass sie 
-zwar ein Pre- aber kein Post-Event besitzen. Ein Beispiel für solch eine hängende Channel-Operation findet sich in 
-Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:ExDangling}.
+\subsection{Hängende Channel-Operationen}
+Man betrachte das Programm in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:ExDangling}.
 \begin{figure}[h!]
   \lstinputlisting{code/04-analyzer/example-dangling-channel.txt}
   \caption{Beispielprogramm mit hängendem Channel}
   \label{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:ExDangling}
 \end{figure}
-Man betrachtet den Fall, in dem 1 mit 3 synchronisiert. Da eine go-Routine automatisch abgebrochen wird, 
+Es gibt in Diesem zwei mögliche Ausführungspfade. Man betrachtet zuerst den Fall, in dem 1 mit 3 synchronisiert. 
+Da eine go-Routine automatisch abgebrochen wird,  
 wenn die Main-Routine terminiert, entsteht hierbei kein Deadlock. Anders ist es, wenn 1 mit 2 synchronisiert. 
 In diesem Fall wird die Main-Routine blockiert, ohne dass es eine Möglichkeit gibt, dass sie sich wieder 
-befreit. Es kommt also zu einem Deadlock. In beiden Fällen gibt es in dem Trace eine Receive-Information, 
-welche ein Pre- aber kein Post-Event und somit eine hängede Operation besitzt, welche zu einem Deadlock 
-führen kann. Durch eine einfache traversierung des Traces können solche Situationen erkannt werden. 
+befreit. Es kann also, abhängig davon, ob 1 oder 2 die Nachricht erhällt zu einem Deadlock kommen. Was 
+allerdings beide Fälle gemeinsam haben ist, dass sie eine Channel-Operation besitzen, welche zwar 
+gestartet, allerdings nie ausgeführt wird.
+In diesen Fällen gibt es in dem Trace eine Channel-Information, 
+welche ein Pre- aber kein Post-Event besitzt. Solch eine Situation bezeichnen wir als hängenden Channel. 
+Durch eine einfache traversierung des Traces können solche Situationen erkannt werden. Solche hängenden 
+Channel können auf einen potenziellen oder tatsächlich auftretenden Channel hindeuten.
 Es sei allerdings dazu gesagt, dass eine solche hängende Operation nicht immer zu einem Deadlock führen muss.
 Man betrachte dazu das Beispiel in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:ExDanglingWithout}.
 \begin{figure}[h!]
@@ -86,24 +86,75 @@ Man betrachte dazu das Beispiel in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dan
 \end{figure}
 Da auf dem Channel \texttt{x} nie gesendet wird, kommtes es in Zeile~3 zu einer hängenden Channel-Operation. Da 
 dabei aber die Main-Routine nicht blockiert wird, kommt es nicht zu einem Deadlock und die Go-Routine 
-terminiert, sobald die Main-Routine terminiert. Solch eine Routine wird als leakende Routine bezeichnet. 
-Da es sich auch bei solch einer Situation in der Regel nicht um ein gewünschtes verhalten handelt, 
-machte es sinn, den Nutzer auch vor solchen Situationen zu warnen.\\\\
-Neben der Information, dass eine hängende Operation aufgetreten ist, ist es zur Beseitigung solcher 
-Situationen auch sinnvoll, die potenziellen Kommunikationspartner dieser Operationen anzugeben. 
-Die betrachtete Methode zur Bestimmung der pottenziellen Kommunikationspartner mittels Vectorclocks 
-basiert dabei auf \cite{PPDP18}. Sie wird nur ausgeführt, wenn eine hängende Channel-Operation gefunden wurde.
-Dabei werden zuerst die Vectoclocks für alle Elemente in den Traces 
-berechnet. Die Berechnung der Clocks basiert dabei auf der Methode von Fidge~\cite{Fidge}. Dabei werden die
-Clocks nur bei Post-Event verändert. Bei Pre- und anderen Events wird lediglich die vorherigen Vectorclocks
-übernommen. Im Anschluss wird jeder Send- oder Receive-Operation eine Pre- und eine Post-Operation 
-zugeordnet. Diese entsprechen den Vectorclocks der entsprechenden Routine zur Zeit der erzeugung 
-der entsprechenden Events. Für Operationen, welche nur Pre- aber keine Post-Events besitzen 
-werden alle Werte der Vectorclock auf den maximal möglichen Wert (max(int)) gestetzt. 
-Nun werden für alle Channel, für welche hängende Channel-Operation existieren mögliche 
-Kommunicationsparner gesucht. Man bezeichne zwei Vectoclocks $c_1$ und $c_2$ als unvergleichbar, wenn 
-$c_1 \not < c_2$ und $c_1 \not > c_2$, wobei $a < b$ genau dann wenn $\forall i a[i] < b[i]$. 
-Zwei Channel-Operationen sind nun gleichzeitig, und können somit alternative Kommunikationspartner
-bilden, wenn sowohl die Pre- als auch die Post-Vectoclocks unvergleichbar sind. In diesem Fall 
-wird eine Meldung über einen potenziellen alternativen Kommunikationspartner gefunden werden. 
-Die tatsächlich Bewertung und geg. Beseitigung dieser Situation wird dabei dem Nutzer überlassen.
+terminiert, sobald die Main-Routine terminiert. Solch eine Routine bezeichnen wir als leakende Routine.
+Sie führt hierbei nicht zu einem Deadlock, ist aber in der Regel dennoch eine ungewollte Situation.
+Es ist also sinnvoll, auch solche Situationen zu erkennen.\\\\
+Wir sind nun also in der Lage solche Situationen zu erkennen. Um solche Situationen verhindern 
+zu können, kann es aber auch sinnvoll sein für Channels, bei welchen eine solche Sitation aufgetreten ist 
+alle potenziellen Kommunikationspartner anzugeben, um dem Nutzer bei der Suche und Beseitigung 
+solcher Situationen zu helfen. Für Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:ExDangling}
+soll also angegeben werden können, dass die Send-Operation in 1 sowohl mit 2 als auch mit 3 
+synchronisieren kann. Dabei sei allerdings zu beachten, dass nur weil eine Send- und eine 
+Receive-Operation auf dem selben Channel und in unterschiedlichen Routine geschehen, nicht 
+in jedem Fall eine Kommunikation zwischen diesen möglich ist. Man betrachte dazu das Beispiel in 
+Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:NoSync}.
+\begin{figure}[h!]
+  \lstinputlisting{code/04-analyzer/example-no-sync.txt}
+  \caption{Beispielprogramm für unmögliche Synchronisation}
+  \label{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:NoSync}
+\end{figure}
+Auf dem Channel \texttt{x} wird in 1 gesendet und kann in 2 und 3 empfangen werden. Da es zwei Receive, 
+aber nur eine Send-Operation gibt, kommt es zu einem hängenden Channel. Betrachtet man nur 
+Channel \texttt{x} könnte man davon ausgehen, dass 1 nach 2 senden kann, was zu einem Deadlock
+führen würde. Dies ist aber nicht möglich. Da der Channel \texttt{y} in 1 nach \texttt{x} sendet, 
+in 2 allerdings von \texttt{x} empfangen muss, ist eine synchronisierung auf \texttt{x} von 1 nach 
+2 nicht möglich und die beiden Operationen bilden demnach keine möglichen Kommunikationspartner.\\\\
+Um mögliche Kommunikationspartner zu erkennen, nicht mögliche Kommunikationspartner wie in 
+Abb~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:NoSync} aber auszuschließen, werden
+Vector-Clocks verwendet. Die grundlegende Idee basiert auf~\cite{PPDP18}.\\
+In einem ersten Durchlauf wird dabei der Trace mit Vector-Clock Informationen nach der Methode 
+von Fidge~\cite{Fidge} erweitert. Dazu werden alle Elemente des Trace in der Reihenfolge durchlaufen, 
+in denen sie in den Trace eingefügt wurden. Die korrekte Reihenfolge zwischen den Traces ist dabei 
+durch die Speicherung eines globalen Timers in den Elementen des Trace gegeben. Für jede Routine 
+wird eine Vector-Clock gespeichter, welche für jede Routine einen Wert enthält. Zu Begin werden 
+all diese Werte auf 0 gesetzt. Bei jedem Post-Event, sowohl für Send als auch Receive und für 
+Signal und Wait Elemente wird der Wert der eigenen Routine in der lokalen Vector-Clock um eins 
+erhöht. Bei einem Post-Receive und einem Wait Element wird die Vectorclock $vc'$ betrachtet, 
+welche in der sendenden Routine zum Zeitpunkt des Post-Send- bzw. Signal-Elements vorlag. 
+Da ein Send- bzw. Signal-Event immer vor dem Receive- bzw. Wait-Element erzeugt wird, wurde 
+die entsprechende Vectorclock in jedem Fall bereits bestimmt. Die Zuordnung der Trace-Elemente 
+ist möglich, da der globale Counter bei einem Send an den Empfangenden Channel mitgesendet 
+wird, und in dem entsprechenden Post-Receive- bzw. Wait-Trace-Element gespeichert wird.
+Bei einem Select-Statement wird nur derjenoge Fall betrachtet, der auch tatsächlich ausgeführt wurde.
+Diese Vector-Clock \texttt{vc}
+wird nun mit der lokalen Vector-Clock $vc$ der empfangenden Routine, bzw. der Wait-Routine 
+\texttt{q} verrechnet und ersätzt diese. Dabei gilt\\
+\begin{figure}[h]
+  \centering
+  \lstinputlisting[frame=none, numbers=none]{code/04-analyzer/vector-clock.txt}
+\end{figure}\\
+wobei $n$ die Anzahl der Routinen ist.\\
+Für alle andern Elemente, z.B. Pre usw. wird einfach die lokale Vector-Clock der Routine übernommen, 
+ohne diese zu veränden. Da nun die Vector-Clocks zu jedem Zeitpunk bestimmt wurde, kann jedem 
+Send- und Receive-Trace-Element eine Pre- und eine Post-Vector-Clock zugeordnet werden. 
+Dabei handelt es sich um die Vector-Clocks, die bei Erzeugung des Pre- bzw. Post-Events in 
+der Routine, in der die Operation ausgeführ wurde vorlag. Für hängende Operationen, 
+bei denen kein Post-Element existiert, werden alle Werte der Post-Vector-Clock auf 
+max(Int32) gesetzt.
+Man betrachte das Beispiel in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:PorgVC}.
+\begin{figure}[h!]
+  \lstinputlisting{code/04-analyzer/example-vector-clock-prog.txt}
+  \caption{Beispielprogramm für die Betrachtung der Vector-Clocks}
+  \label{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:PorgVC}
+\end{figure}
+Man betrachte den Fall, in dem 3 mit 4 und dann 1 mit 5 synchronisiert und 2 eine hängende Operation bildet.
+In diesem Fall erhält man folgenden Trace:
+\begin{align}
+  [&[signal(1, 2), signale(2, 3), pre(1, x?), post(7, 1, x?, 6), pre(8, x?), post(13, 1, x?, 11)]\\
+  &[wait(9, 2), pre(10, x!), post(11, 1, x!), pre(12, 1?)]\\
+  &[wait(4, 3), pre(5, 1!), post(6, 2, 1!),]
+  ]
+\end{align}
+Aus diesem Trace lassen sich nun die Vector-Clocks für die einzelnen Operationen berechnen. 
+\todo{Vectorclocks angeben}
+\todo{Weiter}
