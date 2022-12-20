@@ -143,10 +143,12 @@ bei denen kein Post-Element existiert, werden alle Werte der Post-Vector-Clock a
 max(Int32) gesetzt.
 Man betrachte das Beispiel in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:PorgVC}.
 \begin{figure}[h!]
+  \centering
   \lstinputlisting{code/04-analyzer/example-vector-clock-prog.txt}
   \caption{Beispielprogramm für die Betrachtung der Vector-Clocks}
   \label{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:PorgVC}
 \end{figure}
+\todo{Fix image}
 Man betrachte den Fall, in dem 3 mit 4 und dann 1 mit 5 synchronisiert und 2 eine hängende Operation bildet.
 In diesem Fall erhält man folgenden Trace:
 \begin{align}
@@ -155,6 +157,13 @@ In diesem Fall erhält man folgenden Trace:
   &[wait(4, 3), pre(5, 1!), post(6, 2, 1!),]
   ]
 \end{align}
-Aus diesem Trace lassen sich nun die Vector-Clocks für die einzelnen Operationen berechnen. 
-\todo{Vectorclocks angeben}
+Aus diesem Trace lassen sich nun die Vector-Clocks für die einzelnen Operationen berechnen.
+Diese werden im Folgenden in der Form $^{vc}a^{vc'}$ mit der Pre-Vector-Clock $vc$ und der 
+Post-Vector-Clock $vc'$ und der Channel-Operation $a$. Sie geben sich also als
+\begin{align*}
+  [&[^{[2,0,0]}x?^{[3,0,2]}, ^{[3,0,2]}x?^{[4,2,2]}]\\
+  &[^{[1, 1, 0]}x!^{[1, 2, 0]}, ^{[1, 2, 0]}x?^{[max, max, max]}]\\
+  &[^{[2, 0, 1]}x!^{[2, 0, 2]}]]
+\end{align*}
+
 \todo{Weiter}
