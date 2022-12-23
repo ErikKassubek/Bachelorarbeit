@@ -98,11 +98,12 @@ synchronisieren kann. Dabei sei allerdings zu beachten, dass nur weil eine Send-
 Receive-Operation auf dem selben Channel und in unterschiedlichen Routine geschehen, nicht 
 in jedem Fall eine Kommunikation zwischen diesen möglich ist. Man betrachte dazu das Beispiel in 
 Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:NoSync}.
-\begin{figure}[h!]
-  \lstinputlisting{code/04-analyzer/example-no-sync.txt}
-  \caption{Beispielprogramm für unmögliche Synchronisation}
-  \label{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:NoSync}
-\end{figure}
+% \begin{figure}[h!]
+%   % \lstinputlisting{code/04-analyzer/example-no-sync.txt}
+%   \caption{Beispielprogramm für unmögliche Synchronisation}
+%   \label{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:NoSync}
+% \end{figure}
+\todo{bild aktivieren wenn synchronisiert}
 Auf dem Channel \texttt{x} wird in 1 gesendet und kann in 2 und 3 empfangen werden. Da es zwei Receive, 
 aber nur eine Send-Operation gibt, kommt es zu einem hängenden Channel. Betrachtet man nur 
 Channel \texttt{x} könnte man davon ausgehen, dass 1 nach 2 senden kann, was zu einem Deadlock
@@ -131,8 +132,8 @@ wird nun mit der lokalen Vector-Clock $vc$ der empfangenden Routine, bzw. der Wa
 \texttt{q} verrechnet und ersätzt diese. Dabei gilt\\
 \begin{figure}[h]
   \centering
-  \lstinputlisting[frame=none, numbers=none]{code/04-analyzer/vector-clock.txt}
-\end{figure}\\
+  % \lstinputlisting[frame=none, numbers=none]{code/04-analyzer/vector-clock.txt}
+\end{figure}\todo{Code aktivieren wenn synchronisiert}\\
 wobei $n$ die Anzahl der Routinen ist.\\
 Für alle andern Elemente, z.B. Pre usw. wird einfach die lokale Vector-Clock der Routine übernommen, 
 ohne diese zu veränden. Da nun die Vector-Clocks zu jedem Zeitpunk bestimmt wurde, kann jedem 
@@ -144,11 +145,11 @@ max(Int32) gesetzt.
 Man betrachte das Beispiel in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:PorgVC}.
 \begin{figure}[h!]
   \centering
-  \lstinputlisting{code/04-analyzer/example-vector-clock-prog.txt}
+  % \lstinputlisting{code/04-analyzer/example-vector-clock-prog.txt}
   \caption{Beispielprogramm für die Betrachtung der Vector-Clocks}
   \label{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:PorgVC}
 \end{figure}
-\todo{Fix image}
+\todo{Bild aktivieren wenn synchronisiert}
 Man betrachte den Fall, in dem 3 mit 4 und dann 1 mit 5 synchronisiert und 2 eine hängende Operation bildet.
 In diesem Fall erhält man folgenden Trace:
 \begin{align}
@@ -165,5 +166,31 @@ Post-Vector-Clock $vc'$ und der Channel-Operation $a$. Sie geben sich also als
   &[^{[1, 1, 0]}x!^{[1, 2, 0]}, ^{[1, 2, 0]}x?^{[max, max, max]}]\\
   &[^{[2, 0, 1]}x!^{[2, 0, 2]}]]
 \end{align*}
-
+Man bezeichne zwei Vector-Clocks $vc$ und $vc'$ als vergleichbar, wenn
+$\forall i: vc[i] \leq vc'[i]$ oder $\forall i: vc[i] \geq vc'[i]$. Man 
+schreibe in diesem Fall $vc \leq vc$ bzw. $vc \geq vc$ bzw.~allgemein 
+$vc \gtreqless vc'$. Andernfalls 
+bezeichnen man $vc$ und $vc'$ als unvergleichbar $vc \not\gtreqless vc'$. 
+Sind zwei Vector-Clocks 
+unvergleichbar, sind sie unabhängig und können somit gleichzeitig auftreten. 
+Man erkennt also zwei Operationen, welche eine mögliche Kommunikation durchführen 
+können daran, dass sie auf dem selben Channel definiert sind, eine Send-
+und eine Receive-Operation definieren und dass 
+entweder ihre Pre- oder Vector-Clock (oder beide) unvergleichbar sind.
+Um alternative Kommunikationspartner für hängende Kanäle zu finden, werden also
+die Pre- und Post-Vector-Clocks der Channels mit dem selben Channel verglichen.\\
+Man betrachte die hängende Receive-Operation in dem obigen Beispiel. Es gibt 
+in dem Programm 2 Send-Operationen, welche als Kommunikationspartner für 
+die hängende Operation $r$ in frage kommen. Vergleicht man die Vector-Clocks der 
+Send-Operationen mit denen der hängenden Operation wird aber klar, dass nur 
+eine der beiden Operationen tatsächlich möglich ist. Für die Send-Operation 
+in der 2. Routine (der selben wie die hängende Operation) $s_1$ gilt 
+$s_{1, pre} \leq r_{pre}$ und $s_{1, post} \leq r_{pre}$.  
+Für die andere Send-Operation $s_2$ in Routine 3 hingegen gilt 
+$s_{1, pre} \not\gtreqless r_{pre}$. Sie kann also gleichzeitig mit der 
+hängenden Operation ausgeführt werden und bildet somit einen potenziellen 
+Kommunikation. Hierbei wird auch klar, warum es nicht nur ausreicht einen 
+Trace aufzuzeichnen, wenn eine Operation ausgeführt wird. Da für die 
+Post-Vector-Clocks gilt, dass $s_{2, post} \geq r_{post}$, kann allein aus der 
+Post-Vector-Clock nicht auf eine mögliche Kommunikation geschlossen werden.
 \todo{Weiter}
