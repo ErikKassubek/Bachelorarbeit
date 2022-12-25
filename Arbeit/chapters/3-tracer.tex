@@ -152,9 +152,9 @@ Man betrachte als Beispiel das folgende Programm in Go:
 Dieser ergibt den folgenden Trace:
 \begin{align*}
   [&[signal(1, 2),\ signal(2, 3),\ signal(3, 4),\ pre(4, a?, default),\ post(5, default)]\\
-  &[wait(8, 2),\ lock(9, 1, -, 1),\ pre(10, x!),\ post(16, 2, x!),\ unlock(17, 1)]\\
-  &[wait(11, 3),\ pre(12, y!),\ post(13, 3, y!),\ pre(14, x?),\ post(15, 2, x?, 10)]\\
-  &[wait(6, 4),\ pre(7, y?),\ post(18, 3, y?, 12)]]
+  &[wait(8, 2),\ lock(9, 1, -, 1),\ pre(10, x!),\ post(16, 2, x!, 1),\ unlock(17, 1)]\\
+  &[wait(11, 3),\ pre(12, y!),\ post(13, 3, y!, 1),\ pre(14, x?),\ post(15, 2, x?, 10, 1)]\\
+  &[wait(6, 4),\ pre(7, y?),\ post(18, 3, y?, 12, 1)]]
 \end{align*}
 Aus diesem lässt sich der Ablauf des Programms vollständig rekonstruieren.
 \extend{Tracer}
