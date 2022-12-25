@@ -59,18 +59,18 @@ Im folgenden sollen Deadlocks betrachtet werden, welche durch die Verwendung von
 Szenarien betrachtet werden, die auf das Auftreten von Deadlocks hindeuten können. \todo{Betrachtete Szenatien beschreiben}
 \todo{Einschrenkungen beschreiben, z.B. nur unbuffered channels} \todo{select}
 
-\subsection{Hängende Channel-Operationen}
+\subsection{Hängende ungepufferte Channel-Operationen}\label{Chap:Analyze-Sec:Channel-SubSec:Dangling}
 Man betrachte das Programm in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:ExDangling}.
 \begin{figure}[h!]
   \lstinputlisting{code/04-analyzer/example-dangling-channel.txt}
   \caption{Beispielprogramm mit hängendem Channel}
   \label{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:ExDangling}
 \end{figure}
-Es gibt in Diesem zwei mögliche Ausführungspfade. Man betrachtet zuerst den Fall, in dem 1 mit 3 synchronisiert. 
+Es gibt in diesem zwei mögliche Ausführungspfade. Man betrachtet zuerst den Fall, in dem 1 mit 3 synchronisiert. 
 Da eine go-Routine automatisch abgebrochen wird,  
 wenn die Main-Routine terminiert, entsteht hierbei kein Deadlock. Anders ist es, wenn 1 mit 2 synchronisiert. 
 In diesem Fall wird die Main-Routine blockiert, ohne dass es eine Möglichkeit gibt, dass sie sich wieder 
-befreit. Es kann also, abhängig davon, ob 1 oder 2 die Nachricht erhällt zu einem Deadlock kommen. Was 
+befreit. Es kann also, abhängig davon, ob 1 oder 2 die Nachricht erhält zu einem Deadlock kommen. Was 
 allerdings beide Fälle gemeinsam haben ist, dass sie eine Channel-Operation besitzen, welche zwar 
 gestartet, allerdings nie ausgeführt wird.
 In diesen Fällen gibt es in dem Trace eine Channel-Information, 
@@ -193,4 +193,49 @@ Kommunikation. Hierbei wird auch klar, warum es nicht nur ausreicht einen
 Trace aufzuzeichnen, wenn eine Operation ausgeführt wird. Da für die 
 Post-Vector-Clocks gilt, dass $s_{2, post} \geq r_{post}$, kann allein aus der 
 Post-Vector-Clock nicht auf eine mögliche Kommunikation geschlossen werden.
-\todo{Weiter}
+\todo{Besser beschreiben}
+
+\section{Gepufferte Kanäle}
+Anders als in ungepufferten Kanälen müssen in gepufferten Kanälen Send und 
+Receive einer Nachricht nicht gleichzeitig ablaufen. Hierbei kann es 
+zu Situationen kommen, in dem eine Nachricht zwar erfolgreich gesendet, aber
+nie ausgelesen wird. Man betrachte dazu das Beispiel in 
+Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Buffered-Fig:Ex1}.
+\begin{figure}[h!]
+  \lstinputlisting{code/04-analyzer/non-read-message.txt}
+  \caption{Beispielprogramm für nicht gelesenen Nachricht in gepuffertem Channel} 
+  \label{Chap:Analyze-Sec:Channel-SubSec:Buffered-Fig:Ex1}
+\end{figure}
+Es besitzt 2 Send- aber nur eine Receive-Operation. Wäre der Channel nicht 
+gepuffert, und hätte 1 mit 3 synchronisiert, würde 2 blockieren und es 
+würde zu einem Deadlock, bzw. dadurch dass 2 nicht in der Main-Routine liegt
+zu einer hängenden Operation kommen. Dadurch das der Channel allerdings gepuffert ist
+können sowohl 1 als auch 2 senden ohne zu blockieren. Da der Trace somit ein gültiges Post-Event dieser Operation besitzt, 
+wird dieses Problem nicht durch die in 
+Abschnitt~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling} beschriebenen Methode erkannt.
+Solche Situation lassen sich allerdings aus Trace einfach erkennen.
+Dazu wird der mit Vector-Clocks annotierte Trace durchlaufen. Auf diesem 
+wird nun für jeden Channel gezählt, wie oft erfolgreich gesendet bzw. erfolgreich empfangen 
+wurde (Anzahl der entsprechenden Elemente, bei denen die Post-Vector-Clock 
+nicht max(Int) ist). Ist die Anzahl der erfolgreichen Send größer als 
+die Anzahl der erfolgreichen Receive, bedeutet diese, dass nach Abschluss des 
+Programms auf dem entsprechenden Channel noch nicht gelesene Nachrichten vorhanden sind.\\\\
+In dem Beispiel in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling}
+wird eine weitere Problematik mit gepufferten Channels deutlich. 
+Betrachtet man nur die Vector-Clock Informationen, dann scheint es, als wären 
+2 und 3 potenzielle Kommunikationspartner. Dies ist allerdings nicht der Fall. 
+In Go sind gepufferte Channels als FIFO Queue implementiert~\cite{chan-impl}. 
+Das bedeutet, dass bei einem Receive immer diejenige Nachricht ausgegeben wird, 
+welche bereits am längsten in dem Puffer des Channels gehalten wird. Da 
+1 in dem Beispiel immer vor 2 ausgeführt wird und demnach in 3 immer die 
+Nachricht aus 1 empfangen wird, bilden 2 und 3 kein mögliches Kommunikationspaar
+und sollte somit auch nicht als solches ausgegeben werden. Um solche Situationen 
+zu erkennen, wird in dem Trace für jedes Post-Event gespeichert, die 
+wievielte Send- bzw. Receive-Operation auf diesem Channel bereits erfolgreich 
+ausgeführt worden sind. Bei der Suche nach möglichen Kommunikationspartnern 
+wird nun für gepufferte Channels überprüft, ob die Anzahl der gesendeten 
+Nachrichten in dem Send-Statement mit der Anzahl der empfangenen 
+Nachrichten in dem Receive-Statement übereinstimmt. Da die 
+Send- und Receive-Operation nicht gleichzeitig ausgeführt werden müssen, 
+ist es nicht notwendig die Vector-Clocks zu betrachten.
+\todo{cont.}
