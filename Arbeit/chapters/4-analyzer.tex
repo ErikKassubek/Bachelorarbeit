@@ -238,4 +238,33 @@ Nachrichten in dem Send-Statement mit der Anzahl der empfangenen
 Nachrichten in dem Receive-Statement übereinstimmt. Da die 
 Send- und Receive-Operation nicht gleichzeitig ausgeführt werden müssen, 
 ist es nicht notwendig die Vector-Clocks zu betrachten.
-\todo{continue}
+\todo{Noch genauer beschreiben}
+
+\section{Select}
+In Go können Select-Statements dazu verwendet werden, abhängig davon, 
+auf welchen Channels Nachrichten gesendet werden unterschiedliche Programmteile
+auszuführen. Dies erschwert die Analyse des Programs, da der 
+tatsächliche Programmablauf dabei praktisch non-deterministisch werden 
+kann~\cite{select-spec}. Da der aufgezeichnete Trace immer nur einen 
+Programmablauf widerspiegelt, führt dies zu Problemen, da 
+nicht betrachtete Ausführungspfade zu Deadlocks oder anderen Problemen 
+führen. Eine Möglichkeit besteht darin, das Programm mehrfach auszuführen, 
+und dabei immer unterschiedliche Select-Cases zu erzwingen. Dies ist der Ansatz,
+welcher für den GFuzz-Detektor~\cite{gfuzz} gewählt wurde. Dazu werden die 
+Select-Statements in dem Programmcode so verändert, dass aus den vorhandenen 
+Cases eines gezielt ausgewählt werden kann. Ein Beispiel dazu findet sich 
+in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Select-Fig:GFuzz_Inst}.
+\begin{figure}[h!]
+  \begin{minipage}[t]{0.3\textwidth}
+    \lstinputlisting[xrightmargin=-50pt]{code/04-analyzer/gfuzz-select-pre.txt}
+  \end{minipage}
+  \begin{minipage}[t]{0.65\textwidth}
+    \lstinputlisting[xrightmargin=40pt]{code/04-analyzer/gfuzz-select-post.txt}
+  \end{minipage}
+  \caption{Beispiel für die Order-Enforcement-Instrumentierung eines Select-Statements 
+  durch GFuzz for (links) und nach der Implementierung (rechts). Ersetze $......$
+  in dem Programm nach der Instrumentierung (rechts) durch das Programm vor der 
+  Instrumentierung (links).~\cite[gekürzt]{gfuzz}}
+  \label{Chap:Analyze-Sec:Channel-SubSec:Select-Fig:GFuzz_Inst}
+\end{figure}
+\todo{Cont}

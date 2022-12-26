@@ -1,0 +1,8 @@
+select {
+  case <- Fire(time.Second):
+    Log("Timeout!")
+  case e := <- ch:
+    Log("Unexpected!")
+  case e := <- errCh:
+    Log("Error!")
+}

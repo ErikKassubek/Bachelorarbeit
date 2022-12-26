@@ -1,0 +1,25 @@
+switch FetchOrder(...) {
+  case 0: 
+    select {
+      case <- Fire(time.Second):
+        Log("Timeout!")
+      case <- time.After(T):
+        .....
+    }
+  case 1:
+    select {
+      case e := <- ch:
+        Log("Unexpected")
+      case <- time.After(T):
+        .....
+    }
+  case 2:
+    select {
+      case e := <- errCh:
+        Log("Error")
+      case <- time.After(T):
+        .....
+    }
+  default:
+    .....
+}
