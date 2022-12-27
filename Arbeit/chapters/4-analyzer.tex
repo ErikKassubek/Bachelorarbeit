@@ -152,12 +152,12 @@ Man betrachte das Beispiel in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling
 \todo{Bild aktivieren wenn synchronisiert}
 Man betrachte den Fall, in dem 3 mit 4 und dann 1 mit 5 synchronisiert und 2 eine hängende Operation bildet.
 In diesem Fall erhält man folgenden Trace:
-\begin{align}
+\begin{align*}
   [&[signal(1, 2), signale(2, 3), pre(1, x?), post(7, 1, x?, 6), pre(8, x?), post(13, 1, x?, 11)]\\
   &[wait(9, 2), pre(10, x!), post(11, 1, x!), pre(12, 1?)]\\
   &[wait(4, 3), pre(5, 1!), post(6, 2, 1!),]
   ]
-\end{align}
+\end{align*}
 Aus diesem Trace lassen sich nun die Vector-Clocks für die einzelnen Operationen berechnen.
 Diese werden im Folgenden in der Form $^{vc}a^{vc'}$ mit der Pre-Vector-Clock $vc$ und der 
 Post-Vector-Clock $vc'$ und der Channel-Operation $a$. Sie geben sich also als
@@ -195,7 +195,7 @@ Post-Vector-Clocks gilt, dass $s_{2, post} \geq r_{post}$, kann allein aus der
 Post-Vector-Clock nicht auf eine mögliche Kommunikation geschlossen werden.
 \todo{Besser beschreiben}
 
-\section{Gepufferte Kanäle}
+\subsection{Gepufferte Kanäle}\label{Chan:Analyze-Sec:Channel-SubSec:Buffered}
 Anders als in ungepufferten Kanälen müssen in gepufferten Kanälen Send und 
 Receive einer Nachricht nicht gleichzeitig ablaufen. Hierbei kann es 
 zu Situationen kommen, in dem eine Nachricht zwar erfolgreich gesendet, aber
@@ -267,4 +267,48 @@ in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Select-Fig:GFuzz_Inst}.
   Instrumentierung (links).~\cite[gekürzt]{gfuzz}}
   \label{Chap:Analyze-Sec:Channel-SubSec:Select-Fig:GFuzz_Inst}
 \end{figure}
-\todo{Cont}
+Durch die Switch-Operation lässt sich einer der Fälle in der ursprünglichen 
+Select-Operation auswählen, welche bevorzugt ausgeführt werden soll. Nur 
+wenn dieser innerhalb einer voreingestellten Zeit nicht ausgeführt wird, 
+wird die ursprüngliche Select-Operation vollständig ausgeführt um zu verhindern, 
+dass es durch diese Instrumentierung zu einem Deadlock kommt, welche ohne 
+sie nicht aufgetreten wäre. Der Ablauf eines Programms bezüglich seiner 
+Select-Statements kann nun als Liste von Tupeln 
+$[(s_0, c_0, e_0), \ldots, (s_n, c_n, e_n)]$ dargestellt werden. Dabei 
+bezeichnet $s_i (0 \leq i \leq n)$ die ID einer Select-Operation, $c_i$ 
+die Anzahl der Cases in dieser Operation und $e_n$ den Index des Ausgeführten 
+Case. Das Programm wird nun mehrfach durchlaufen, wobei die Ordnung zufällig 
+verändert wird. Dazu wird nach jedem Durchlauf der Index $e_i$ jedes Tupels 
+auf einen zufälligen, aber gültigen Wert gesetzt. Da die Anzahl der möglichen 
+Ausführungspfade durch die Select-Statements gegebenenfalls gegen unendlich gehen kann,
+ist es nicht möglich jede mögliche Kombination von Select-Cases auszuführen.
+Aus diesem Grund sammelt GFuzz während der Ausführung einer Ordnung Informationen 
+über diese, um die Qualität einer Ordnung abzuschätzen. Aus diesen wird 
+über 
+\begin{align}
+  \begin{split}
+    score = &\sum_j \log_2{CountChOpPair_j} + 10 \cdot \# CreateCh \\
+            &+ 10 \cdot \#CloseCh + 10 \cdot \sum_j MaxChBufFull_j
+  \end{split}
+\end{align}
+eine Wertung für die durchlaufenden Ordnung bestimmt, über welche die 
+Anzahl der Mutationen bestimmt werden. Hierbei bezeichnet $CountChOpPair_j$ 
+die Anzahl der neuen Ausführungen von Channel-Operationen pro Channel $j$, $CreateCh$
+die Anzahl der neu erzeugten Channels, $CloseCh$ die Anzahl der neu geschlossenen 
+Channels und $MaxChBufFull_j$ die neue maximale Anzahl an 
+gepufferten Nachrichten in jedem Channel $j$. Neu bedeutet hierbei, dass die
+entsprechende Operation noch nicht, auch nicht in vorherigen Durchläufen, 
+aufgetreten ist. Die Anzahl der Mutationen 
+einer Ordnung gibt sich nun als $\# nuwMut = \lceil 5 \cdot \nicefrac{score}{maxScode} \rceil$, 
+wobei $score$ den Score der Ordnung und $maxScore$ den bisher maximal 
+erhaltenen Score bezeichnet. Diese $\# newMut$ neuen Mutationen werden nun 
+basierend auf der alten erzeugt, in eine Queue eingefügt und anschließend 
+durchlaufen. GFuzz beschränkt sich bei der Erkennung von Bugs auf die Erkennung
+von blockenden Bugs.\\\\
+Diese Betrachtung der verschiedenen Pfade soll nun auch für GoChan 
+\todo{gegebenenfall umbenennen} verwendet werden. Für jeden Durchlauf wird 
+ein Trace aufgezeichnet und dieser basierend 
+auf~\ref{Chan:Analyze-Sec:Mutex} und~\ref{Chap:Analyse-Sec:Channel}
+\todo{Gegenenenfalls anpassen}
+analysiert.
+\todo{cont, implementierung beschreiben}
