@@ -98,12 +98,11 @@ synchronisieren kann. Dabei sei allerdings zu beachten, dass nur weil eine Send-
 Receive-Operation auf dem selben Channel und in unterschiedlichen Routine geschehen, nicht 
 in jedem Fall eine Kommunikation zwischen diesen möglich ist. Man betrachte dazu das Beispiel in 
 Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:NoSync}.
-% \begin{figure}[h!]
-%   % \lstinputlisting{code/04-analyzer/example-no-sync.txt}
-%   \caption{Beispielprogramm für unmögliche Synchronisation}
-%   \label{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:NoSync}
-% \end{figure}
-\todo{bild aktivieren wenn synchronisiert}
+\begin{figure}[h!]
+  % \lstinputlisting{code/04-analyzer/example-no-sync.txt}
+  \caption{Beispielprogramm für unmögliche Synchronisation}
+  \label{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:NoSync}
+\end{figure}
 Auf dem Channel \texttt{x} wird in 1 gesendet und kann in 2 und 3 empfangen werden. Da es zwei Receive, 
 aber nur eine Send-Operation gibt, kommt es zu einem hängenden Channel. Betrachtet man nur 
 Channel \texttt{x} könnte man davon ausgehen, dass 1 nach 2 senden kann, was zu einem Deadlock
@@ -132,8 +131,8 @@ wird nun mit der lokalen Vector-Clock $vc$ der empfangenden Routine, bzw. der Wa
 \texttt{q} verrechnet und ersätzt diese. Dabei gilt\\
 \begin{figure}[h]
   \centering
-  % \lstinputlisting[frame=none, numbers=none]{code/04-analyzer/vector-clock.txt}
-\end{figure}\todo{Code aktivieren wenn synchronisiert}\\
+  \lstinputlisting[frame=none, numbers=none]{code/04-analyzer/vector-clock.txt}
+\end{figure}\\
 wobei $n$ die Anzahl der Routinen ist.\\
 Für alle andern Elemente, z.B. Pre usw. wird einfach die lokale Vector-Clock der Routine übernommen, 
 ohne diese zu veränden. Da nun die Vector-Clocks zu jedem Zeitpunk bestimmt wurde, kann jedem 
@@ -145,11 +144,10 @@ max(Int32) gesetzt.
 Man betrachte das Beispiel in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:PorgVC}.
 \begin{figure}[h!]
   \centering
-  % \lstinputlisting{code/04-analyzer/example-vector-clock-prog.txt}
+  \lstinputlisting{code/04-analyzer/example-vector-clock-prog.txt}
   \caption{Beispielprogramm für die Betrachtung der Vector-Clocks}
   \label{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:PorgVC}
 \end{figure}
-\todo{Bild aktivieren wenn synchronisiert}
 Man betrachte den Fall, in dem 3 mit 4 und dann 1 mit 5 synchronisiert und 2 eine hängende Operation bildet.
 In diesem Fall erhält man folgenden Trace:
 \begin{align*}

@@ -1,0 +1,10 @@
+func main() {
+  x := make(chan int)
+  go func() { 
+    x <- 1                // 1
+    <- x                  // 2 
+  }()
+  go func() { x <- 1 }()  // 3
+  <- x                    // 4
+  <- x                    // 5
+}

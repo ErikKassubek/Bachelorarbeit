@@ -1,0 +1,6 @@
+if vc[q] <= vc'[q] {
+  vc[q] = 1 + vc'[q]
+}
+for i := 0; i < n; i++ {
+  vc[i] = max(vc[i], vc'[i])
+} 
