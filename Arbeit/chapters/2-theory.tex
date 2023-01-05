@@ -1,7 +1,7 @@
 \chapter{Hintergrund}\label{chap:background}
 \todo{Einführung}
 
-\section{Mutexe}
+\section{Mutexe}\label{Chap:Back-Sec:Mutex}
 Mutexe (auch Locks genannt) gehören zu den am weitesten Verbreitenten Mechanismen 
 zur Synchronisierung nebenläufiger Programme~\cite{Undead}. Sie bilden 
 eine Lösung für das Problem des kritischen Abschnitts. In solch einem 
@@ -38,7 +38,7 @@ gleichzeitig lesend auf eine Datenstruktur zugreifen dürfen, allerdings nur,
 wenn gerade keine Routine schreibend auf die selbe Datenstruktur zugreift.
 
 
-\section{Channel}
+\section{Channel}{Chap:Back-Sec:Chann}
 Channel~\cite{channel-spec} ermöglichen es Routinen untereinander zu 
 kommunizieren.
 Ein Channel \texttt{c} kann Daten \texttt{d} senden (\texttt{c} <- \texttt{d})
@@ -87,8 +87,13 @@ ausgeführt werden kann.
 \section{Trace}\label{chap:background-sec:trace}
 \todo{Warum trace?}
 Um ein Program analysieren zu können, soll der Ablauf eines Programmdurchlaufs
-(Trace) aufgezeichnet werden. Zur Vermeidung von Konflikten zwischen 
-verschiedenen Routinen wird dabei der Trace für jede Routine separat aufgezeichnet.
+(Trace) aufgezeichnet werden. Der Aufbau des Trace basiert auf~\cite{PPDP18}. 
+Er wird aber um Informationen 
+über Locks erweitert. Der Trace wird für jede Routine
+separat aufgezeichnet. Außerdem wird, anders als in~\cite{PPDP18} ein globaler
+Program-Counter für alle Routinen und nicht ein separater Counter für jede 
+Routine verwendet. Dies ermöglicht es bessere Rückschlüsse über den genauen 
+Ablauf des Programms zu ziehen.
 Die Syntax des Traces in EBNF gibt sich 
 folgendermaßen:
 \begin{align*}
@@ -170,7 +175,7 @@ Aus diesem lässt sich der relevante Ablauf des Programms rekonstruieren.
 
 
 
-\section{Probleme und Problemerkennung}
+\section{Probleme und Problemerkennung}\label{Chap:Back-Sec:Prob}
 
 \subsection{Mutex}
 Durch die Verwendung von Mutexen in nebenläufigen Programmen kann es 
@@ -418,7 +423,7 @@ Nachrichten in dem Receive-Statement übereinstimmt. Da die
 Send- und Receive-Operation nicht gleichzeitig ausgeführt werden müssen, 
 ist es nicht notwendig die Vector-Clocks zu betrachten.
 
-\subsection{Select}
+\subsection{Select}\label{Chap:Back-Sec:Select}
 In Go können Select-Statements dazu verwendet werden, abhängig davon, 
 auf welchen Channels Nachrichten gesendet werden unterschiedliche Programmteile
 auszuführen. Dies erschwert die Analyse des Programs, da der 
@@ -430,8 +435,7 @@ führen können. Eine Möglichkeit besteht darin, das Programm mehrfach auszufü
 und dabei immer unterschiedliche Select-Cases zu erzwingen. Dies ist der Ansatz,
 welcher für den GFuzz-Detektor~\cite{gfuzz} gewählt wurde. Dazu werden die 
 Select-Statements in dem Programmcode so verändert, dass aus den vorhandenen 
-Cases eines gezielt ausgewählt werden kann. Ein Beispiel dazu findet sich 
-in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Select-Fig:GFuzz_Inst}.
+Cases eines gezielt ausgewählt werden kann.
 Durch die Switch-Operation lässt sich einer der Fälle in der ursprünglichen 
 Select-Operation auswählen, welche bevorzugt ausgeführt werden soll. Nur 
 wenn dieser innerhalb einer voreingestellten Zeit nicht ausgeführt wird, 
@@ -473,7 +477,7 @@ von blockenden Bugs.\\\\
 Die Betrachtung von verschiedenen Pfaden soll nun auch für GoChan 
 \todo{gegebenenfall umbenennen} verwendet werden. Für jeden Durchlauf wird 
 der Trace aufgezeichnet und dieser basierend 
-auf~\ref{Chan:Analyze-Sec:Mutex} und~\ref{Chap:Analyse-Sec:Channel}
+auf~\ref{Chap:Back-Sec:Prob}
 analysiert. Die Auswahl der Pfade wird dabei vereinfacht. Anders als 
 in GFuzz basieren Ausführungsordnungen nicht auf schon versuchten Ordnungen, 
 sondern es wird eine Menge von vollständig zufälligen Ordnungen betrachtet. 

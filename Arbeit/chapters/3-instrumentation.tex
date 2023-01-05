@@ -1,28 +1,14 @@
-\chapter{Instrumentation}
+\chapter{Instrumentierung}
 
-Dazu wurde ein Tracer implementiert, durch welchem die 
-Channel- und Lock-Operationen, sowie andere Operationen wie Select und das 
-erzeugen einer neuen Routine, ersetzt, bzw. erweitert werden. Diese 
-führen die eigentlichen Operationen aus und zeichnen gleichzeitig den 
-Trace auf. Die Ersetzung durch die Drop-In Replacements kann dabei automatisch 
-durch einen Instrumenter erfolgen, welche mit Hilfe des Abstract Syntax Tress 
-die Ersetzungen vornimmt.\\
+\section{Trace}
+Wie bereits in dem vorherigen Kapitel beschrieben soll, um das 
+Programm analysieren zu können ein Trace aufgezeichnet werden.\\
 Anders als in vielen anderen Programmen, welche den Trace von Go-Programmen
 analysieren, wie z.B.~\cite{GoAt2} oder~\cite{GoVis} wird dabei der Tracer 
 selbst implementiert und basiert nicht auf dem Go-Runtime-Tracer~\cite{GoRunTrace}. 
 Dies ermöglicht es, den Tracer genau auf die benötigten Informationen zuzuschneiden
 und so einen geringeren negativen Einfluss auf die Laufzeit des Programms zu erreichen.\\\\
-Der Aufbau des Trace basiert auf~\cite{PPDP18}. Er wird aber um Informationen 
-über Locks erweitert. Der Trace wird für jede Routine
-separat aufgezeichnet. Außerdem wird, anders als in~\cite{PPDP18} ein globaler
-Program-Counter für alle Routinen und nicht ein separater Counter für jede 
-Routine verwendet. Dies ermöglicht es bessere Rückschlüsse über den genauen 
-Ablauf des Programms zu ziehen.
-\todo{umschreiben}
-
-\section{Trace}
-
-Um diesen Trace zu erzeugen, werden die Standartoperation aud Go durch Elemente
+Um diesen Trace zu erzeugen, werden die Standartoperation auf Go durch Elemente
 des Tracers ersetzt. Die Funktionsweisen dieser Ersetzungen sind im folgenden 
 angegeben. Dabei werden nur solche Ersetzungen angegeben, welche direkt 
 für die Erzeugung
@@ -86,8 +72,11 @@ empfangen wurde.
 \todo{Mehr}
 
 \section{Select}\label{Chap:Inst-Sec:Select}
-Ein Beispiel dazu findet sich 
-in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Select-Fig:GFuzz_Inst}.
+Neben den Ersetzungen der einzelnen Operationen, werden auch die Select-Statements 
+verändert, um einen der Fälle bevorzugt auswählen zu können, wie in Kap.~\ref{Chap:Back-Sec:Select}.
+beschrieben. Die Implementierung basiert dabei zum größten Teil auf~\cite{gfuzz}.
+Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Select-Fig:GFuzz_Inst} zeigt ein 
+Beispiel für die Instrumentierung eines 
 \begin{figure}[h!]
   \begin{minipage}[t]{0.3\textwidth}
     \lstinputlisting[xrightmargin=-50pt]{code/gfuzz-select-pre.txt}
@@ -101,6 +90,23 @@ in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Select-Fig:GFuzz_Inst}.
   Instrumentierung (links).~\cite[gekürzt]{gfuzz}}
   \label{Chap:Analyze-Sec:Channel-SubSec:Select-Fig:GFuzz_Inst}
 \end{figure}
+Die Select-Operation wird durch eine Switch-Operation auf der \texttt{Fetch-Order}
+ersetzt. Die Fetch-Order speichert für jede Select-Operation den Index des bevorzugten
+Case. Für eine gewisse, festgelegte Zeit $T$ wird somit nur auf die in der 
+\texttt{Fetch-Order} spezifizierten Operation gewartet. Wird diese in der 
+vorgegebenen Zeit nicht ausgeführt, geht das Programm wieder in die Ausführung
+der ursprünglichen Select-Operation um zu verhindern, dass es zu einem 
+Deadlock kommt, welcher in dem originalen-Code nicht vorgekommen wäre.
+Das selbe gilt auch, wenn für die Select-Operation fälschlicherweise kein 
+gültiges Case ausgewählt worden ist. Anders als in~\cite{gfuzz} beschrieben,
+wird für ein Select in dem selben Durchlauf immer der selbe Channel priorisiert, 
+auch wenn die Operation mehrfach durchlaufen wird. Um für jede Ausführung einen
+eigenen Case zu priorisiere, müsste, da die Ordnung bereits vor dem 
+Durchlauf festgelegt werden soll, der Ablauf des Programms bereits 
+bekannt sein. Dies ist allerdings nur möglich, wenn die Wahl der Cases der 
+Select-Operationen keine Einfluss auf die Ausführung anderer Select-Cases 
+hat. Dass dadurch nicht alle möglichen Abläufe durchlaufen werden können, 
+muss dabei in kauf genommen werden.
 
 
 
@@ -108,24 +114,22 @@ in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Select-Fig:GFuzz_Inst}.
 
 
 
-
-\todo{Abschnitt einfügen}
-\section{Instrumenter}\label{Chap:Tracer-Sec:Instrumenter}
+\section{Automatisierter Instrumenter}\label{Chap:Tracer-Sec:Instrumenter}
 \draft{Instrumenter}
 Um den Trace zu erzeugen, müssen verschiedene Operationen durch Funktionen
-des Tracers ersetzt bzw. erweitert werden. Wie man an dem Beispiel 
-unschwer erkennen kann, besitzt die Version mit dem Tracer einen deutlich längeren
-Programmcode, was bei der Implementierung zu einer größeren Arbeitslast 
-führen kann. Da sich der Tracer auch negativ auf die Laufzeit des Programms 
+des Tracers ersetzt bzw. erweitert werden. Bei einem größeren 
+Programmcode ist eine händische Instrumentierung nicht machbar.
+Da sich der Tracer auch negativ auf die Laufzeit des Programms 
 auswirken kann, ist es in vielen Situationen nicht erwünscht, ihn in den 
 eigentlichen Release-Code einzubauen, sondern eher in eine eigenständige 
 Implementierung, welche nur für den Tracer verwendet werden. Um dies zu
 automatisieren wurde ein zusätzliches Programm implementiert, welches in der 
-Lage ist, den Tracer in normalen Go-Code einzufügen. Die Implementierung, 
-welche ebenfalls in~\cite{GoChan} zur Verfügung steht, arbeitet mit einem 
-Abstract Syntax Tree. Bei dem Durchlaufen dieses Baums werden die 
-entsprechenden Operationen in dem Programm erkannt, und durch ihre entsprechenden 
-Tracer-Funktionen ersetzt bzw.\ ergänzt. Neben dem Ersetzen der verschiedenen 
+Lage ist, den Tracer in normalen Go-Code einzufügen.\\\\
+Die Implementierung arbeitet aus dem 
+Abstract Syntax Tree des Programms. Bei dem Durchlaufen dieses Baums werden die 
+entsprechenden Mutex-, Channel- und Select-Operationen in dem Programm erkannt, 
+und durch ihre entsprechenden 
+Tracer-Äquivalente ersetzt. Neben dem Ersetzen der verschiedenen 
 Operationen werden außerdem einige Funktionen hinzugefügt. Zu Begin der 
 Main-Funktion des Programms wird der Tracer initialisiert. Zusätzlich
 wird eine zusätzliche Go-Routine gestartet, in welcher ein Timer läuft. 
@@ -137,7 +141,7 @@ nach der Beendigung des Programms gestartet.
 
 \extend{Instrumenter}
 
-\section{Laufzeit}\label{Chap:Tracer-Sec:Laufzeit}
+\subsection{Laufzeit}\label{Chap:Tracer-Sec:Laufzeit}
 \paragraph{Instrumenter} Zuerst soll die Laufzeit des Instrumenters betrachtet 
 werden. Es ist erwartbar, 
 dass sich die Laufzeit linear in der Anzahl der Ersetzungen in dem AST, also 
@@ -195,7 +199,7 @@ zu können, wird das selbe Testprogramm betrachtet, welches bereits in der Messu
 für den Instrumenter verwendet wurde. Abb. \ref{Chap:Trace-Sec:Laufzeit-Img:LaufzeitTracer}
 zeigt den gemessenen Overhead. Der durchschnittliche Overhead über alle gemessenen Werte 
 liegt dabei bei $14 \pm 2\ \%$. Da der Overhead aber linear davon abhängt, 
-wie größ der Anteil der Mutex- und Channel-Operationen im Verhältniss zu 
+wie groß der Anteil der Mutex- und Channel-Operationen im Verhältniss zu 
 der Größe bzw. der Laufzeit des gesammten Programms ist, kann dieser Wert abhängig 
 von dem tatsächlichen Programm start schwanken. Dies wird unteranderem klar, wenn man 
 den Overhead für ht-cat ($9 \pm 3\ \%$) und go-dsp ($60\pm 18\ \%$) welche $51 \pm 21$ 
