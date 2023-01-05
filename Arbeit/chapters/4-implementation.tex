@@ -1,0 +1,53 @@
+
+\chapter{Implementierung} \label{Chap:Implement}
+
+Das folgende Kapitel soll sich nun mit der Analyze des in Kap~\ref{Chap:Tracer} erstellten 
+Trace befassen. Sie befasst sich dabei mit der Erkennung unerwünschter Situationen 
+durch die vorkommenden Mutexe und Routinen. \extend{Mehr zur Einführung}
+
+
+
+
+
+
+
+\section{Mutex} \label{Chap:Implement-Sec:Mutex}
+\todo{Für mutex: regeln, gate-locks}
+
+
+
+
+
+
+
+Eine 
+genauere Erklärung der Implemenierung des Locks findet sich in~\cite{bachelor-project}. 
+\todo{ist des erlabut, oder soll ich es nochmal komplett beschreiben}  \\\\
+Die Lock-Bäume werden basierend auf dem aufgezeichneten Trace aufgebaut. Dazu werden die Traces der 
+einzelnen Routinen nacheinander durchlaufen. Für jede Routine erzeugen wir eine Liste \texttt{currentLocks} aller 
+Locks, die momentan von der Routine gehalten werden. Die einzelnen Elemente des Trace einer 
+Routine werden nun durchlaufen. Handelt es sich dabei um ein Lock Event eines Locks \texttt{x}, wird 
+für jedes Lock \texttt{l} in \texttt{currentLocks} eine Kante von \texttt{l} nach \texttt{x} in den 
+Lock-Graphen eingefügt. Anschließend wird \texttt{x} in \texttt{currentLocks} eingefügt.
+Ist das handelt es sich bei dem Element um ein unlock Event auf dem Lock \texttt{x}, dann wird das 
+letzt vorkommen von \texttt{x} auf \texttt{currentLocks} entfernt.\\
+Nachdem der Trace einer Routine durchlaufen wurde, wird überprüft ob sich noch Elemente in 
+\texttt{currentLocks} befinden. Ist dies der Fall, handelt es sich um Locks, welche zum Zeitpunkt der Terminierung 
+des Programms noch nicht wieder freigegeben worden sind. Dies deutet darauf hin, dass die
+entsprechende Routine nicht beendet wurde, z.B. weil das Programm bzw. die Main-Routine beendet wurden.
+Dies kann einfach durch die entsprechende Logik des Programms zustande gekommen sein, es kann aber auch 
+auf einen tatsächlich auftretenden Deadlock, z.B. durch doppeltes Locking des selben Locks in einer Routine, ohne dass 
+es zwischenzeitlich wieder freigegeben wurde. In diesem Fall wird eine warnung ausgegeben.\\
+Ein potenzieller Deadlock gibt sich nun, wenn in diesem Graph ein Kreis existert. Dabei muss darauf 
+geachtet werden, dass nicht alle Kanten durch die selbe Routine erzeugt wurden, und dass in 
+zwei, in dem Kreis hintereinander folgende Kanten der gemeinsame Knoten nicht beides mal durch eine 
+R-Lock Operation durch Kanten verbunden wurde. Die Erkennung solcher Zyklen geschieht nun durch 
+eine Tiefensuche auf dem erzeugen Baum. Wird ein solcher Zyklus erkannt, wird ebenfalls eine 
+Warnung ausgegeben.
+
+
+
+
+\section{Channels}\label{Chap:Analyse-Sec:Channel}
+
+\todo{cont, implementierung beschreiben}

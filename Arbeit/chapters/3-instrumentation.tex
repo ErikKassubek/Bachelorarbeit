@@ -1,6 +1,6 @@
-\chapter{Tracer}\label{Chap:Tracer}
-Um ein Program analysieren zu können, wird der Ablauf eines Programmdurchlaufs
-aufgezeichnet. Dazu wurde ein Tracer implementiert, durch welchem die 
+\chapter{Instrumentation}
+
+Dazu wurde ein Tracer implementiert, durch welchem die 
 Channel- und Lock-Operationen, sowie andere Operationen wie Select und das 
 erzeugen einer neuen Routine, ersetzt, bzw. erweitert werden. Diese 
 führen die eigentlichen Operationen aus und zeichnen gleichzeitig den 
@@ -11,74 +11,17 @@ Anders als in vielen anderen Programmen, welche den Trace von Go-Programmen
 analysieren, wie z.B.~\cite{GoAt2} oder~\cite{GoVis} wird dabei der Tracer 
 selbst implementiert und basiert nicht auf dem Go-Runtime-Tracer~\cite{GoRunTrace}. 
 Dies ermöglicht es, den Tracer genau auf die benötigten Informationen zuzuschneiden
-und so einen geringeren negativen Einfluss auf die Laufzeit des Programms zu erreichen.
-
-\extend{Tracer Einführung}
-
-\section{Trace}\label{Chap:Tracer-Sec:Trace}
-\draft{Trace} 
+und so einen geringeren negativen Einfluss auf die Laufzeit des Programms zu erreichen.\\\\
 Der Aufbau des Trace basiert auf~\cite{PPDP18}. Er wird aber um Informationen 
 über Locks erweitert. Der Trace wird für jede Routine
 separat aufgezeichnet. Außerdem wird, anders als in~\cite{PPDP18} ein globaler
 Program-Counter für alle Routinen und nicht ein separater Counter für jede 
 Routine verwendet. Dies ermöglicht es bessere Rückschlüsse über den genauen 
-Ablauf des Programms zu ziehen.  
-Die Syntax des Traces in EBNF gibt sich 
-folgendermaßen:
-\begin{align*}
-  \begin{matrix*}[l]
-    T & = & ''\ [\ '',\ \{\ U\ \},\ ''\ ]\ ''; & \text{Trace}\\
-    U & = & ''\ [\ '',\ \{\ t\ \},\ ''\ ]\ ''; & \text{lokaler Trace} \\
-    t & = & signal(t, i)\ |\ wait(t, i)\ |\ pre(t, as)\ |\ post(t, i, x!) & \text{Event}\\
-      &   & |\ post(t, i, x?, t') |\ post(t, default)\ |\ close(t, x)\  & \\
-      &   & |\ lock(t, y, b, c) |\ unlock(t, y); & \\
-    a & = & x,\ (''\ !\ ''\ |\ ''\ ?\ ''); & \\
-    as & = & a\ |\ (\{\ a\ \}, [\ ''\ default\ ''\ ]); & \\
-    b & = & ''-''\ |\ ''t''\ |\ ''r''\ |\ ''tr'' & \\
-    c & = & ''0''\ |\ ''1''
-  \end{matrix*}
-\end{align*}
-wobei $i$ die Id einer Routine, $t$ einen globalen Zeitstempel, $x$ die Id eines 
-Channels und $y$ die Id eines Locks darstellt. Die Events haben dabei folgende Bedeutung:
-\begin{itemize}
-  \item \texttt{signal(t, i)}: In der momentanen Routine wurde
-    eine Fork-Operation ausgeführt,
-    d.h. eine neue Routine mit Id $i$ wurde erzeugt.
-  \item \texttt{wait(t, i)}: Die momentane Routine mit Id $i$ wurde soeben erzeugt. Dies ist 
-    in allen Routinen außer der Main-Routine das erste Event in ihrem lokalen Trace.
-  \item \texttt{pre(t, as)}: Die Routine ist an einer Send- oder Receive-Operation eines 
-    Channels oder an einem Select-Statement angekommen, dieses wurde aber noch nicht 
-    ausgeführt. Das Argument $as$ gibt dabei die Richtung und den Channel an. 
-    Ist $as = x!$, dann befindet sich der Trace vor einer Send-Operation, bei 
-    $as = x?$ vor einer Receive-Operation. Bei einem Select-Statement ist 
-    $as$ eine Liste aller Channels für die es einen 
-    Case in dem Statement gibt. Besitzt das Statement einen Default-Case, wird
-    dieser ebenfalls in diese List aufgenommen.
-  \item \texttt{post(t, i, x!)}: Dieses Event wird in dem Trace gespeichert, nachdem 
-    eine Send-Operation auf $x$ erfolgreich abgeschlossen wurde. 
-    $i$ gibt dabei die Id der sendenden Routine
-    an.
-  \item \texttt{post(t, i, x?, t')}: Dieses Event wird in dem Trace gespeichert, nachdem 
-    eine Receive-Operation des Channels $x$ erfolgreich abgeschlossen wurde. 
-    $i$ gibt dabei die Id der sendenden Routine an. $t'$ gibt den Zeitstempel an,
-    welcher bei dem Pre-Event der sendenden Routine galt. Durch die Speicherung der Id und des 
-    Zeitstempels der sendenden Routine bei einer Receive-Operation lassen sich 
-    die Send- und Receive-Operationen eindeutig zueinander zuordnen.
-  \item \texttt{post(t, default)}: Wird in einem Select-Statement der Default-Case ausgeführt,
-    wird dies in dem Trace der entsprechenden Routine durch $post(t, default)$ 
-    gespeichert.
-  \item \texttt{close(t, x)}: Mit diesem Eintrag wird das schließen eines Channels $x$ 
-    in dem Trace aufgezeichnet.
-  \item \texttt{lock(t, y, b, c)}: Der Beanspruchungsversuch eines Locks mit id $y$ wurde beendet. 
-    $b$ gibt dabei die Art der Beanspruchung an. Bei $b = r$ war es eine R-Lock
-    Operation, bei $b = t$ eine Try-Lock Operation und bei $b = tr$ ein Try-R-Lock
-    Operation. Bei einer normalen Lock-Operation ist $b = -$. Bei einer 
-    Try-Lock Operation kann es passieren, dass die Operation beendet wird, 
-    ohne das das Lock gehalten wird. In diesem Fall wird $c$ auf $0$, und 
-    sonst auf $1$ gesetzt. 
-  \item \texttt{unlock(t, y)}: Das Lock mit id $y$ wurde zum Zeitpunkt 
-    $t$ wieder freigegeben. 
-\end{itemize}
+Ablauf des Programms zu ziehen.
+\todo{umschreiben}
+
+\section{Trace}
+
 Um diesen Trace zu erzeugen, werden die Standartoperation aud Go durch Elemente
 des Tracers ersetzt. Die Funktionsweisen dieser Ersetzungen sind im folgenden 
 angegeben. Dabei werden nur solche Ersetzungen angegeben, welche direkt 
@@ -123,7 +66,7 @@ empfangen wurde.
   <- ch & $\Rightarrow$ & ts := atomicInc(c); [ pre(ts, ch.id, false) ]$^\text{id}$;\\
     & & \{i, id\_send, ts\_send\} := <-c; ts' := atomicInc(c);\\
     & & [ post(ts', ch.id, false, id\_send, ts\_send) ]$^\text{id}$; return i;\\
-  close(ch) & $\Rightarrow$ & ts := atomicInc(c); close(ch); [ close(ts, ch.id) ]$^\text{id}$\\
+  % close(ch) & $\Rightarrow$ & ts := atomicInc(c); close(ch); [ close(ts, ch.id) ]$^\text{id}$\\
   select(e$_\text{i} \leadsto \text{B}_\text{i}$) & $\Rightarrow$ & ts := atomicInc(c); [ pre(ts, e$_1^*$, $\ldots$, e$_n^*$, false) ]$^\text{id}$;\\
     & & select(e$_\text{i} \leadsto$ \{ ts' := atomicInc(c);\\
     & & [ $\langle \text{post(ts, e$_\text{i}$.ch, false, e$_\text{i}^\text{m}$.id\_send, e$_\text{i}^\text{m}$.ts\_send)}\ |$ \\
@@ -140,26 +83,33 @@ empfangen wurde.
     & & [ lock(ts, rmu.id, $\langle \text{-|t|r|tr}\rangle$, $\langle \text{0|1}\rangle$) ]$^\text{id}$;\\
   rmu.Unlock() & $\Rightarrow$ & ts := atomicInc(c); rmu.Unlock(); [ unlock(ts, rmu.id) ]$^\text{id}$;
 \end{tabular}
+\todo{Mehr}
 
-Man betrachte als Beispiel das folgende Programm in Go:
-\begin{figure}figure
-  \lstinputlisting{code/03-tracer/example_code_pre.txt}
-  \caption{Beispielprogramm für Tracer}
-  \label{Chap:Tracer-Sec:Trace-Fig:Example}
+\section{Select}\label{Chap:Inst-Sec:Select}
+Ein Beispiel dazu findet sich 
+in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Select-Fig:GFuzz_Inst}.
+\begin{figure}[h!]
+  \begin{minipage}[t]{0.3\textwidth}
+    \lstinputlisting[xrightmargin=-50pt]{code/gfuzz-select-pre.txt}
+  \end{minipage}
+  \begin{minipage}[t]{0.65\textwidth}
+    \lstinputlisting[xrightmargin=40pt]{code/gfuzz-select-post.txt}
+  \end{minipage}
+  \caption{Beispiel für die Order-Enforcement-Instrumentierung eines Select-Statements 
+  durch GFuzz for (links) und nach der Implementierung (rechts). Ersetze $......$
+  in dem Programm nach der Instrumentierung (rechts) durch das Programm vor der 
+  Instrumentierung (links).~\cite[gekürzt]{gfuzz}}
+  \label{Chap:Analyze-Sec:Channel-SubSec:Select-Fig:GFuzz_Inst}
 \end{figure}
-% Erweitert man diesen mit dem Tracer, erhält man folgendes Programm:
-% \lstinputlisting{code/03-tracer/example_code_post.txt}
-Dieser ergibt den folgenden Trace:
-\begin{align*}
-  [&[signal(1, 2),\ signal(2, 3),\ signal(3, 4),\ pre(4, a?, default),\ post(5, default)]\\
-  &[wait(8, 2),\ lock(9, 1, -, 1),\ pre(10, x!),\ post(16, 2, x!, 1),\ unlock(17, 1)]\\
-  &[wait(11, 3),\ pre(12, y!),\ post(13, 3, y!, 1),\ pre(14, x?),\ post(15, 2, x?, 10, 1)]\\
-  &[wait(6, 4),\ pre(7, y?),\ post(18, 3, y?, 12, 1)]]
-\end{align*}
-Aus diesem lässt sich der Ablauf des Programms vollständig rekonstruieren.
-\extend{Tracer}
 
 
+
+
+
+
+
+
+\todo{Abschnitt einfügen}
 \section{Instrumenter}\label{Chap:Tracer-Sec:Instrumenter}
 \draft{Instrumenter}
 Um den Trace zu erzeugen, müssen verschiedene Operationen durch Funktionen
@@ -184,6 +134,7 @@ auch wenn das Programm noch nicht vollständig durchlaufen ist. Dies führt dazu
 dass auch Programme, in welchen ein Deadlock aufgetreten ist, analysiert 
 werden können. Endet das Programm in der vorgegebenen Zeit, wird der Analyzer 
 nach der Beendigung des Programms gestartet.
+
 \extend{Instrumenter}
 
 \section{Laufzeit}\label{Chap:Tracer-Sec:Laufzeit}
@@ -195,14 +146,14 @@ die Messung der Laufzeit des Programms (vgl.
 Abb.~\ref{Chap:Tracer-Sec:Laufzeit-Img:LaufzeitInstrumenter})\\
 \begin{minipage}{0.45\textwidth}
   \centering  
-  \includegraphics[width=\textwidth]{img/03-tracer/Runtime_Instrumenter.eps}
+  \includegraphics[width=\textwidth]{img/Runtime_Instrumenter.eps}
   \captionof{figure}{Laufzeit des Instrumenters}
   \label{Chap:Tracer-Sec:Laufzeit-Img:LaufzeitInstrumenter}
 \end{minipage}
 \hfill
 \begin{minipage}{0.45\textwidth}
   \centering
-  \includegraphics[width=\textwidth]{img/03-tracer/Runtime_Tracer.eps}
+  \includegraphics[width=\textwidth]{img/Runtime_Tracer.eps}
   \captionof{figure}{Prozentualer Overhead des Tracers ohne Analyse}
   \label{Chap:Trace-Sec:Laufzeit-Img:LaufzeitTracer}
 \end{minipage}
@@ -250,5 +201,3 @@ von dem tatsächlichen Programm start schwanken. Dies wird unteranderem klar, we
 den Overhead für ht-cat ($9 \pm 3\ \%$) und go-dsp ($60\pm 18\ \%$) welche $51 \pm 21$ 
 Prozentpunkte außeinander liegen. 
 \extend{Laufzeit}
-
-

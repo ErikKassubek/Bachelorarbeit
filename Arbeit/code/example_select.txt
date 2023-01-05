@@ -1,0 +1,14 @@
+x := make(chan int)
+y := make(chan int)
+z := make(chan int)
+
+select {
+  case <- x:
+    fmt.Println("x")
+  case a := <- y:
+    fmt.Println(a)
+  case  z <- 5:
+    fmt.Println(5)
+  default:
+    fmt.Println("default")
+}
