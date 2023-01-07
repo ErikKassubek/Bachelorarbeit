@@ -1,0 +1,9 @@
+func() {
+  GoChanRoutineIndex := goChan.SpawnPre()
+  go func(i int) {
+    goChan.SpawnPost(GoChanRoutineIndex)
+    {
+      fmt.Println(i)
+    }
+  }(i)
+}()

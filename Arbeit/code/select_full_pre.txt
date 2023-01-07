@@ -1,0 +1,6 @@
+select {
+	case a := <-x:
+		fmt.Println(a)
+	case y <- 1:
+		fmt.Println(1)
+}

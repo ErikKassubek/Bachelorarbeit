@@ -102,7 +102,7 @@ folgendermaßen:
     U & = & ''\ [\ '',\ \{\ t\ \},\ ''\ ]\ ''; & \text{lokaler Trace} \\
     t & = & signal(t, i)\ |\ wait(t, i)\ |\ pre(t, as)\ |\ post(t, i, x!) & \text{Event}\\
       &   & |\ post(t, i, x?, t') |\ post(t, default)\ 
-      %|\ close(t, x)\  
+      |\ close(t, x)\  
       & \\
       &   & |\ lock(t, y, b, c) |\ unlock(t, y); & \\
     a & = & x,\ (''\ !\ ''\ |\ ''\ ?\ ''); & \\
@@ -140,8 +140,8 @@ Channels und $y$ die Id eines Locks darstellt. Die Events haben dabei folgende B
   \item \texttt{post(t, default)}: Wird in einem Select-Statement der Default-Case ausgeführt,
     wird dies in dem Trace der entsprechenden Routine durch $post(t, default)$ 
     gespeichert.
-  % \item \texttt{close(t, x)}: Mit diesem Eintrag wird das schließen eines Channels $x$ 
-  %   in dem Trace aufgezeichnet.
+  \item \texttt{close(t, x)}: Mit diesem Eintrag wird das schließen eines Channels $x$ 
+    in dem Trace aufgezeichnet.
   \item \texttt{lock(t, y, b, c)}: Der Beanspruchungsversuch eines Locks mit id $y$ wurde beendet. 
     $b$ gibt dabei die Art der Beanspruchung an. Bei $b = r$ war es eine R-Lock
     Operation, bei $b = t$ eine Try-Lock Operation und bei $b = tr$ ein Try-R-Lock
