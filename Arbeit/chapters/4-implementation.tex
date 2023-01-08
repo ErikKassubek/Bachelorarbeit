@@ -1,53 +1,241 @@
 
 \chapter{Analyzer} \label{Chap:Implement}
 
-Das folgende Kapitel soll sich nun mit der Analyze des in Kap~\ref{Chap:Tracer} erstellten 
-Trace befassen. Sie befasst sich dabei mit der Erkennung unerwünschter Situationen 
-durch die vorkommenden Mutexe und Routinen. \extend{Mehr zur Einführung}
+Das folgende Kapitel soll sich nun mit der Implementierung der Analyze des in 
+Kap.~\ref{Chap:Instrumenter-Sec:Trace} erstellten 
+Trace befassen.
 
+\section{Aufzeichung des Trace}
+Der Trace wird wie in Kap.~\ref{Chap:Instrumenter-Sec:Trace}
+beschriebenen erzeugt. Er wird dabei durch ein Slice von Slices 
+gespeichert, wobei jeder Slice den Trace einer Routine 
+speichert. Dazu wird für jedes Trace-Element ein Struct definiert, 
+welches alle notwendigen Informationen speichert. Über ein Interface 
+wird dafür gesorgt, dass diese Elemente alle in das Slice des Trace eingefügt
+werden kann. Dabei wird über einen Mutex dafür gesorgt, dass nicht 
+zwei Routinen gleichzeitig ein Element in den Trace einfügen können\\
+Jeder Routine wird ein fortlaufender Wert eines atomaren Zählers zugeordnet. 
+Um die interne Id einer Routine zu erhalten, und auf die dem Trace zugeordnete 
+Id zuzuordnen wird eine externe Bibliothek GoId~\cite{goid} verwendet.\\
+Auch die Ids für Channels und Mutexes werden durch laufende, atomare Zähler 
+implementiert, welche in den Objekten für Channels und Mutexes gespeichert werden.
 
-
-
-
-
+\todo{Implementierung: Gegebenenfalls Elemente aus Theoie hierher verschieben }
 
 \section{Mutex} \label{Chap:Implement-Sec:Mutex}
-\todo{Für mutex: regeln, gate-locks}
-
-
-
-
-
-
-
-Eine 
-genauere Erklärung der Implemenierung des Locks findet sich in~\cite{bachelor-project}. 
-\todo{ist des erlabut, oder soll ich es nochmal komplett beschreiben}  \\\\
-Die Lock-Bäume werden basierend auf dem aufgezeichneten Trace aufgebaut. Dazu werden die Traces der 
+Um potenzielle Deadlocks durch Mutexe erkennen zu können werden nun, wie in 
+Kap.~\ref{Chap:Back-Sec:Prob-SubSec:Mutex} beschrieben, Lock-Bäume verwendet.
+Diese werden basierend auf dem aufgezeichneten Trace aufgebaut. Dazu werden die Traces der 
 einzelnen Routinen nacheinander durchlaufen. Für jede Routine erzeugen wir eine Liste \texttt{currentLocks} aller 
 Locks, die momentan von der Routine gehalten werden. Die einzelnen Elemente des Trace einer 
-Routine werden nun durchlaufen. Handelt es sich dabei um ein Lock Event eines Locks \texttt{x}, wird 
-für jedes Lock \texttt{l} in \texttt{currentLocks} eine Kante von \texttt{l} nach \texttt{x} in den 
-Lock-Graphen eingefügt. Anschließend wird \texttt{x} in \texttt{currentLocks} eingefügt.
+Routine werden nun durchlaufen. Handelt es sich dabei um ein Lock Event eines Locks \texttt{x}, 
+wird eine s.g. \texttt{dependendency} erzeugt und gespeichert. Diese beinhaltet 
+das Lock \texttt{x} sowie eine Liste aller von der Routine momentan gehaltenen 
+Locks, dem s.g. \texttt{holdingSet hs}. Dieses entspricht gerade \texttt{currentLocks}. 
+Diese \texttt{dependendency} stellt also 
+eine Menge von Kanten von in dem Lockgraphen der Routine da. 
+Anschließend wird \texttt{x} in \texttt{currentLocks} eingefügt.
 Ist das handelt es sich bei dem Element um ein unlock Event auf dem Lock \texttt{x}, dann wird das 
-letzt vorkommen von \texttt{x} auf \texttt{currentLocks} entfernt.\\
+letzte Vorkommen von \texttt{x} auf \texttt{currentLocks} entfernt.\\
 Nachdem der Trace einer Routine durchlaufen wurde, wird überprüft ob sich noch Elemente in 
 \texttt{currentLocks} befinden. Ist dies der Fall, handelt es sich um Locks, welche zum Zeitpunkt der Terminierung 
 des Programms noch nicht wieder freigegeben worden sind. Dies deutet darauf hin, dass die
 entsprechende Routine nicht beendet wurde, z.B. weil das Programm bzw. die Main-Routine beendet wurden.
 Dies kann einfach durch die entsprechende Logik des Programms zustande gekommen sein, es kann aber auch 
 auf einen tatsächlich auftretenden Deadlock, z.B. durch doppeltes Locking des selben Locks in einer Routine, ohne dass 
-es zwischenzeitlich wieder freigegeben wurde. In diesem Fall wird eine warnung ausgegeben.\\
-Ein potenzieller Deadlock gibt sich nun, wenn in diesem Graph ein Kreis existert. Dabei muss darauf 
+es zwischenzeitlich wieder freigegeben wurde. In diesem Fall wird eine Warnung ausgegeben.\\
+Ein potenzieller Deadlock gibt sich nun, wenn in diesem aus den Bäumen zusammengesetzten 
+Graph ein Zyklus existiert.
+Nicht alle Zyklen bilden dabei gültige Zyklen. zum Beispiel muss darauf 
 geachtet werden, dass nicht alle Kanten durch die selbe Routine erzeugt wurden, und dass in 
 zwei, in dem Kreis hintereinander folgende Kanten der gemeinsame Knoten nicht beides mal durch eine 
-R-Lock Operation durch Kanten verbunden wurde. Die Erkennung solcher Zyklen geschieht nun durch 
-eine Tiefensuche auf dem erzeugen Baum. Wird ein solcher Zyklus erkannt, wird ebenfalls eine 
-Warnung ausgegeben.
-
-
-
+R-Lock Operation durch Kanten verbunden wurde. Gültige Zyklen lassen sich durch 
+dir folgenden Formeln charakterisieren.
+\begin{align}
+  &\forall\ i, j \in \{1,...,n\}\ \lnot (hs_i \cap hs_j = \emptyset) \rightarrow (i = j) 
+  \tag{\ref{Chap:Implement-Sec:Mutex}.a}
+  \label{Chap:Implement-Sec:Mutex.a}\\
+  &\forall\ i \in \{1,...,n-1\}\ mu_i \in hs_{i+1} 
+  \tag{\ref{Chap:Implement-Sec:Mutex}.b}
+  \label{Chap:Implement-Sec:Mutex.b}\\
+  &mu_n \in hs_{1} 
+  \tag{\ref{Chap:Implement-Sec:Mutex}.c}
+  \label{Chap:Implement-Sec:Mutex.c}\\
+  &\forall i \in \{1,\ldots,n-1\}\ read(mu_i) \to (\forall mu\in hs_{i+1} (mu = mu_i) \to \lnot read(mu))
+  \tag{\ref{Chap:Implement-Sec:Mutex}.d}
+  \label{Chap:Implement-Sec:Mutex.d}\\
+  &read(mu_n) \rightarrow 
+  (\forall\ mu \in hs_{1}: (mu = mu_n) \to \lnot read(mu))
+  \tag{\ref{Chap:Implement-Sec:Mutex}.e}
+  \label{Chap:Implement-Sec:Mutex.e}\\
+  &\makecell{\forall\ i, j \in \{1,...,n\}\ \lnot (i = j) \rightarrow 
+  (\exists\ mu_1 \in hs_i\ \exists\ mu_2 \in hs_j ((mu_1 = mu_2) \rightarrow\\
+  (read(mu_1) \land read(mu_2))))\phantom{123123123122131231231231223123}}
+  \tag{\ref{Chap:Implement-Sec:Mutex}.f}
+  \label{Chap:Implement-Sec:Mutex.f}
+\end{align}
+Dabei bezeichnet $mi_i$ den Mutex $hs_i$ das holdingSet der $i$-ten 
+in dem Zyklus.\ \eqref{Chap:Implement-Sec:Mutex.a} stellt sicher, dass das selbe 
+Lock nicht in dem HoldingSet von zwei verschiedenen Routinen auftauchen kann.\
+\eqref{Chap:Implement-Sec:Mutex.b} und~\eqref{Chap:Implement-Sec:Mutex.c}
+sorgen dafür, dass es sich bei der Kette tatsächlich um einen Zyklus handelt, 
+dass also das Lock einer Dependency immer in dem HoldingSet
+der nächsten Dependency enthalten ist und das Lock der letzten Routine 
+wiederum im HoldingSet der ersten Routine liegt, um den Zyklus zu schließen.
+\eqref{Chap:Implement-Sec:Mutex.d} bis \eqref{Chap:Implement-Sec:Mutex.f} 
+beschäftigen sich mit dem Einfluss von RW-Locks auf die Gültigkeit von 
+Zyklen. Auch wenn \eqref{Chap:Implement-Sec:Mutex.a} bid~\eqref{Chap:Implement-Sec:Mutex.c} 
+erfüllt sind, ist dies dennoch keine gültige Kette, wenn sowohl
+der Mutex $mu_i$ als auch der Mutex $mu$ in $hs_{i+1}$, 
+für die $mu = mu_i$ gilt, beides Reader-Locks
+sind, also Locks welche durch eine RLock-Operation erzeugt worden sind. 
+Dass solche Pfade ausgeschlossen werden wird durch \eqref{Chap:Implement-Sec:Mutex.d} 
+und \eqref{Chap:Implement-Sec:Mutex.e} sichergestellt.
+\eqref{Chap:Implement-Sec:Mutex.f} beschäftigt sich mit Gate-Locks. 
+Dabei handelt es sich um Situationen, bei denen mehrere Teile des Programmcodes,
+welche zu einem Deadlock führen könnten durch ein Lock umschlossen sind, 
+in der Praxis also nicht gleichzeitig ausgeführt werden und somit einen Deadlock 
+verhindern.
+Die Regel besagt nun, dass wenn es einen Mutex gibt,
+der in den HoldingSets zweier verschiedener Dependencies in dem Pfad vorkommt, so müssen
+beide diese Mutexe Reader-Locks sein. Sind sie es nicht, handelt es sich um Gate-Locks, und
+der entsprechende Pfad kann somit nicht zu einem Deadlock führen.\\\\
+Für die Suche nach solchen Zyklen wird eine Depth-First-Search auf den gesammelten 
+Dependencies ausgeführt. Dazu wird zuerst eine Dependency auf einen Stack gelegt. 
+Der Stack entspricht immer dem momentan
+betrachteten Pfad. Anschließend werden schrittweise weitere Dependencies auf den 
+Stack gelegt, wobei darauf geachtet wird, dass aus jeder Routine immer nur maximal 
+eine Dependency auf dem Stack liegt. Bevor eine Dependency zu dem Stack 
+hinzugefügt wird, wird überprüft ob der durch den Stack betrachtete Pfad 
+einen gültigen Pfad bilden würde, ob also \eqref{Chap:Implement-Sec:Mutex.a}, 
+\eqref{Chap:Implement-Sec:Mutex.b}, \eqref{Chap:Implement-Sec:Mutex.d} und 
+\eqref{Chap:Implement-Sec:Mutex.f} immer noch gelten würden. Ist dies nicht
+der Fall, so wird die Dependency nicht auf den Stack gelegt. Werden die 
+Regeln hingegen erfüllt, dann wird überprüft, um der Stack nun einen gültigen
+Zyklus enthält, also auch \eqref{Chap:Implement-Sec:Mutex.c} und \eqref{Chap:Implement-Sec:Mutex.e}
+gültig sind. In diesem Fall wurde ein potenzielles Deadlock gefunden, und dies 
+ausgegeben. Andernfalls werden weiter Dependency auf dem Stack hinzugefügt. 
+Dies wird wiederholt, bis es keine Dependency mehr gibt, die auf den Stack VaT
+gelegt werden könnte. In diesem Fall werden per Backtracking Dependencies 
+von dem Stack entfernt, so dass andere Pfade ausprobiert werden können.
+Dies wird so lange durchgeführt. Bis alle gültigen Kombinationen durchprobiert 
+worden sind.
 
 \section{Channels}\label{Chap:Analyse-Sec:Channel}
+Die Analyse des Programs zur Erkennung und Beschreibung von durch Channels ausgelösten 
+Problemen läuft in mehreren Schritten ab. Zuerst werden die Vectorclock-Informationen 
+der einzelnen Operationen bestimmt und mit diesen ein Vectorclock-Annotated-Trace 
+(VaT) erzeugt. Anschließend wird nach hängenden Events (pre ohne post) und 
+nicht-leere Channels, also gebufferte Channels, welche bei Terminierung 
+des Programms noch Nachrichten in ihrem Buffer beinhalten gesucht. 
+Werden solche Probleme entdeckt, bestimmt der Analyzer mögliche andere 
+Kommunikationspartner für Send-Operationen auf Channels. Zum Schluss 
+wird noch nach Situationen gesucht, bei denen es zu einem Send auf einen 
+geschlossenen Channel kommen kann, da solche Situationen zu Laufzeitfehlern 
+führen, welche den Abbruch eines Programms zur Folge haben.
+Receives auf geschlossenen Channels werden nicht betrachtet, da diese 
+lediglich einen Null-Wert zurückgeben und nicht blocken, somit also nicht 
+zu Laufzeitfehlern führen. 
 
-\todo{cont, implementierung beschreiben}
+\paragraph{Bestimmung der Vectorclocks}
+Basierend auf dem aufgezeichneten Trace soll nun ein Vectorclock annotierter Trace 
+(VaT) erzeugt werden. Dieser besteht aus einer Reihe von \texttt{vcn}'s, 
+welche jeweils eine Send-, Receive- oder Close-Operation repräsentieren.
+Andere Operation, wie z.B. signal-wait werden zwar bei der Berechnung der Vectorclocks 
+beachtet, allerdings nicht in den VaT aufgenommen, da sie für die weitere 
+Analyse nicht benötigt werden. Ein \texttt{vcn} beinhaltet dabei die Channel-Id,
+die Routine, ob es sich um Send- oder Receive handelt (bei Close beliebig gesetzt),
+ein Counter für die Anzahl der bereits erfolgreich abgeschlossenen Send- bzw.
+Receive-Operationen bei der Ausführung des Send- oder Receive (bei Close -1), 
+die Position der Operation im Programmcode
+sowie die Pre- und Post-Vectorclocks der Operation. Eine Close Operation 
+wird dabei dadurch erkannt, dass die Pre- und Post-Vectorclocks übereinstimmen.\\\\
+Bevor der eigentliche VaT erzeugt wird werden erst die Vectorclocks zu allen
+Zeitpunkten bestimmt. Dazu wird für jede Routine wie in 
+Kap.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling} eine Vectorclock initialisiert. 
+Anschließend werden die Elemente in der Reihenfolge durchlaufen, in der sie 
+in den Trace eingefügt wurden, also aufsteigend sortiert nach dem Timestamp 
+der Trace-Element. Für jeden Zeitpunkt wird nun eine Vectorclock berechnet,
+wobei für jeden Timestamp immer diejenige Vectorclock gespeichert wird, die 
+der Vectorclock entspricht, auf welcher die entsprechende Operation ausgeführt wurde.
+Für die Berechnung der Vectorclocks werden signal-wait Paare wie das Senden 
+einer Nachricht von signal nach wait betrachtet.\\
+Für send (post) und Signal bzw. Receive (post) und Wait werden nun die Vectorclocks 
+wie in Kap.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling} beschrieben aktualisiert.
+Für Send und Signal wird lediglich der eigene Timestamp in der eigenen 
+Vectorclock um eins erhöht. Für die Aktualisierung bei einem Receive oder Wait 
+wird die Vectorclock zur Zeit von Send oder Signal benötigt. Da diese in jedem 
+Fall vor dem Receive oder Wait erzeugt worden sind, wurden sie bereits berechnet.
+Da für die Receive-Elemente in dem Trace die Zeitstempel der Send-Operationen 
+gespeichert sind, ist eine eindeutige Zuordnung der Send- und Receive-Statements 
+möglich. Für die Signal- und Wait-Elemente ist jeweils die Id der neu erzeugten 
+Routine gespeichert. Es ist also auch hier eine eindeutige Zuordnung möglich. 
+Die Vectorclock der Send- bzw. Signal-Operation kann also immer eindeutig bestimmt 
+werden und die Vectorclock somit wie in Kap.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling}
+beschrieben aktualisiert werden.\\
+Für alle anderen Element, also alle Pre-Elemente, Close-Operationen und Mutex-Operationen 
+werden die Vectorclocks lediglich kopiert.\\\\
+Nach der Berechnung der Vectorclocks kann nun der VaT bestimmt werden. 
+Dazu wird nun der Trace für die einzelnen Routinen durchlaufen. Bei jedem 
+Pre- und PreSelect-Element wird eine \texttt{vcn} erzeugt. Dazu wird der restliche Trace 
+der selben Routine durchlaufen um das zugehörige Post-Element zu finden. 
+Wird diese gefunden wird 
+das \texttt{vcn} erzeugt, wobei die Pre- und Post-Vectorclock über den 
+Zeitstempel der Pre- und Post-Elemente aus der Liste der Vectorclocks 
+übernommen wird.
+Wird kein Post-Element gefunden, handelt es sich also um ein hängendes Event, 
+wird die Pre-Vectorclock auf die Vectorclock des Pre-Events und alle Elemente 
+der Post-Vectorclock auf \texttt{maxInt}, als den maximal möglichen Wert 
+gesetzt. 
+\\
+Für Close-Elemente gibt es keine nur ein Element in dem Trace. Aus diesem Grund 
+besitzt das Element nur eine Vectorclock. Pre- und Post-Vectorclock werden 
+dabei auf die gleiche Vectorclock gesetzt.
+
+\paragraph{Suche nach hängenden Events} Die Suche nach hängenden Events 
+wird auf dem ursprünglichen Trace ausgeführt. Dazu wird der Trace jeder einzelnen 
+Routine durchlaufen. Für Pre- und PreSelect-Event wird dabei überprüft, ob 
+ein entsprechendes Post-Event existiert. Ein Element gilt dabei als 
+entsprechendes Post-Event, wenn es sich nach dem Pre- oder PreSelect-Event 
+befindet und dabei auf dem selben Channel und der selben Operation (Send oder 
+Receive) arbeitet. Wird eine solche Situation gefunden, wird eine 
+Nachricht, welche die Situation beschreibt zwischengespeichert
+und nach dem Durchlaufen aller Routinen die Liste der gefundenen 
+Situationen zurückgegeben.
+
+\paragraph{Suche nach nicht-leeren Channels} 
+Um nicht-leere Channels, also gebufferte Channels, bei denen nicht alle 
+gesendeten Nachrichten gelesen wurden, zu finden, wird der Vectorclock annotierte
+Trace durchlaufen und für jeden Channel in dem Programm gezählt, wie viele 
+erfolgreiche Send- und Receive-Operationen auf dem Channel erfolgreich ausgeführt 
+wurden. Eine Operation gilt in dem VaT als erfolgreich ausgeführt, wenn 
+das erste Element der Vector-Clock nicht ``maxInt'' entspricht. Gibt es 
+eine Differenz zwischen der Anzahl der gesendeten und der empfangen Nachrichten, 
+dann lässt sich daraus schließen, dass sich bei der Terminierung des 
+Programms noch ungelesene Nachrichten in dem Channel befanden.
+Für jeden dieser Fälle wird eine entsprechende Nachricht zurückgegeben. 
+
+\paragraph{Suche nach potenziellen Kommunikationspartnern}
+Zur Suche nach alternativen Kommunikationspartner werden Kombinationen
+von zwei Elementen in dem VaT betrachtet. Dabei werden all diejenigen 
+Elemente verglichen, bei welchen beide Operationen auf dem selben Channel 
+ausgeführt werden und eines der 
+Elemente ein Send- und das andere eine Receive-Operation ist. Zwei Operationen
+werden als potenzielle Kommunikationspartner angesehen, wenn der Channel 
+ungebuffert ist und entweder die Pre- oder die Vectorclocks der beiden 
+Operationen unvergleichbar sind, oder wenn der Channel gebuffert ist
+Anzahl der Send-Operationen der Anzahl der Receive-Operationen auf dem Channel 
+entspricht. Für den gebufferten Channel müssen Send- und Receive nicht 
+gleichzeitig ausgeführt werden. Aus diesem Grund müssen die Vectorclocks 
+nicht unvergleichbar sein. Allerdings sind gebufferte Channel als FIFO-Queue 
+implementiert. Die $n$-te Receive-Operation erhält also die Nachricht der 
+$n$-ten Send-Operation.
+
+\paragraph{Senden auf geschlossenen Channel}
+Für die Suche nach Situationen, die dazu führen können, dass auf einem 
+geschlossenen Channel gesendet wird, werden die Vectorclock aller in dem 
+Trace vorhandenen Close-Operationen mit den Vectorclocks aller Send-Operationen
+auf dem selben Channel verglichen. Ist mindestens eine der beiden Vectorclocks 
+unvergleichbar, dann nimmt das Programm an, das eine Send-Operation auf 
+einen geschlossenen Channel möglich ist, und gibt eine entsprechende 
+Warnung zurück.

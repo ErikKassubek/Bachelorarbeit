@@ -1,6 +1,6 @@
 \chapter{Instrumentierung}
 
-\section{Trace}
+\section{Trace}\label{Chap:Instrumenter-Sec:Trace}
 Wie bereits in dem vorherigen Kapitel beschrieben soll, um das 
 Programm analysieren zu können ein Trace aufgezeichnet werden.\\
 Anders als in vielen anderen Programmen, welche den Trace von Go-Programmen
@@ -80,7 +80,7 @@ Zeitstempel bekannt sein. Daher wird bei der eigentlichen
 Send-Operation nicht nur die eigentliche Information gesendet, sondern ein  
 Objekt, welches die Information, sowie die Id der sendenden Routine und deren
 Zeitstempel beinhaltet.\\Für die anderen Operationen sind Funktionen 
-definiert, die in die entsprechenden Strukturen eingenfügt werden, um so
+definiert, die in die entsprechenden Strukturen eingefügt werden, um so
 die Aufzeichnung in dem Trace zu gewehrleisten. Die eigentlichen Operationen
 werden in diesen Fällen aber weiterhin in dem eigentlichen Code vorgenommen.
 
@@ -369,9 +369,8 @@ zu können, wird das selbe Testprogramm betrachtet, welches bereits in der Messu
 für den Instrumenter verwendet wurde. Abb. \ref{Chap:Trace-Sec:Laufzeit-Img:LaufzeitTracer}
 zeigt den gemessenen Overhead. Der durchschnittliche Overhead über alle gemessenen Werte 
 liegt dabei bei $14 \pm 2\ \%$. Da der Overhead aber linear davon abhängt, 
-wie groß der Anteil der Mutex- und Channel-Operationen im Verhältniss zu 
-der Größe bzw. der Laufzeit des gesammten Programms ist, kann dieser Wert abhängig 
-von dem tatsächlichen Programm start schwanken. Dies wird unteranderem klar, wenn man 
+wie groß der Anteil der Mutex- und Channel-Operationen im Verhältnis zu 
+der Größe bzw. der Laufzeit des gesamten Programms ist, kann dieser Wert abhängig 
+von dem tatsächlichen Programm start schwanken. Dies wird unter anderem klar, wenn man 
 den Overhead für ht-cat ($9 \pm 3\ \%$) und go-dsp ($60\pm 18\ \%$) welche $51 \pm 21$ 
-Prozentpunkte außeinander liegen. 
-\extend{Laufzeit}
+Prozentpunkte aufeinander liegen. 

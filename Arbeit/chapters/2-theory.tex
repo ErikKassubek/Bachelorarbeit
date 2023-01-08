@@ -100,8 +100,8 @@ folgendermaßen:
   \begin{matrix*}[l]
     T & = & ''\ [\ '',\ \{\ U\ \},\ ''\ ]\ ''; & \text{Trace}\\
     U & = & ''\ [\ '',\ \{\ t\ \},\ ''\ ]\ ''; & \text{lokaler Trace} \\
-    t & = & signal(t, i)\ |\ wait(t, i)\ |\ pre(t, as)\ |\ post(t, i, x!) & \text{Event}\\
-      &   & |\ post(t, i, x?, t') |\ post(t, default)\ 
+    t & = & signal(t, i)\ |\ wait(t, i)\ |\ pre(t, as)\ |\ post(t, i, x!, n) & \text{Event}\\
+      &   & |\ post(t, i, x?, t', n') |\ post(t, default)\ 
       |\ close(t, x)\  
       & \\
       &   & |\ lock(t, y, b, c) |\ unlock(t, y); & \\
@@ -127,16 +127,17 @@ Channels und $y$ die Id eines Locks darstellt. Die Events haben dabei folgende B
     $as$ eine Liste aller Channels für die es einen 
     Case in dem Statement gibt. Besitzt das Statement einen Default-Case, wird
     dieser ebenfalls in diese List aufgenommen.
-  \item \texttt{post(t, i, x!)}: Dieses Event wird in dem Trace gespeichert, nachdem 
+  \item \texttt{post(t, i, x!, n)}: Dieses Event wird in dem Trace gespeichert, nachdem 
     eine Send-Operation auf $x$ erfolgreich abgeschlossen wurde. 
-    $i$ gibt dabei die Id der sendenden Routine
-    an.
-  \item \texttt{post(t, i, x?, t')}: Dieses Event wird in dem Trace gespeichert, nachdem 
+    $i$ gibt dabei die Id der sendenden Routine an. $n$ zählt die wievielte 
+    erfolgreiche Send-Operation die zugrundeliegende Operation im Programmablauf war.
+  \item \texttt{post(t, i, x?, t', n)}: Dieses Event wird in dem Trace gespeichert, nachdem 
     eine Receive-Operation des Channels $x$ erfolgreich abgeschlossen wurde. 
     $i$ gibt dabei die Id der sendenden Routine an. $t'$ gibt den Zeitstempel an,
     welcher bei dem Pre-Event der sendenden Routine galt. Durch die Speicherung der Id und des 
     Zeitstempels der sendenden Routine bei einer Receive-Operation lassen sich 
-    die Send- und Receive-Operationen eindeutig zueinander zuordnen.
+    die Send- und Receive-Operationen eindeutig zueinander zuordnen. $n$ zählt die wievielte 
+    erfolgreiche Receive-Operation die zugrundeliegende Operation im Programmablauf war.
   \item \texttt{post(t, default)}: Wird in einem Select-Statement der Default-Case ausgeführt,
     wird dies in dem Trace der entsprechenden Routine durch $post(t, default)$ 
     gespeichert.
@@ -177,7 +178,7 @@ Aus diesem lässt sich der relevante Ablauf des Programms rekonstruieren.
 
 \section{Probleme und Problemerkennung}\label{Chap:Back-Sec:Prob}
 
-\subsection{Mutex}
+\subsection{Mutex}\label{Chap:Back-Sec:Prob-SubSec:Mutex}
 Durch die Verwendung von Mutexen in nebenläufigen Programmen kann es 
 zu sogenannten Deadlocks kommen. Blockieren sich dabei mehrere Routinen 
 gegenseitig bezeichnen wir eine solche Situation als zyklisches Locking.
@@ -218,7 +219,7 @@ In Abb.~\ref{Chap:Analyze-Sec:Mutex-Fig:ZyclicTreeImg} sind die entsprechenden
 Lock-Bäume, sowie der enthaltene Zyklus graphisch dargestellt. Es sei allerdings 
 festzuhalten, dass besonders bei der Verwendung von RW-Locks nicht jeder 
 Zyklus auch direkt zu einem potenziellen Deadlock führen kann. Wie solche 
-false-positives verhinder werde können wird in dem Kapitel zur Implementierung
+false-positives verhinder werde wird in dem Kapitel zur Implementierung
 des Detektors (\ref{Chap:Implement-Sec:Mutex}) noch genauer betrachtet.
 \begin{figure}[h!]
   \centering
@@ -337,14 +338,19 @@ Man betrachte das Beispiel in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling
 Man betrachte den Fall, in dem 3 mit 4 und dann 1 mit 5 synchronisiert und 2 eine hängende Operation bildet.
 In diesem Fall erhält man folgenden Trace:
 \begin{align*}
-  [&[signal(1, 2), signale(2, 3), pre(1, x?), post(7, 1, x?, 6), pre(8, x?), post(13, 1, x?, 11)]\\
-  &[wait(9, 2), pre(10, x!), post(11, 1, x!), pre(12, 1?)]\\
-  &[wait(4, 3), pre(5, 1!), post(6, 2, 1!),]
+  [&[signal(1, 2), signale(2, 3), pre(1, x?), post(7, 1, x?, 6, 1), pre(8, x?), post(13, 1, x?, 11, 2)]\\
+  &[wait(9, 2), pre(10, x!), post(11, 1, x!, 2), pre(12, 1?)]\\
+  &[wait(4, 3), pre(5, 1!), post(6, 2, 1!, 1),]
   ]
 \end{align*}
-Aus diesem Trace lassen sich nun die Vector-Clocks für die einzelnen Operationen berechnen.
+Aus diesem Trace lassen sich nun die Vector-Clocks für die einzelnen Channel-Operationen berechnen.
 Diese werden im Folgenden in der Form $^{vc}a^{vc'}$ mit der Pre-Vector-Clock $vc$ und der 
-Post-Vector-Clock $vc'$ und der Channel-Operation $a$. Sie geben sich also als
+Post-Vector-Clock $vc'$ und der Channel-Operation $a$. Für Close gilt, 
+dass die Pre-Vectorclock gleich der Post-Vectorclock ist. Andere Elemente 
+werden in den Vectorclock-Annotierte-Trace (VAT) nicht aufgenommen, da sie 
+für die anschließende Analyse nicht benötigt wird.
+Der 
+VAT gibt sich in diesem Fall also als
 \begin{align*}
   [&[^{[2,0,0]}x?^{[3,0,2]}, ^{[3,0,2]}x?^{[4,2,2]}]\\
   &[^{[1, 1, 0]}x!^{[1, 2, 0]}, ^{[1, 2, 0]}x?^{[max, max, max]}]\\
@@ -377,7 +383,6 @@ Kommunikation. Hierbei wird auch klar, warum es nicht nur ausreicht einen
 Trace aufzuzeichnen, wenn eine Operation ausgeführt wird. Da für die 
 Post-Vector-Clocks gilt, dass $s_{2, post} \geq r_{post}$, kann allein aus der 
 Post-Vector-Clock nicht auf eine mögliche Kommunikation geschlossen werden.
-\todo{Besser beschreiben}
 
 \subsubsection{Gebufferte Channel}\label{Chan:Analyze-Sec:Channel-SubSec:Buffered}
 Anders als in ungebufferten Kanälen müssen in gepufferten Kanälen Send und 
@@ -422,6 +427,17 @@ Nachrichten in dem Send-Statement mit der Anzahl der empfangenen
 Nachrichten in dem Receive-Statement übereinstimmt. Da die 
 Send- und Receive-Operation nicht gleichzeitig ausgeführt werden müssen, 
 ist es nicht notwendig die Vector-Clocks zu betrachten.
+
+\subsection{Close}
+Versuch ein geschlossener Channel zu senden kommt es zu einem Laufzeitfehler, 
+welcher in einem Programmabbruch führen kann. Solch eine Situation lässt sich 
+dadurch erkennen, dass eine Close- und eine Send-Operation 
+gleichzeitig ablaufen können, dass also die Pre- oder Post-Vectorclock 
+der Send-Operation unvergleichbar mit der Vectorclock der Close-Operation 
+ist. Situationen, bei denen die Vectorclocks der Send-Operation streng später 
+als die der Close-Operation sind führen immer dazu, das es zu einem einem 
+Send auf einem geschlossenen Channel kommt. In diesem Fall kommt es also immer 
+zu einem Laufzeitfehler des Programms, durch welchen das Programm abgebrochen wird.
 
 \subsection{Select}\label{Chap:Back-Sec:Select}
 In Go können Select-Statements dazu verwendet werden, abhängig davon, 
@@ -483,5 +499,3 @@ in GFuzz basieren Ausführungsordnungen nicht auf schon versuchten Ordnungen,
 sondern es wird eine Menge von vollständig zufälligen Ordnungen betrachtet. 
 Die Anzahl der Durchläufe basiert dabei auf der Anzahl der möglichen Pfade.
 Dies wird später (Kap.~\ref{Chap:Inst-Sec:Select}) noch genauer erläutert. 
-
-\todo{Close nochmal schauen}
