@@ -1,0 +1,67 @@
+\appendix
+\chapter{Beschreibung der betrachteten Programme}\label{Appendix-1}
+\begin{table}[h]
+  \centering
+  \begin{tabular}{|l|c|}
+  \hline
+  \textbf{Beschreibung} & \textbf{Ok?} \\ \hline
+  Potenzielles Deadlock durch zyklisches Locking von zwei Mutexen & Ja \\ \hline
+  Potenzielles Deadlock durch zyklisches Locking von drei Locks & Ja \\ \hline
+  Locking von zwei Locks, welche keinen Deadlock bilden, da Locking nicht zyklisch ist & Ja \\ \hline
+  Zyklisches Locking welches durch Gate-Locks nicht zu einem Deadlock führen kann & Ja \\ \hline
+  \makecell[l]{Potenzielles Deadlock, welches durch Verschachtlung mehrerer\\Routinen (fork/join) verschleiert wird} & Nein \\ \hline
+  Deadlock durch doppeltes Locken & Ja \\ \hline
+  Tatsächliches Deadlock durch zyklisches Locking von Locks in zwei Routinen & Ja \\ \hline
+  Tatsächliches Deadlock durch zyklisches Locking von Locks in drei Routinen & Ja \\ \hline
+  Doppeltes Locking mit TryLock (TryLock $\to$ Lock) & Ja \\ \hline
+  Kein doppeltes Locking mit TryLock (Lock $\to$ TryLock) & Ja \\ \hline
+  Deadlock durch zyklisches Locking mit TryLock & Ja \\ \hline
+  Zyklisches Locking, welches durch TryLock nicht zu einem Deadlock führen kann & Ja \\ \hline   
+  \makecell[l]{Potenzielles Deadlock mit RW-Mutexe in zwei Routinen\\(R1: x.RLock $\to$ y.Lock, R2: y.Lock $\to$ x.Lock)} & Ja \\ \hline
+  \makecell[l]{Potenzielles Deadlock mit RW-Mutexe in zwei Routinen\\(R1: x.RLock $\to$ y.Lock, R2: y.RLock $\to$ x.Lock)} & Ja \\ \hline
+  \makecell[l]{Kein potenzielles Deadlock mit RW-Mutexe in zwei Routinen\\(R1: x.RLock $\to$ y.RLock, R2: y.RLock $\to$ x.RLock)} & Ja \\ \hline
+  \makecell[l]{Kein potenzielles Deadlock mit RW-Mutexe in zwei Routinen\\(R1: x.Lock $\to$ y.RLock, R2: y.RLock $\to$ x.Lock)} & Ja \\ \hline
+  \makecell[l]{Kein potenzielles Deadlock mit RW-Mutexe in zwei Routinen\\(R1: x.RLock $\to$ y.Lock, R2: y.RLock $\to$ x.RLock)} & Ja \\ \hline
+  \makecell[l]{Kein potenzielles Deadlock mit RW-Mutexe in zwei Routinen\\(R1: x.Lock $\to$ y.RLock, R2: y.RLock $\to$ x.RLock)} & Ja \\ \hline
+  Kein potenzielles Deadlock, wegen Lock von RW-Locks als Gate-Locks & Ja \\ \hline
+  Potenzielles Deadlock, da R-Lock von Deadlock nicht als Gate-Lock funktioniert & Ja\\ \hline
+  \makecell[l]{Doppeltes Locking von RW-Locks, welches zu Deadlock führt\\(Lock$\to$Lock, RLock$\to$Lock, Lock$\to$Rlock)} & Ja \\ \hline
+  \makecell[l]{Doppeltes Locking von RW-Locks, welches nicht zu einem\\Deadlock führt(RLock$\to$Rlock)} & Ja \\ \hline
+  \end{tabular}
+  \caption{Beschreibung der für die Auswertung betrachteten 
+    Standardprogramme zur Erkennung von Situationen mit Mutexen, sowie 
+    Information (Ok?) ob die Situation korrekt erkannt wurde. Ja bedeutet, dass 
+    die Situation korrekt erkannt wurde
+    und Nein, das das Problem nicht richtig kategorisiert wurde.}
+  \label{App-Stand-Mut}
+  \end{table}
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{|l|c|}
+  \hline
+  \textbf{Beschreibung} & \textbf{Ok?} \\ \hline
+  Deadlock oder hängende Routine durch Receive auf ungepuffertem Channel ohne Send & Ja \\ \hline
+  Deadlock oder hängende Routine durch Receive auf gepuffertem Channel ohne Send & Ja \\ \hline
+  Deadlock oder hängende Routine durch Send auf ungepuffertem Channel ohne Receive & Ja \\ \hline
+  \makecell[l]{Kein Deadlock aber ungelesene Nachricht in Channel durch Send in \\Main-Routine auf gepuffertem Channel ohne Receive} & Ja \\ \hline
+  \makecell[l]{Deadlock durch zweifaches Send auf gebufferten Channel in Kapazität 1\\in Main-Routine ohne Receive} & Ja \\ \hline
+  \makecell[l]{Ungelesene Nachricht bei [$R_0$: \{$c_1^1$<-1; $c_1^1$<-1; $c_1^1$<-1\} , $R_1$: \{<-$c_1^1$\}, $R_2$: \{<-$c_1^1$\}]\\sowie Erkennung der
+    potenziellen Kommunikationspartner} & Ja \\ \hline
+  \makecell[l]{Keine Probleme bei [$R_0$: \{$c_1^1$<-1; $c_1^1$<-1\} , $R_1$: \{<-$c_1^1$\}, $R_2$: \{<-$c_1^1$\}]} & Ja \\ \hline
+  Tatsächliches Send auf geschlossenen Channel & \todo{Ja} \\ \hline
+  Potenzielles aber nicht tatsächliches Send auf geschlossenen Channel Channel & Ja \\ \hline
+  \makecell[l]{Kein Problem, wenn Channel erst nach letztem Send geschlossen werden\\kann [$R_0$: \{$c_1^0$ <- 1; close($c_1^1$)\}, $R_1$: \{<-$c_1^1$\}]} & Ja \\ \hline
+  \makecell[l]{Kein Problem, wenn Channel erst nach letztem Send geschlossen werden\\kann [$R_0$: \{<-$c_1^0$; close($c_1^1$)\}, $R_1$: \{$c_1^1$<-1\}]} & Nein \\ \hline
+  \makecell[l]{Korrekte Kommunikationspartner bei [$R_0$: \{$c_1^1$ <- 1; $c_1^1$ <- 1; $c_1^1$ <- 1\}, $R_1$: \{<-x; <-x\}]\\(letztes Send hat keinen Kommunikationspartner)} & Ja \\ \hline
+  \end{tabular}
+  \caption{Beschreibung der für die Auswertung betrachteten 
+  Standardprogramme zur Erkennung von Situationen mit Mutexen, sowie 
+  Information (Ok?) ob die Situation korrekt erkannt wurde. Ja bedeutet, dass 
+  die Situation korrekt erkannt wurde
+  und Nein, das das Problem nicht richtig kategorisiert wurde. In den Fällen in denen 
+  Teile des Programmcodes angegeben sind sei $R_0$ die Main-Routine. $c_i^j$
+  sei ein Channel mit Kapazität $j$.}
+\label{App-Stand-Mut}
+\end{table}
+\todo{tatsächliches send auf closed channel}

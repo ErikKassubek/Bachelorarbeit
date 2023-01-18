@@ -143,13 +143,16 @@ Channels und $y$ die Id eines Locks darstellt. Die Events haben dabei folgende B
     gespeichert.
   \item \texttt{close(t, x)}: Mit diesem Eintrag wird das schließen eines Channels $x$ 
     in dem Trace aufgezeichnet.
-  \item \texttt{lock(t, y, b, c)}: Der Beanspruchungsversuch eines Locks mit id $y$ wurde beendet. 
+  \item \texttt{lock(t, y, b, c)}: Der Beanspruchungsversuch eines Locks mit id $y$ wurde gestartet. 
     $b$ gibt dabei die Art der Beanspruchung an. Bei $b = r$ war es eine R-Lock
     Operation, bei $b = t$ eine Try-Lock Operation und bei $b = tr$ ein Try-R-Lock
     Operation. Bei einer normalen Lock-Operation ist $b = -$. Bei einer 
     Try-Lock Operation kann es passieren, dass die Operation beendet wird, 
     ohne das das Lock gehalten wird. In diesem Fall wird $c$ auf $0$, und 
-    sonst auf $1$ gesetzt. 
+    sonst auf $1$ gesetzt. Das Trace-Element wird vor der abgeschlossen 
+    Beanspruchung in den Trace eingefügt um sicher zu stellen, dass 
+    ein zyklisches Locking auch dann erkannt wird, wenn es zu einem 
+    tatsächlichen Deadlock führt. 
   \item \texttt{unlock(t, y)}: Das Lock mit id $y$ wurde zum Zeitpunkt 
     $t$ wieder freigegeben. 
 \end{itemize}

@@ -62,8 +62,9 @@ empfangen wurde.
     & & [ $\langle \text{post(ts, e$_\text{i}$.ch, false, e$_\text{i}^\text{m}$.id\_send, e$_\text{i}^\text{m}$.ts\_send)}\ |$ \\
     & & post(ts, e$_\text{i}$.ch, true, id) $\rangle$ ]$^\text{id}$ B$_\text{i}$\} |\\
     & & ts' := atomicInc(c); [ default(ts) ]$^\text{id}$; B$_\text{def}$) \\
-  mu.(Try)Lock() & $\Rightarrow$ & ts := atomicInc(c); mu.(Try)Lock();\\
-    & & [ lock(ts, mu.id, $\langle \text{-|t}\rangle$, $\langle \text{0|1}\rangle$) ]$^\text{id}$;\\
+  mu.(Try)Lock() & $\Rightarrow$ & ts := atomicInc(c);
+    [ lock(ts, mu.id, $\langle \text{-|t}\rangle$, $\langle \text{0|1}\rangle$) ]$^\text{id}$;\\
+    & & mu.(Try)Lock();\\
   mu.Unlock() & $\Rightarrow$ & ts := atomicInc(c); mu.Unlock(); [ unlock(ts, mu.id) ]$^\text{id}$;\\
   rmu.(Try)(R)Lock() & $\Rightarrow$ & ts := atomicInc(c); rmu.(Try)(R)Lock();\\
     & & [ lock(ts, rmu.id, $\langle \text{-|t|r|tr}\rangle$, $\langle \text{0|1}\rangle$) ]$^\text{id}$;\\
@@ -250,8 +251,8 @@ wird diese erzeugt. \texttt{RAjWwhTH} ist dabei lediglich eine zufällige
 Zeichenkette, um unterschiedliche Nachrichten voneinander trennen zu können. 
 Anschließend beginnt das switch Statement. \texttt{goChanFetchOrder} ist 
 dabei die globale Map, die für jedes Select-Statement den für diesen 
-Durchlauf bevorzugte Case angibt. \texttt{498498082} ist dabei die Id des 
-select-Cases, welche auch nur eine zufällige Zahl ist. Dadurch, dass die Anzahl 
+Durchlauf bevorzugte Case angibt. \texttt{1} ist dabei die Id des 
+select-Cases. Dadurch, dass die Anzahl 
 der möglichen Ids sehr groß gewählt ist und diese dann zufällig zugeteilt 
 werden, ist die Wahrscheinlichkeit verschwindend gering, dass mehrere 
 Select-Cases die selbe Id- erhalten.\\Auf den Cases werden nun normale 

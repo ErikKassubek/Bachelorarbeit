@@ -1,7 +1,7 @@
 goChan.PreSelect(false, x.GetIdPre(true), 
                  y.GetIdPre(false))
 sel_RAjWwhTH := goChan.BuildMessage(1)
-switch goChanFetchOrder[498498082] {
+switch goChanFetchOrder[1] {
 case 0:
 	select {
 	case sel_VlBzgbaiCM := <-x.GetChan():
