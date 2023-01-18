@@ -1,4 +1,4 @@
-\chapter{Hintergrund}\label{chap:background}
+\chapter{Theorie}\label{chap:background}
 \todo{Einführung}
 
 \section{Mutexe}\label{Chap:Back-Sec:Mutex}
@@ -39,7 +39,8 @@ wenn gerade keine Routine schreibend auf die selbe Datenstruktur zugreift.
 
 
 \section{Channel}{Chap:Back-Sec:Chann}
-Channel~\cite{channel-spec} ermöglichen es Routinen untereinander zu 
+\todo{Buffered Channel in theorie nicht fifo}
+Channel~\cite{effectiveGo} ermöglichen es Routinen untereinander zu 
 kommunizieren.
 Ein Channel \texttt{c} kann Daten \texttt{d} senden (\texttt{c} <- \texttt{d})
 und empfangen (<- \texttt{c}). Das genaue Verhalten der Channel hängt dabei 
@@ -83,9 +84,9 @@ werden kann. Er ist allerdings nicht notwendig. Besitzt das Select-Statement
 keinen Default-Case, dann blockiert die Routine so lange, bis einer der Cases 
 ausgeführt werden kann.
 
-
 \section{Trace}\label{chap:background-sec:trace}
 \todo{Warum trace?}
+\todo{Gegebenenfalls in Implementierung schieben}
 Um ein Program analysieren zu können, soll der Ablauf eines Programmdurchlaufs
 (Trace) aufgezeichnet werden. Der Aufbau des Trace basiert auf~\cite{PPDP18}. 
 Er wird aber um Informationen 
