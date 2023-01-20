@@ -45,41 +45,67 @@ und könne daher auch nicht erkannt werden. \\
 
 \begin{minipage}{0.45\textwidth}
   \centering  
-  \includegraphics[width=0.8\textwidth]{img/pi_standart_total.eps}
+  \includegraphics[width=0.8\textwidth]{img/pi_standard_total.eps}
   \captionof{figure}{Verteilung der Ergebnisse für Standardprogramme}
   \label{Chap:Eval-Sec:Stand-Fig:Total}
 \end{minipage}
 \hfill
 \begin{minipage}{0.45\textwidth}
   \centering
-  \includegraphics[width=0.8\textwidth]{img/pi_standart_mutex.eps}
+  \includegraphics[width=0.8\textwidth]{img/pi_standard_mutex.eps}
   \captionof{figure}{Verteilung der Ergebnisse für Standardprogramme mit Mutexen}
   \label{Chap:Eval-Sec:Stand-Fig:Mutex}
 \end{minipage}
 \begin{minipage}{0.45\textwidth}
   \centering  
-  \includegraphics[width=0.8\textwidth]{img/pi_standart_channel.eps}
+  \includegraphics[width=0.8\textwidth]{img/pi_standard_channel.eps}
   \captionof{figure}{Verteilung der Ergebnisse für Standardprogramme mit Channel}
   \label{Chap:Eval-Sec:Stand-Fig:Channel}
 \end{minipage}
 \hfill
 \begin{minipage}{0.45\textwidth}
   \centering
-  \includegraphics[width=0.8\textwidth]{img/pi_standart_mix.eps}
+  \includegraphics[width=0.8\textwidth]{img/pi_standard_mix.eps}
   \captionof{figure}{Verteilung der Ergebnisse für Standardprogramme mit Mutexen und Channel}
   \label{Chap:Eval-Sec:Stand-Fig:Mix}
 \end{minipage}
+\todo{cont. Beschreibung}
 
+\section{Goker}
+Für die Analyse wurden insgesamt 35 Programme betrachtet. Die betrachteten 
+Programme und deren Ergebnisse befinden sich in Tab.~\ref{App-Goker} 
+in Anhang~\ref{Appendix-1}. Von den Programmen betrafen 15 die 
+Verwendung von Resource wie Mutexen (14 korrekt erkannt), 11 die 
+Verwendung von Kommunikationen und 9 eine Kombination aus Mutexen und 
+Channel (7 korrekt erkannt). \\
 
-\section{Programme mit Channel}
-\todo{Programme mit Channel}
-\todo{Standrardprogramme}
-\todo{Goker}
-
-\section{Programme mit Mutexen und Channel}
-\todo{Programme mit Mutexen und Channel}
-\todo{Standrardprogramme}
-\todo{Goker}
+\begin{minipage}{0.45\textwidth}
+  \centering  
+  \includegraphics[width=0.8\textwidth]{img/pi_goker_total.eps}
+  \captionof{figure}{Verteilung der Ergebnisse für Programme aus GoKer}
+  \label{Chap:Eval-Sec:Goker-Fig:Total}
+\end{minipage}
+\hfill
+\begin{minipage}{0.45\textwidth}
+  \centering
+  \includegraphics[width=0.8\textwidth]{img/pi_goker_mutex.eps}
+  \captionof{figure}{Verteilung der Ergebnisse für Programme aus GoKer mit Mutexen}
+  \label{Chap:Eval-Sec:Goker-Fig:Mutex}
+\end{minipage}
+\begin{minipage}{0.45\textwidth}
+  \centering  
+  \includegraphics[width=0.8\textwidth]{img/pi_goker_channel.eps}
+  \captionof{figure}{Verteilung der Ergebnisse für Programme aus GoKer mit Channel}
+  \label{Chap:Eval-Sec:Goker-Fig:Channel}
+\end{minipage}
+\hfill
+\begin{minipage}{0.45\textwidth}
+  \centering
+  \includegraphics[width=0.8\textwidth]{img/pi_goker_mix.eps}
+  \captionof{figure}{Verteilung der Ergebnisse für Programme aus GoKer mit Mutexen und Channel}
+  \label{Chap:Eval-Sec:Goker-Fig:Mix}
+\end{minipage}
+\todo{Beschreibung der Messwerte}
 
 \section{Vergleich mit GFuzz}
 \todo{Vergleich mit GFuzz}
