@@ -12,12 +12,27 @@ Anhang~\ref{Appendix-1}.\\
 Anschließend werden die Leistungen des Detektors mit denen von GFuzz verglichen.
 \todo{wahrscheinlich nur channel}
 
-\section{Programme mit Mutexen}
+\section{Standardprogramme}
+Für die Analyse wurden insgesammt 35 Standartprobleme betrachtet. 
+Dabei wurde überprüft, ob der Detektor in der Lage ist, das in dem 
+Programm erhaltene Problem richtig zu erkennen, bzw.~zu erkenne wenn 
+die vorliegende Situation nicht zu einem Problem führen kann. Eine 
+tabellarische Beschreibung der betrachteten Situationen, sowie der Ergebnisse 
+des Detektors ist in Tab.~\ref{App-Stand} in Anhang~\ref{Appendix-1} aufgeführt.
+Abb.~\ref{Chap:Eval-Sec:Stand-Fig:Total} - \ref{Chap:Eval-Sec:Stand-Fig:Mix}
+zeigen die Ergebnisse der Auswertung.\\\\
+Von den 43 Programmen konnten 38 korrekt kategorisiert werden. Dabei 
+bestehen 18 Probleme aus Problemen mit Mutexen (17 korrekt erkannt),
+18 aus Problemen mit Channel (16 korrekt erkannt) und 7 mit einem 
+Mix aus Mutexen und Channel (5 korrekt erkannt).
+
+
+
 Zuerst sollen Standardprogramme betrachtet werden, die durch Mutexe erzeugte 
 Bug enthalten, sowie Probleme mit Mutexen, in denen keine Probleme enthalten 
 sind, welche durch eine Detektor aber fälschlicherweise für solche gehalten werden 
 könnten. Eine Liste der betrachteten Probleme befinden sich in 
-Tab.~\ref{App-Stand-Mut}. Von den 22 betrachteten Problemen war es des 
+Tab.~\ref{App-Stand}. Von den 22 betrachteten Problemen war es des 
 Detektor in 19 Fällen möglich, die Situation richtig zu erkennen. Lediglich 
 in einer Situation war es dem Detektor nicht möglich, einen potenziellen 
 Deadlock zu erkennen. Dabei handelt es sich um eine Situation, bei der 
@@ -25,21 +40,36 @@ ein potenzielles doppeltes Locking durch verschachtelte Routinen verschleiert
 wird. Da die innere Routine als eigenständige Routine angesehen wird, 
 werden Abhängigkeiten der Lock-Operationen nicht in den Lock-Bäumen abgebildet 
 und könne daher auch nicht erkannt werden. \\
+
+
+
 \begin{minipage}{0.45\textwidth}
   \centering  
-  \includegraphics[width=\textwidth]{img/pi_standart_mutex.eps}
-  \captionof{figure}{Verteilung der Ergebnisse für Standardprogramme mit Mutexen.}
-  \label{Chap:Tracer-Sec:Laufzeit-Img:LaufzeitInstrumenter}
+  \includegraphics[width=0.8\textwidth]{img/pi_standart_total.eps}
+  \captionof{figure}{Verteilung der Ergebnisse für Standardprogramme}
+  \label{Chap:Eval-Sec:Stand-Fig:Total}
 \end{minipage}
 \hfill
 \begin{minipage}{0.45\textwidth}
   \centering
-  \includegraphics[width=\textwidth]{img/pi_standart_mutex.eps}
-  \captionof{figure}{Verteilung der Ergebnisse für Programme aus Goker mit Mutexen.}
-  \label{Chap:Trace-Sec:Laufzeit-Img:LaufzeitTracer}
+  \includegraphics[width=0.8\textwidth]{img/pi_standart_mutex.eps}
+  \captionof{figure}{Verteilung der Ergebnisse für Standardprogramme mit Mutexen}
+  \label{Chap:Eval-Sec:Stand-Fig:Mutex}
 \end{minipage}
-\todo{change second image}
-\todo{Goker}
+\begin{minipage}{0.45\textwidth}
+  \centering  
+  \includegraphics[width=0.8\textwidth]{img/pi_standart_channel.eps}
+  \captionof{figure}{Verteilung der Ergebnisse für Standardprogramme mit Channel}
+  \label{Chap:Eval-Sec:Stand-Fig:Channel}
+\end{minipage}
+\hfill
+\begin{minipage}{0.45\textwidth}
+  \centering
+  \includegraphics[width=0.8\textwidth]{img/pi_standart_mix.eps}
+  \captionof{figure}{Verteilung der Ergebnisse für Standardprogramme mit Mutexen und Channel}
+  \label{Chap:Eval-Sec:Stand-Fig:Mix}
+\end{minipage}
+
 
 \section{Programme mit Channel}
 \todo{Programme mit Channel}
