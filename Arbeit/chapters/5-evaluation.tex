@@ -8,9 +8,7 @@ verwendet. Dabei handelt es sich um eine Sammlung von Programmteilen mit
 Concurrency-Bugs aus 9 
 großen open-source Anwendungen wie z.B. Kubernetes und Moby. 
 Beschreibungen der Probleme, sowie die Ergebnisse des Detektors befinden in 
-Anhang~\ref{Appendix-1}.\\
-Anschließend werden die Leistungen des Detektors mit denen von GFuzz verglichen.
-\todo{wahrscheinlich nur channel}
+Anhang~\ref{Appendix-1}.
 
 \section{Standardprogramme}
 Für die Analyse wurden insgesammt 35 Standartprobleme betrachtet. 
@@ -22,24 +20,38 @@ des Detektors ist in Tab.~\ref{App-Stand} in Anhang~\ref{Appendix-1} aufgeführt
 Abb.~\ref{Chap:Eval-Sec:Stand-Fig:Total} - \ref{Chap:Eval-Sec:Stand-Fig:Mix}
 zeigen die Ergebnisse der Auswertung.\\\\
 Von den 43 Programmen konnten 38 korrekt kategorisiert werden. Dabei 
-bestehen 18 Probleme aus Problemen mit Mutexen (17 korrekt erkannt),
-18 aus Problemen mit Channel (16 korrekt erkannt) und 7 mit einem 
-Mix aus Mutexen und Channel (5 korrekt erkannt).
+bestehen 18 Probleme aus Problemen mit Mutexen,
+18 aus Problemen mit Channel und 7 mit einem 
+Mix aus Mutexen und Channel. Abbildungen~ref{Chap:Eval-Sec:Stand-Fig:Total}
+bis~\ref{Chap:Eval-Sec:Stand-Fig:Mix} geben an, welcher Anteil der 
+Betrachteten Standartprobleme korrekt erkannt wurde.\\\\
+Für Programme, bei denen der Fehler auf die Verwendung von Mutexen 
+basiert, konnten 17 der 18 Probleme richtig kategorisiert werden. 
+Dies entspricht ca. $94.4\%$.\\
+Bei den Programmen, bei welchen es durch Channel zu Problemen kommen kann, 
+konnten 16 der 18 Programme richtig kategorisiert werden, was einem 
+Anteil von ca. $88.9\%$ entspricht.\\
+Bei Programmen, welche sowohl Mutexe als auch Channels verwenden liegt 
+die Erfolgsquote mit 5 aus 7 ($71.4\%$) am niedrigstem. Da der Detektor 
+zwei verschiedene Methoden verwendet, um Probleme mit Mutexen und Probleme 
+mit Channels zu erkenne, aber keine direkte Methode für die Erkennung
+von Problemen besitzt, welche durch eine Kombination der beiden entstehen, 
+werden solche Situationen nicht direkt erkannt. Sie werden nur dann erkannt, 
+wenn sie dazu führt, dass einer der beiden Mechanismen sie erkennen 
+kann. Es ist daher nicht verwunderlich, dass hierbei eine höhere Fehlerquote 
+betrachtet werden kann, als wenn man die beiden Situationen einzeln
+betrachtet.\\
+Insgesamt hat der Detektor für die betrachteten Programme eine 
+Trefferwahrscheinlichkeit von $88.4\%$. \\
+Es sei noch dazu gesagt, dass die betrachteten Programme immer so implementiert 
+worden sind, dass die entsprechenden Situationen auch in dem Durchlauf 
+auftreten. Es ist allerdings auch möglich, dass Situationen bei den Durchläufen 
+nicht durchlaufen werden, z.B. wenn sie sich ein einem Konditionellen 
+Block (If) befinden, bei welchem die Bedingung während keinem der Durchläufe 
+wahr wird. Da die entsprechenden Operationen somit nicht aufgezeichnet 
+werden können, ist es demnach logischerweise auch nicht möglich, dass der 
+Detektor die entsprechenden Situationen erkennt.
 
-
-
-Zuerst sollen Standardprogramme betrachtet werden, die durch Mutexe erzeugte 
-Bug enthalten, sowie Probleme mit Mutexen, in denen keine Probleme enthalten 
-sind, welche durch eine Detektor aber fälschlicherweise für solche gehalten werden 
-könnten. Eine Liste der betrachteten Probleme befinden sich in 
-Tab.~\ref{App-Stand}. Von den 22 betrachteten Problemen war es des 
-Detektor in 19 Fällen möglich, die Situation richtig zu erkennen. Lediglich 
-in einer Situation war es dem Detektor nicht möglich, einen potenziellen 
-Deadlock zu erkennen. Dabei handelt es sich um eine Situation, bei der 
-ein potenzielles doppeltes Locking durch verschachtelte Routinen verschleiert 
-wird. Da die innere Routine als eigenständige Routine angesehen wird, 
-werden Abhängigkeiten der Lock-Operationen nicht in den Lock-Bäumen abgebildet 
-und könne daher auch nicht erkannt werden. \\
 
 
 
@@ -69,15 +81,32 @@ und könne daher auch nicht erkannt werden. \\
   \captionof{figure}{Verteilung der Ergebnisse für Standardprogramme mit Mutexen und Channel}
   \label{Chap:Eval-Sec:Stand-Fig:Mix}
 \end{minipage}
-\todo{cont. Beschreibung}
 
-\section{Goker}
+\section{GoKer}
 Für die Analyse wurden insgesamt 35 Programme betrachtet. Die betrachteten 
 Programme und deren Ergebnisse befinden sich in Tab.~\ref{App-Goker} 
 in Anhang~\ref{Appendix-1}. Von den Programmen betrafen 15 die 
 Verwendung von Resource wie Mutexen (14 korrekt erkannt), 11 die 
 Verwendung von Kommunikationen und 9 eine Kombination aus Mutexen und 
-Channel (7 korrekt erkannt). \\
+Channel (7 korrekt erkannt).
+Die Erfolgsraten des Detektors für die Programme aus GoKer 
+(Abb.~\ref{Chap:Eval-Sec:Goker-Fig:Total} bis~\ref{Chap:Eval-Sec:Goker-Fig:Mix})
+stimmen dabei in etwa mit denen der Standardprogramme überein.
+Für die Analyse wurden dabei nur solche Programme ausgewählt,
+welche basieren auf ihrer Beschreibung für den Detektor theoretisch erkennbare 
+Situation enthielt. Situationen, welche sich auf andere Concurrency-Bugs,
+z.B. Race-Conditions bezogen wurden nicht betrachtet. 
+Die Betrachtung der Programme aus Goker hat einen Nachteil der hier 
+verwendeten Methode, bzw. der Implementierung deutlich gemacht.
+Der Instrumenter ist nur in der Lage den vorliegenden Code zu instrumentieren. 
+Es kann aber vorkommen, dass in einem Programm externe Funktionen 
+verwendet werden, welche Mutexe oder Channel als Parameter oder 
+Rückgabewerte besitzen. Da bei der Instrumentierung Mutexe und Channel 
+durch eingens implementierte Objekte ersetzt werden, externe Funktionen 
+aber nicht entsprechend Instrumentiert werden können kommt es 
+hierbei zu Compiler-Fehlern. Die entsprechenden Programme sind daher nicht 
+Lauffähig und können somit auch nicht analysiert werden. Programme aus GoKer, 
+bei denen dies der Fall war wurden für die Analyse nicht betrachtet. 
 
 \begin{minipage}{0.45\textwidth}
   \centering  
@@ -105,16 +134,3 @@ Channel (7 korrekt erkannt). \\
   \captionof{figure}{Verteilung der Ergebnisse für Programme aus GoKer mit Mutexen und Channel}
   \label{Chap:Eval-Sec:Goker-Fig:Mix}
 \end{minipage}
-\todo{Beschreibung der Messwerte}
-
-\section{Vergleich mit GFuzz}
-\todo{Vergleich mit GFuzz}
-
-
-
-
-
-
-
-
-\todo{Funktioniert nicht, wenn externe Funktionen auf Chan or Mut verwendet werden}

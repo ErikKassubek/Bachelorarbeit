@@ -299,8 +299,8 @@ verhinder, dass die Dauer der Analyse zu lange wird, wenn sehr viele Select-Stat
 bzw.\ sehr viele Select-Cases vorhanden sind. Anschließend wird das Instrumentierte 
 Programm für jeden dieser Abläufe über einen \texttt{exec.Command} Befehl 
 ausgeführt, wobei die Ordnung als Command-Line-Argument übergeben wird 
-(also z.B. \texttt{exec.Command(./Examples/select/select -order="498498082,1")}, 
-wobei hierbei für das Select mit Id 498498082 der Case 1 bevorzugt ausgewählt
+(also z.B. \texttt{exec.Command(./Examples/select/select -order="0,1")}, 
+wobei hierbei für das Select mit Id 0 der Case 1 bevorzugt ausgewählt
 wird). Für das Programm wird nun der Trace aufgezeichnet und dieser 
 anschließend analysiert (s. \ref{Chap:Implement}).
 

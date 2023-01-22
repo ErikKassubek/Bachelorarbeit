@@ -1,5 +1,7 @@
 \chapter{Theorie}\label{chap:background}
-\todo{Einführung}
+Im folgenden soll der theoretische Hintergrund bezüglich der 
+Betrachteten Probleme sowie die theoretische Funktionsweise des 
+Detektors betrachtet werden. 
 
 \section{Mutexe}\label{Chap:Back-Sec:Mutex}
 Mutexe (auch Locks genannt) gehören zu den am weitesten Verbreitenten Mechanismen 
@@ -12,7 +14,7 @@ zugreifen. Solche Abschnitte werden nun mit einem Lock umschlossen.
 Diese besitzen die folgenden Operationen:
 \begin{itemize}
   \item Lock: Die Lock-Operation wird vor dem Eintritt in einen kritischen 
-    Bereich aufgerufen. Sie versucht den Mutex zu beanspruchen. Wird es im moment
+    Bereich aufgerufen. Sie versucht den Mutex zu schließen. Wird es im moment
     von keiner Routine gehalten, wird der Mutex geschlossen und der kritische
     Bereich ausgeführt. Wird der Mutex bereits von einer anderen Routine 
     gehalten, muss die Routine, in welcher die Lock-Operation ausgeführt 
@@ -35,11 +37,18 @@ Dabei kann der selbe Mutex von mehreren Routinen gleichzeitig über
 nicht, dass ein Mutex gleichzeitig über eine RLock- und eine Lock-Operation 
 gehalten werden. Diese können z.B. verwendet werden, wenn mehrere Routinen 
 gleichzeitig lesend auf eine Datenstruktur zugreifen dürfen, allerdings nur, 
-wenn gerade keine Routine schreibend auf die selbe Datenstruktur zugreift.
+wenn gerade keine Routine schreibend auf die selbe Datenstruktur zugreift.\\\\
+Theoretisch verhalten sich Mutexe in Go wie Semaphore, d.h.~es ist möglich, 
+dass eine Routine ein 
+geschlossenes Lock freigibt, obwohl das Lock von einer anderen Routine
+geschlossen wurde. Da dies allerdings in der Praxis sehr leicht zu einem 
+unvorhersehbaren Verhalten führen kann, ist es fasst immer üblich, 
+dass ein Lock immer nur von derjenigen Routine freigegeben werden
+soll, von der es beansprucht wurde. Für die Erkennung von 
+Problemen wird daher angenommen, das dies immer der Fall ist.
 
 
-\section{Channel}{Chap:Back-Sec:Chann}
-\todo{Buffered Channel in theorie nicht fifo}
+\section{Channel}\label{Chap:Back-Sec:Chann}
 Channel~\cite{effectiveGo} ermöglichen es Routinen untereinander zu 
 kommunizieren.
 Ein Channel \texttt{c} kann Daten \texttt{d} senden (\texttt{c} <- \texttt{d})
@@ -58,9 +67,16 @@ gleichzeitig ablaufen können. Eine Operation muss hierbei nur dann
 vor einer Operation warten, wenn eine Send-Operation auf einem vollen 
 Channel, oder eine Receive-Operation auf einem leeren Channel ausgeführt 
 wird. In allen anderen Fällen kann die Operation die Nachricht in den Buffer 
-schreiben, bzw. eine Nachricht aus dem Buffer lesen. Der Buffer bildet dabei 
-eine FIFO-Queue, dass heißt, es wird bei einem Receive immer die ältest in dem
-Buffer vorhandene Nachricht ausgegeben.\\
+schreiben, bzw.~eine Nachricht aus dem Buffer lesen.\\
+Basierend auf dem 
+Go-Memory-Model gilt, dass zum einen das Senden auf einem Channel vor dem 
+dazugehörigen Receive auf dem Channel synchronisiert wird und dass 
+das $k$-te Receive auf einem Channel mit Kapazität $C$ vor der Beendigung
+des $k+C$-ten Send auf dem Channel synchronisiert wird~\cite{memModel}.   
+In der Praxis verhält sich der Buffer eines Channels allerdings wie eine FIFO-Queue,
+dass heißt, es wird bei einem Receive immer die ältest in dem
+Buffer vorhandene Nachricht ausgegeben. Für die Implementierung des 
+Detektors wird daher von diesem Verhalten ausgegangen.\\\\
 Sowohl bei gebufferten als auch bei ungebufferten Channels kann es zu 
 Situationen kommen, in denen mehrere Routinen gleichzeitig auf dem selben 
 Channel auf eine Nachricht warten. Wird nun auf diesem Channel gesendet 
@@ -70,7 +86,7 @@ erfolgreichen Channel-Operationen gleichzeitig zu warten. Ein Beispiel für solc
 ein Select befindet sich in Abb.~\ref{Chan:Analyze-Sec:Channel-Fig:SelectEx}.
 \begin{figure}[h!]
   \lstinputlisting{code/example_select.txt}
-  \caption{Beispielprogramm zyklisches Locking}
+  \caption{Beispielprogramm für Select}
   \label{Chan:Analyze-Sec:Channel-Fig:SelectEx}
 \end{figure}
 In diesem Beispiel besitzt die Select-Operation 3 Cases und einen Default-Case.

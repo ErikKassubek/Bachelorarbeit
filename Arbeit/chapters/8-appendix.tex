@@ -38,7 +38,7 @@
   Tatsächliches Send auf geschlossenen Channel & Ja \\ \hline
   Potenzielles aber nicht tatsächliches Send auf geschlossenen Channel Channel & Ja \\ \hline
   \makecell[l]{Kein Problem, wenn Channel erst nach letztem Send geschlossen werden\\kann [$R_0$: \{$c_1^0$ $\leftarrow$ 1; close($c_1^1$)\}, $R_1$: \{$\leftarrow$$c_1^1$\}]} & Ja \\ \hline
-  \makecell[l]{Kein Problem, wenn Channel erst nach letztem Send geschlossen werden\\kann [$R_0$: \{$\leftarrow$$c_1^0$; close($c_1^1$)\}, $R_1$: \{$c_1^1$$\leftarrow$1\}]} & Nein \\ \hline
+  \makecell[l]{Kein Problem, wenn Channel erst nach letztem Send geschlossen werden\\kann [$R_0$: \{$\leftarrow$$c_1^0$; close($c_1^0$)\}, $R_1$: \{$c_1^1$$\leftarrow$1\}]} & Nein \\ \hline
   \makecell[l]{Korrekte Kommunikationspartner bei [$R_0$: \{$c_1^1$ $\leftarrow$ 1; $c_1^1$ $\leftarrow$ 1; $c_1^1$ $\leftarrow$ 1\},\\$R_1$: \{$\leftarrow$$x$; $\leftarrow$$x$\}] (letztes Send hat keinen Kommunikationspartner)} & Ja \\ \hline
   \makecell[l]{Deadlock, da gleichzeitiges Send und Receive durch Mutex Lock verhindert\\wird [$R_0$: \{$m_1$.Lock; $\leftarrow$$c_1^0$; $m_1$.Unlock\}, $R_1$: \{$m_1$.Lock; $c_1^0$ $\leftarrow$ 1; $m_1$.Unlock\}]} & Ja \\ \hline
   \makecell[l]{Kein Problem, da gleichzeitiges Send und Receive durch RWMutex R-Lock nicht\\verhindert wird\\$[$$R_0$: \{$m_1^r$.RLock; $\leftarrow$$c_1^0$; $m_1^r$.RUnlock\}, $R_1$: \{$m_1^r$.RLock; $c_1^0$ $\leftarrow$ 1; $m_1^r$.RUnlock\}$]$} & Ja \\ \hline
@@ -57,58 +57,56 @@
   \label{App-Stand}
 \end{longtable}
 
+\newpage
 
-% Please add the following required packages to your document preamble:
-% \usepackage{longtable}
-% Note: It may be necessary to compile the document several times to get a multi-page table to line up properly
-\begin{longtable}[c]{|l|l|l|l|l|c|}
+\begin{longtable}[c]{|l|l|l|l|c|}
   \hline
-  \textbf{Program} & \textbf{Number} & \textbf{Type} & \textbf{SubType}       & \textbf{SubsubType}    & \multicolumn{1}{l|}{\textbf{GoChan}} \\ \hline
+  \textbf{Programm} & \textbf{Type} & \textbf{SubType}       & \textbf{SubsubType}    & \multicolumn{1}{l|}{\textbf{Ok?}} \\ \hline
   \endfirsthead
   %
   \endhead
   %
-  Cockroach        & 584             & Blocking      & Resource Deadlock      & Doppeltes Locking      & Ja                                   \\ \hline
-  moby             & 17176           & Blocking      & Resource Deadlock      & Doppeltes Locking      & Ja                                   \\ \hline
-  moby             & 36114           & Blocking      & Resource Deadlock      & Doppeltes Locking      & Ja                                   \\ \hline
-  etcd             & 5509            & Blocking      & Resource Deadlock      & Doppeltes Locking      & Ja                                   \\ \hline
-  etcd             & 6708            & Blocking      & Resource Deadlock      & Doppeltes Locking      & Ja                                   \\ \hline
-  moby             & 7559            & Blocking      & Resource Deadlock      & Doppeltes Locking      & Ja                                   \\ \hline
-  serving          & 4829            & Blocking      & Resource Deadlock      & Doppeltes Locking      & Ja                                   \\ \hline
-  Cockroach        & 9935            & Blocking      & Resource Deadlock      & Doppeltes Locking      & Ja                                   \\ \hline
-  moby             & 4951            & Blocking      & Resource Deadlock      & Zyklisches Locking     & Ja                                   \\ \hline
-  Cockroach        & 7504            & Blocking      & Resource Deadlock      & Zyklisches Locking     & Ja                                   \\ \hline
-  Cockroach        & 10214           & Blocking      & Resource Deadlock      & Zyklisches Locking     & Ja                                   \\ \hline
-  hugo             & 3251            & Blocking      & Resource Deadlock      & Zyklisches Locking     & Ja                                   \\ \hline
-  kubernetes       & 13135           & Blocking      & Resource Deadlock      & Zyklisches Locking     & Ja                                   \\ \hline
-  Cockroach        & 6181            & Blocking      & Resource Deadlock      & RWR Deadlock           & Ja                                   \\ \hline
-  kubernetes       & 58107           & Blocking      & Resource Deadlock      & RWR Deadlock           & Nein                                 \\ \hline
-  Cockroach        & 24808           & Blocking      & Communication Deadlock & Channel                & Ja                                   \\ \hline
-  Cockroach        & 25456           & Blocking      & Communication Deadlock & Channel                & Ja                                   \\ \hline
-  Cockroach        & 35073           & Blocking      & Communication Deadlock & Channel                & Ja                                   \\ \hline
-  Cockroach        & 35931           & Blocking      & Communication Deadlock & Channel                & Ja                                   \\ \hline
-  etcd             & 6857            & Blocking      & Communication Deadlock & Channel                & Ja                                   \\ \hline
-  kubernetes       & 38669           & Blocking      & Communication Deadlock & Channel                & Ja                                   \\ \hline
-  kubernetes       & 5316            & Blocking      & Communication Deadlock & Channel                & Nein                                 \\ \hline
-  kubernetes       & 70277           & Blocking      & Communication Deadlock & Channel                & Ja                                   \\ \hline
-  moby             & 4395            & Blocking      & Communication Deadlock & Channel                & Ja                                   \\ \hline
-  moby             & 29733           & Blocking      & Communication Deadlock & Konditionelle Variable & Ja                                   \\ \hline
-  moby             & 30408           & Blocking      & Communication Deadlock & Konditionelle Variable & Ja                                   \\ \hline
-  etcd             & 6873            & Blocking      & Mixed Deadlock         & Channel\&Mutex         & Ja                                   \\ \hline
-  etcd             & 7492            & Blocking      & Mixed Deadlock         & Channel\&Mutex         & Nein                                 \\ \hline
-  etcd             & 7902            & Blocking      & Mixed Deadlock         & Channel\&Mutex         & Ja                                   \\ \hline
-  istio            & 16224           & Blocking      & Mixed Deadlock         & Channel\&Mutex         & Ja                                   \\ \hline
-  kubernetes       & 10182           & Blocking      & Mixed Deadlock         & Channel\&Mutex         & Ja                                   \\ \hline
-  kubernetes       & 1321            & Blocking      & Mixed Deadlock         & Channel\&Mutex         & Nein                                 \\ \hline
-  kubernetes       & 26980           & Blocking      & Mixed Deadlock         & Channel\&Mutex         & Ja                                   \\ \hline
-  kubernetes       & 6632            & Blocking      & Mixed Deadlock         & Channel\&Mutex         & Ja                                   \\ \hline
-  serving          & 2137            & Blocking      & Mixed Deadlock         & Channel\&Mutex         & Ja                                   \\ \hline
-  moby             & 4951            & Blocking      & Resource Deadlock      & AB-BA Deadlock         & Ja                                   \\ \hline
-  moby             & 7559            & Blocking      & Resource Deadlock      & Double Locking         & Ja                                   \\ \hline
-  serving          & 5865            & NonBlocking   & Go-Specific            & Misuse channel         & Ja                                   \\ \hline
-  serving          & 2137            & Blocking      & Mixed Deadlock         & Channel\&Lock          & Ja                                   \\ \hline
-  serving          & 4829            & Blocking      & Resource Deadlock      & Double Locking         & Ja                                   \\ \hline
-  \caption{Für die Auswertung betrachteten 
+  Cockroach 584             & Blocking      & Resource Deadlock      & Doppeltes Locking      & Ja                                   \\ \hline
+  moby 17176           & Blocking      & Resource Deadlock      & Doppeltes Locking      & Ja                                   \\ \hline
+  moby 36114           & Blocking      & Resource Deadlock      & Doppeltes Locking      & Ja                                   \\ \hline
+  etcd 5509            & Blocking      & Resource Deadlock      & Doppeltes Locking      & Ja                                   \\ \hline
+  etcd 6708            & Blocking      & Resource Deadlock      & Doppeltes Locking      & Ja                                   \\ \hline
+  moby 7559            & Blocking      & Resource Deadlock      & Doppeltes Locking      & Ja                                   \\ \hline
+  serving 4829            & Blocking      & Resource Deadlock      & Doppeltes Locking      & Ja                                   \\ \hline
+  Cockroach 9935            & Blocking      & Resource Deadlock      & Doppeltes Locking      & Ja                                   \\ \hline
+  moby 4951            & Blocking      & Resource Deadlock      & Zyklisches Locking     & Ja                                   \\ \hline
+  Cockroach 7504            & Blocking      & Resource Deadlock      & Zyklisches Locking     & Ja                                   \\ \hline
+  Cockroach 10214           & Blocking      & Resource Deadlock      & Zyklisches Locking     & Ja                                   \\ \hline
+  hugo 3251            & Blocking      & Resource Deadlock      & Zyklisches Locking     & Ja                                   \\ \hline
+  kubernetes 13135           & Blocking      & Resource Deadlock      & Zyklisches Locking     & Ja                                   \\ \hline
+  Cockroach 6181            & Blocking      & Resource Deadlock      & RWR Deadlock           & Ja                                   \\ \hline
+  kubernetes 58107           & Blocking      & Resource Deadlock      & RWR Deadlock           & Nein                                 \\ \hline
+  Cockroach 24808           & Blocking      & Communication Deadlock & Channel                & Ja                                   \\ \hline
+  Cockroach 25456           & Blocking      & Communication Deadlock & Channel                & Ja                                   \\ \hline
+  Cockroach 35073           & Blocking      & Communication Deadlock & Channel                & Ja                                   \\ \hline
+  Cockroach 35931           & Blocking      & Communication Deadlock & Channel                & Ja                                   \\ \hline
+  etcd 6857            & Blocking      & Communication Deadlock & Channel                & Ja                                   \\ \hline
+  kubernetes 38669           & Blocking      & Communication Deadlock & Channel                & Ja                                   \\ \hline
+  kubernetes 5316            & Blocking      & Communication Deadlock & Channel                & Nein                                 \\ \hline
+  kubernetes 70277           & Blocking      & Communication Deadlock & Channel                & Ja                                   \\ \hline
+  moby 4395            & Blocking      & Communication Deadlock & Channel                & Ja                                   \\ \hline
+  moby 29733           & Blocking      & Communication Deadlock & Konditionelle Variable & Ja                                   \\ \hline
+  moby 30408           & Blocking      & Communication Deadlock & Konditionelle Variable & Ja                                   \\ \hline
+  etcd 6873            & Blocking      & Mixed Deadlock         & Channel\&Mutex         & Ja                                   \\ \hline
+  etcd 7492            & Blocking      & Mixed Deadlock         & Channel\&Mutex         & Nein                                 \\ \hline
+  etcd 7902            & Blocking      & Mixed Deadlock         & Channel\&Mutex         & Ja                                   \\ \hline
+  istio 16224           & Blocking      & Mixed Deadlock         & Channel\&Mutex         & Ja                                   \\ \hline
+  kubernetes 10182           & Blocking      & Mixed Deadlock         & Channel\&Mutex         & Ja                                   \\ \hline
+  kubernetes 1321            & Blocking      & Mixed Deadlock         & Channel\&Mutex         & Nein                                 \\ \hline
+  kubernetes 26980           & Blocking      & Mixed Deadlock         & Channel\&Mutex         & Ja                                   \\ \hline
+  kubernetes 6632            & Blocking      & Mixed Deadlock         & Channel\&Mutex         & Ja                                   \\ \hline
+  serving 2137            & Blocking      & Mixed Deadlock         & Channel\&Mutex         & Ja                                   \\ \hline
+  moby 4951            & Blocking      & Resource Deadlock      & AB-BA Deadlock         & Ja                                   \\ \hline
+  moby 7559            & Blocking      & Resource Deadlock      & Double Locking         & Ja                                   \\ \hline
+  serving 5865            & NonBlocking   & Go-Specific            & Misuse channel         & Ja                                   \\ \hline
+  serving 2137            & Blocking      & Mixed Deadlock         & Channel\&Lock          & Ja                                   \\ \hline
+  serving 4829            & Blocking      & Resource Deadlock      & Double Locking         & Ja                                   \\ \hline
+  \caption{Für Auswertung betrachteten 
   Programme aus Gobench~\cite{gobench} sowie 
   Information (Ok?) ob die Situation korrekt erkannt wurde. Ja bedeutet, dass 
   die Situation korrekt erkannt wurde
