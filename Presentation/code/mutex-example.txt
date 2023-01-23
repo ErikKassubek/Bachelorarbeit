@@ -1,0 +1,13 @@
+func main() {
+  var m sync.Mutex
+
+  go func() {
+    m.Lock()
+    a()  // kritischer Abschnitt
+    m.Unlock()
+  }()
+
+  m.Lock()
+  b()  // kritischer Abschnitt
+  m.Unlock()
+}

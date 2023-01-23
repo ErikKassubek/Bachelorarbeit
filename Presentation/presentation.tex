@@ -167,8 +167,8 @@
 }
 
 \author[Erik Kassubek]{Erik Kassubek} 
-\title[Dynamic Analysis]{Dynamic Analysis of Message Passing Go-Programs}
-\subtitle{Bachelor-Arbeit - Kolloquium}
+\title[Dynamic Analysis of Go-Programs]{Dynamic Analysis of Message Passing Go-Programs}
+\subtitle{Bachelorarbeit - Kolloquium}
 \institute[]{Institut für Informatik\\Albert-Ludwigs-Universität Freiburg}
 \date{14.02.2023}
 
@@ -176,17 +176,81 @@
 
 \frame{
     \titlepage
-    \note{- Authoren: Griesemer, Hu, Kokke, Lange, Taylor, Toninho, Wadler, Yoshida\newline}
-    \note{- Griesmer, Taylor in Go-Dev Team\newline}
-    \note{- Paper beschäftigt sich mit Erweiterung von Go\newline}
-    \note{===>===>===>===> Programmiersprache Go}
 }
 
 
-% Einführung
-\begin{frame}{Title}
-    123
+
+\begin{frame}{Nebenläufigkeit in Go}
+    \begin{itemize}
+      \item Go-Routine
+      \begin{itemize}
+        \item leichtgewichtiger Thread
+        \item ermöglicht Nebenläufigkeit
+      \end{itemize}
+      \item Mutexe (Locks)
+      \begin{itemize}
+        \item Synchronisationsmechanismus
+        \item Löst das Problem des gegenseitigen Ausschluss
+      \end{itemize}
+      \item Channel
+      \begin{itemize}
+        \item Synchronisationsmechanismus
+        \item Ermöglichen Kommunikation zwischen Routinen
+      \end{itemize}
+    \end{itemize}
     \note{Note}
+\end{frame}
+
+% ============== Mutex ===============
+
+\begin{frame}{Mutex}
+  \lstinputlisting{code/mutex-example.txt}
+\end{frame}
+
+\begin{frame}{RWMutex}
+  \lstinputlisting{code/mutex-rw.txt}
+\end{frame}
+
+\begin{frame}{Mutex: Zyklisches Locking}
+  \lstinputlisting{code/mutex-zyclic.txt}
+\end{frame}
+
+\begin{frame}{Mutex: Doppeltes Locking}
+  \lstinputlisting{code/mutex-double.txt}  
+\end{frame}
+
+% ============== Channel =============
+
+\begin{frame}{Channel - unbuffered}
+  \begin{minipage}{0.49\textwidth}
+    \lstinputlisting{code/channel-un-example.txt}
+  \end{minipage}
+  \hfill
+  \begin{minipage}{0.49\textwidth}
+    \lstinputlisting{code/channel-un-block.txt}
+  \end{minipage}
+\end{frame}
+
+\begin{frame}{Channel - buffered}
+  \lstinputlisting{code/channel-buf-example.txt}
+\end{frame}
+
+\begin{frame}{Channel - close}
+  \begin{itemize}
+    \item Schließt Channel $\Rightarrow$ keine weiter Kommunikation möglich
+    \item Send auf geschlossenem Channel $\Rightarrow$ Laufzeitfehler
+  \end{itemize}
+\end{frame}
+
+% ========== Main =============
+\begin{frame}{Analyse}
+  \begin{itemize}
+    \item Entwicklung und Implementierung eines Detektors zur
+    \begin{itemize}
+      \item Erkennung von problematischen Situationen
+      \item Analyse von problematischen Situationen 
+    \end{itemize}
+  \end{itemize}  
 \end{frame}
 
 

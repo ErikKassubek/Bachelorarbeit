@@ -1,0 +1,16 @@
+func main() {
+  m sync.Mutex
+  n sync.Mutex
+
+  go func() {
+    m.Lock()
+    n.Lock()
+    n.Unlock()
+    m.Unlock()
+  }()
+
+  n.Lock()
+  m.Lock()
+  m.Unlock()
+  n.Unlock()
+}
