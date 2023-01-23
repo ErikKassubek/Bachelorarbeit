@@ -3,49 +3,64 @@ Im folgenden soll der theoretische Hintergrund bezüglich der
 Betrachteten Probleme sowie die theoretische Funktionsweise des 
 Detektors betrachtet werden. 
 
+\section{Routinen}\label{Chap:Back-Sec:Routine}
+Bei Go-Routinen handelt es sich um leichtgewichtige Threads, welche 
+nebenläufig mit anderen Routinen auf dem selben Adressraum laufen~\cite{effectiveGo}.
+Anders als Threads in vielen anderen Programmiersprachen werden sie nicht 
+durch den OS-Kernel, sondern durch die Go-Runtime selber gesteuert.
+Diese besitzt einen eigenen Scheduler, welcher eine Technik namens $m$:$n$-Scheduling 
+verwendet, um durch Multiplexing $m$ Go-Routinen auf $n$ OS-Threads auszuführen.
+Diese Herangehensweise hat den Vorteil, dass dadurch eine bessere Ausführungsgeschwindigkeit 
+erreicht und ein geringerer Speicher benötigt wird. Dadurch ist 
+es möglich, dass tausende oder sogar hunderttausende Routinen gleichzeitig 
+auf einer Routine laufen. Sie erleichtert außerdem 
+die Implementierung von Synchronisations- und Kommunikationsmechanismen.
+
 \section{Mutexe}\label{Chap:Back-Sec:Mutex}
-Mutexe (auch Locks genannt) gehören zu den am weitesten Verbreitenten Mechanismen 
+Mutexe (auch Locks genannt) gehören zu den am weitesten verbreitenten Mechanismen 
 zur Synchronisierung nebenläufiger Programme~\cite{Undead}. Sie bilden 
 eine Lösung für das Problem des kritischen Abschnitts. In solch einem 
 kritischen Abschnitt darf sich immer nur maximal eine Routine gleichzeitig
-aufhalten. Sie werden vor allem verwendet um zu verhinder, dass 
+aufhalten. Solche Abschnitte werden nun mit einem Mutex umschlossen. 
+Sie werden unter anderem verwendet um zu verhindern, dass 
 mehrere Routinen gleichzeitig auf die selbe globale Datenstruktur 
-zugreifen. Solche Abschnitte werden nun mit einem Lock umschlossen. 
-Diese besitzen die folgenden Operationen:
+zugreifen. Mutexe besitzen zwei Zustände, geöffnet und geschlossen, mit denen 
+ihre Verhalten gesteuert wird.
+Sie besitzen dabei die folgenden Operationen:
 \begin{itemize}
   \item Lock: Die Lock-Operation wird vor dem Eintritt in einen kritischen 
-    Bereich aufgerufen. Sie versucht den Mutex zu schließen. Wird es im moment
-    von keiner Routine gehalten, wird der Mutex geschlossen und der kritische
-    Bereich ausgeführt. Wird der Mutex bereits von einer anderen Routine 
-    gehalten, muss die Routine, in welcher die Lock-Operation ausgeführt 
-    worden ist so lange warten, bis der Mutex wieder freigegeben wird und 
-    beansprucht werden kann.
-  \item TryLock: Eine TryLock Operation versucht wie die Lock-Operation 
-    einen Mutex zu beanspruchen. Anders als bei Lock wird die Routine allerdings 
-    nicht blockiert, wenn eine Beanspruchung nicht direkt möglich ist. Es wird 
-    lediglich zurückgegeben, ob die erfolgreich war oder nicht. Ein Programmierer 
+    Bereich aufgerufen. Sie versucht den Mutex zu schließen. Ist es momentan 
+    geöffnet, wird der Mutex geschlossen und der kritische
+    Bereich ausgeführt. Ist der Mutex bereits geschlossen, dann muss 
+    die Routine, in welcher die Lock-Operation ausgeführt 
+    werden soll so lange warten, bis der Mutex wieder geöffnet wird und 
+    geschlossen werden kann.
+  \item TryLock: Eine TryLock Operation versucht, wie die Lock-Operation,
+    einen Mutex zu schließen. Anders als bei Lock wird die Routine allerdings 
+    nicht blockiert, wenn eine Schließung nicht direkt möglich ist. Es wird 
+    lediglich zurückgegeben, ob sie erfolgreich war oder nicht. Ein Programmierer 
     kann in diesem Fall selber entscheiden, wie das Programm weiter ablaufen 
-    soll, ob z.B. der kritische Bereich übersprungen werden soll.
-  \item Unlock: Diese Operation gibt einen gehaltenen Mutex wieder frei. Er k
-    kann nur von der Routine freigegeben werden, welche das Lock momentan
-    hält. Der Versuch ein Lock freizugeben, welches nicht gehalten wird führt 
-    zu einem Laufzeitfehler. 
+    soll, ob also z.B. der kritische Bereich übersprungen werden soll.
+  \item Unlock: Diese Operation öffnet einen geschlossenen Mutex. Der versuch ein 
+    geöffnetes Schloss zu öffnen führt zu einem Laufzeitfehler. 
+    Theoretisch verhalten sich Mutexe in Go wie binäre Semaphore, d.h.~es ist möglich, 
+    dass eine Routine ein 
+    geschlossenes Lock freigibt, obwohl das Lock von einer anderen Routine
+    geschlossen wurde. Da dies allerdings in der Praxis sehr leicht zu einem 
+    unvorhersehbaren Verhalten führen kann, ist es fasst immer üblich, 
+    dass ein Lock immer nur von derjenigen Routine freigegeben werden
+    soll, von der es beansprucht wurde. Im weiteren wird daher angenommen, 
+    dass ein Mutex immer von der Routine geöffnet wird, von welchem es 
+    geschlossen wurde.
 \end{itemize}
 Mutexe können mit (Try)RLock Operationen zu RW-Mutex erweitert werden.
-Dabei kann der selbe Mutex von mehreren Routinen gleichzeitig über 
-(Try)RLock-Operationen beansprucht bzw. gehalten werden. Es ist allerdings 
-nicht, dass ein Mutex gleichzeitig über eine RLock- und eine Lock-Operation 
-gehalten werden. Diese können z.B. verwendet werden, wenn mehrere Routinen 
+Dabei kann der selbe Mutex von mehreren 
+(Try)RLock-Operationen geschlossen werden, ohne dass es zwischenzeitlich
+geöffnet werden muss. Es ist allerdings 
+nicht möglich, dass ein Mutex gleichzeitig über eine RLock- und eine Lock-Operation 
+geschlossen wird. RW-Mutexe können z.B. verwendet werden, wenn mehrere Routinen 
 gleichzeitig lesend auf eine Datenstruktur zugreifen dürfen, allerdings nur, 
-wenn gerade keine Routine schreibend auf die selbe Datenstruktur zugreift.\\\\
-Theoretisch verhalten sich Mutexe in Go wie Semaphore, d.h.~es ist möglich, 
-dass eine Routine ein 
-geschlossenes Lock freigibt, obwohl das Lock von einer anderen Routine
-geschlossen wurde. Da dies allerdings in der Praxis sehr leicht zu einem 
-unvorhersehbaren Verhalten führen kann, ist es fasst immer üblich, 
-dass ein Lock immer nur von derjenigen Routine freigegeben werden
-soll, von der es beansprucht wurde. Für die Erkennung von 
-Problemen wird daher angenommen, das dies immer der Fall ist.
+wenn gerade keine Routine schreibend auf die selbe Datenstruktur zugreift.
 
 
 \section{Channel}\label{Chap:Back-Sec:Chann}
@@ -57,13 +72,13 @@ davon ab, ob es sich um einen gebufferten oder ungebufferten Channel handelt. \\
 Bei einem ungebufferten Channel müssen Send- und Receive-Operation gleichzeitig 
 ablaufen. Möchte eine Routine \texttt{R} Daten auf einem Channel \texttt{c} senden, 
 ist aber keine Routine bereit die Daten von \texttt{c} zu empfangen, 
-dann muss \texttt{R} so lange warten, bis eine andere Routine zu einem 
-Receive-Statement des Channels \texttt{c} kommt. Das selbe gilt auch, wenn 
+dann muss \texttt{R} so lange warten, bis eine andere Routine ein
+Receive-Statement auf dem Channel \texttt{c} ausführt. Das selbe gilt auch, wenn 
 eine Routine an ein Receive-Statement eines Channels kommt auf welchem 
 momentan nicht gesendet wird.\\
 Bei einem gebufferten Channel der Größe $n$ können bis zu $n$ Nachrichten
 zwischengespeichert werden. Dies bedeutet, dass Send und Receive nicht mehr 
-gleichzeitig ablaufen können. Eine Operation muss hierbei nur dann 
+gleichzeitig ablaufen müssen. Eine Routine muss hierbei nur dann 
 vor einer Operation warten, wenn eine Send-Operation auf einem vollen 
 Channel, oder eine Receive-Operation auf einem leeren Channel ausgeführt 
 wird. In allen anderen Fällen kann die Operation die Nachricht in den Buffer 
@@ -74,9 +89,9 @@ dazugehörigen Receive auf dem Channel synchronisiert wird und dass
 das $k$-te Receive auf einem Channel mit Kapazität $C$ vor der Beendigung
 des $k+C$-ten Send auf dem Channel synchronisiert wird~\cite{memModel}.   
 In der Praxis verhält sich der Buffer eines Channels allerdings wie eine FIFO-Queue,
-dass heißt, es wird bei einem Receive immer die ältest in dem
-Buffer vorhandene Nachricht ausgegeben. Für die Implementierung des 
-Detektors wird daher von diesem Verhalten ausgegangen.\\\\
+das heißt, es wird bei einem Receive immer die ältest in dem
+Buffer vorhandene Nachricht ausgegeben. Im Folgenden wird daher immer von diesem 
+Verhalten ausgegangen.\\\\
 Sowohl bei gebufferten als auch bei ungebufferten Channels kann es zu 
 Situationen kommen, in denen mehrere Routinen gleichzeitig auf dem selben 
 Channel auf eine Nachricht warten. Wird nun auf diesem Channel gesendet 
@@ -98,18 +113,121 @@ die Operation, sowie der darunter stehende Block (Print-Statement) ausgeführt.
 Der Default-Case wird ausgeführt, wenn keiner der anderen Cases ausgeführt 
 werden kann. Er ist allerdings nicht notwendig. Besitzt das Select-Statement 
 keinen Default-Case, dann blockiert die Routine so lange, bis einer der Cases 
-ausgeführt werden kann.
+ausgeführt werden kann.\\\\
+Channel können vorzeitig durch eine \texttt{close} Operation geschlossen werden.
+In diesem Fall kann auf diesem Channel nicht mehr gesendet werden. Versucht 
+das Program auf einem geschlossenen Channel zu senden kommt es zu einem 
+Laufzeitfehler und das Programm wird abgebrochen. Versucht das Programm 
+auf einem geschlossenen Channel zu lesen, wir ein Default-Wert zurückgegeben,
+ohne dass die Routine blockiert.
 
-\section{Trace}\label{chap:background-sec:trace}
-\todo{Warum trace?}
-\todo{Gegebenenfalls in Implementierung schieben}
+\section{Probleme}\label{chap:background-sec:trace}
+\subsection{Mutex}\label{Chap:Back-Sec:Prob-SubSec:Mutex}
+Durch die Verwendung von Mutexen in nebenläufigen Programmen kann es 
+zu sogenannten Deadlocks kommen. Blockieren sich dabei mehrere Routinen 
+gegenseitig bezeichnen wir eine solche Situation als zyklisches Locking.
+Abb.~\ref{Chap:Analyze-Sec:Mutex-Fig:Zyclic} zeigt ein Beispiel, in welchem es zu zyklischem 
+Locking kommen kann.
+\begin{figure}[h!]
+  \lstinputlisting{code/zyclic-locking-example.txt}
+  \caption{Beispielprogramm zyklisches Locking}
+  \label{Chap:Analyze-Sec:Mutex-Fig:Zyclic}
+\end{figure}
+Routine 0 und Routine 1 können dabei gleichzeitig ausgeführt werden. Man betrachte den Fall, in dem 
+Zeile 7 und 14 gleichzeitig ausgeführt werden, also Lock \texttt{y} von Routine 0 und Lock \texttt{x} 
+von Routine 1 gehalten wird. In diesem Fall kann in keiner der Routinen die nächste Zeile ausgeführt werden,
+da das jeweilige Locks, welches beansprucht werden soll bereits durch die andere Routine gehalten wird. 
+Da sich diese Situation auch nicht von alleine auflösen kann, blockiert dass Programm, befindet sich also 
+in einem zyklischen Deadlock.\\\\
+Neben zyklischem Locking kann es auch durch doppeltes Locking von Mutexen 
+zu Deadlocks kommen. Ein Beispiel dazu findet sich in 
+Abb.~\ref{Chap:Analyze-Sec:Mutex-Fig:Double}.
+\begin{figure}[h!]
+  \lstinputlisting{code/double-locking-example.txt}
+  \caption{Beispielprogramm doppeltes Locking}
+  \label{Chap:Analyze-Sec:Mutex-Fig:Double}
+\end{figure}
+Der Mutex \texttt{x} soll hierbei mehrfach geschlossen werden, ohne dass 
+es zwischenzeitlich geöffnet wird. In diesem Fall blockiert die Routine
+endlos.\\\\
+In Go terminiert ein Programm, wenn dessen Main-Routine terminiert, unabhängig
+davon, ob andere Routinen noch laufen. Dies bedeutet, dass es nur zu einem 
+``echten'' Deadlock, bei welchem das gesamte Programm blockiert, kommen kann,
+wenn die Main-Routine in der Deadlock-Situation involviert ist. Sind nur 
+Nicht-Main-Routinen an dem Deadlock beteiligt, kann dass Programm dennoch
+terminieren. Man bezeichne Nicht-Main-Routinen, welche sich in einer blockenden 
+Deadlock Situation befinden, als hängende Routinen. Auch wenn diese nicht zu einer 
+nicht-terminierung des Programms führen können, handelt es sich bei ihnen dennoch 
+um ungewolltes Verhalten.
+
+\subsection{Channel}
+Wie Mutexe können auch Channels zu Deadlocks führen. Diese treten auf,
+wenn ein Channel auf eine Send- oder Receive-Operation wartet, ohne dass
+während der Laufzeit des Programms ein Kommunikationspartner für die 
+Operation gefunden wird.
+Man betrachte das Programm in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:ExDangling}.
+\begin{figure}[h!]
+  \lstinputlisting{code/example-dangling-channel.txt}
+  \caption{Beispielprogramm mit hängendem Channel}
+  \label{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:ExDangling}
+\end{figure}
+Es gibt in diesem zwei mögliche Ausführungspfade. Man betrachtet zuerst den Fall, in dem 1 mit 3 synchronisiert. 
+Da eine go-Routine automatisch abgebrochen wird,  
+wenn die Main-Routine terminiert, entsteht hierbei kein ``echter" Deadlock. Anders ist es, wenn 1 mit 2 synchronisiert. 
+In diesem Fall wird die Main-Routine blockiert, ohne dass es eine Möglichkeit gibt, dass sie sich wieder 
+befreit. Es kann also, abhängig davon, ob 1 oder 2 die Nachricht erhält zu einem Deadlock kommen. Was 
+allerdings beide Fälle gemeinsam haben ist, dass sie eine Channel-Operation besitzen, welche zwar 
+gestartet, allerdings nie ausgeführt wird.\\
+Anders als in ungebufferten Kanälen müssen in gepufferten Kanälen Send und 
+Receive einer Nachricht nicht gleichzeitig ablaufen. Hierbei kann es 
+zu Situationen kommen, in dem eine Nachricht zwar erfolgreich gesendet, aber
+nie ausgelesen wird. Man betrachte dazu das Beispiel in 
+Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Buffered-Fig:Ex1}.
+\begin{figure}[h!]
+  \lstinputlisting{code/non-read-message.txt}
+  \caption{Beispielprogramm für nicht gelesenen Nachricht in gepuffertem Channel} 
+  \label{Chap:Analyze-Sec:Channel-SubSec:Buffered-Fig:Ex1}
+\end{figure}
+Es besitzt 2 Send- aber nur eine Receive-Operation. Wäre der Channel nicht 
+gepuffert, und hätte 1 mit 3 synchronisiert, würde 2 blockieren und es 
+würde zu einem Deadlock, bzw. dadurch dass 2 nicht in der Main-Routine liegt
+zu einer hängenden Operation kommen. Dadurch das der Channel allerdings gepuffert ist
+können sowohl 1 als auch 2 senden ohne zu blockieren. Hierbei kann es nur 
+zu einem blockierenden Deadlock kommen, wenn aus einem leeren Channel empfangen wird, 
+ohne dass es irgendwann zu einer sendenden Operation kommt, oder wenn auf 
+einem vollen Channel gesendet werden soll, ohne dass es zu einer Empfangenden
+Operation kommt.\\
+Anders als bei Mutexen, bei denen immer eine Lock-
+und eine Unlock-Operation fest zusammen gehören können Channel-Operationen
+je nach dem wie dass Programm genau anläuft verschieden Kommunikationspartner 
+haben. Die Wahl der Kommunikationspaar kann außerdem, vor allem in Select-Statements
+quasi non-deterministisch ablaufen, was eine Voraussage von Potenziellen 
+Deadlocks deutlich verkompliziert. Aus diesem Grund beschränken wir uns 
+hierbei darauf tatsächlich auftretende Probleme zu erkennen, sie zu analysieren 
+und dann, soweit möglich Hinweise über die Probleme zu liefern, welche die 
+Erkennung und manuelle Beseitigung der Probleme erleichtern.\\\\
+Ein weiterer möglicher kritischer Fehler bei Channels liegt in dem 
+Senden auf einem geschlossenen Channel. Da dies zu einem Abbruch des 
+Programms führen kann. Dies sollte also unter allen Umständen vermieden werden.
+Das Empfangen auf einem geschlossen Channel ist hingegeben kein Problem. 
+
+\section{Detektor}
+Der Detektor basiert auf zwei Schritten. Zuerst wird das Programm 
+durchlaufen. Dabei wird ein Trace aufgezeichnet, welche die relevanten 
+Informationen über den Programmablauf aufzeichnet. Dieser 
+Trace wird im Anschluss analysiert, um Informationen über Probleme 
+in dem Programm zu erhalten. Das ganze wird gegebenenfalls mehrfach wiederholt,
+um eine breitere Abdeckung des Programmcodes zu erreichen.
+
+
+\subsection{Trace}\label{chap:background-sec:trace}
 Um ein Program analysieren zu können, soll der Ablauf eines Programmdurchlaufs
-(Trace) aufgezeichnet werden. Der Aufbau des Trace basiert auf~\cite{PPDP18}. 
+(Trace) aufgezeichnet werden. Der grundlegende Aufbau des Trace basiert auf~\cite{PPDP18}. 
 Er wird aber um Informationen 
 über Locks erweitert. Der Trace wird für jede Routine
 separat aufgezeichnet. Außerdem wird, anders als in~\cite{PPDP18} ein globaler
 Program-Counter für alle Routinen und nicht ein separater Counter für jede 
-Routine verwendet. Dies ermöglicht es bessere Rückschlüsse über den genauen 
+Routine verwendet. Dies ermöglicht es, bessere Rückschlüsse über den genauen 
 Ablauf des Programms zu ziehen.
 Die Syntax des Traces in EBNF gibt sich 
 folgendermaßen:
@@ -191,31 +309,17 @@ Dieser ergibt den folgenden Trace:
   &[wait(6, 4),\ pre(7, y?),\ post(18, 3, y?, 12, 1)]]
 \end{align*}
 Aus diesem lässt sich der relevante Ablauf des Programms rekonstruieren.
-\extend{Tracer}
 
 
+\subsection{Analyze}
+Nach dem das Programm durchlaufen und der Trace aufgezeichnet wurde, 
+wird dieser anschließend Analysiert. Dabei werden für die Erkennung von 
+Problemen mit Mutexen und Channels zwei verschiedene Ansätze verwendet.
 
-
-\section{Probleme und Problemerkennung}\label{Chap:Back-Sec:Prob}
-
-\subsection{Mutex}\label{Chap:Back-Sec:Prob-SubSec:Mutex}
-Durch die Verwendung von Mutexen in nebenläufigen Programmen kann es 
-zu sogenannten Deadlocks kommen. Blockieren sich dabei mehrere Routinen 
-gegenseitig bezeichnen wir eine solche Situation als zyklisches Locking.
-Abb.~\ref{Chap:Analyze-Sec:Mutex-Fig:Zyclic} zeigt ein Beispiel, in welchem es zu zyklischem 
-Locking kommen kann.
-\begin{figure}[h!]
-  \lstinputlisting{code/zyclic-locking-example.txt}
-  \caption{Beispielprogramm zyklisches Locking}
-  \label{Chap:Analyze-Sec:Mutex-Fig:Zyclic}
-\end{figure}
-Routine 0 und Routine 1 können dabei gleichzeitig ausgeführt werden. Man betrachte den Fall, in dem 
-Zeile 7 und 14 gleichzeitig ausgeführt werden, also Lock \texttt{y} von Routine 0 und Lock \texttt{x} 
-von Routine 1 gehalten wird. In diesem Fall kann in keiner der Routinen die nächste Zeile ausgeführt werden,
-da das jeweilige Locks, welches beansprucht werden soll bereits durch die andere Routine gehalten wird. 
-Da sich diese Situation auch nicht von alleine auflösen kann, blockiert dass Programm, befindet sich also 
-in einem zyklischen Deadlock.\\\\
-Da solche Situationen nur in ganz besonderen Situation auftreten (in dem obigen Beispiel müssen Zeilen 
+\subsubsection{Mutexe}
+Man betrachte zuerst die Erkennung von eines zyklischen Locking. 
+Da solche Situationen nur in ganz besonderen Situation auftreten 
+(in Abb.~\ref{Chap:Analyze-Sec:Mutex-Fig:Zyclic} müssen Zeilen 
 7 und 14 genau gleichzeitig ausgeführt werden, ohne dass Zeile 8 oder 15 ausgeführt werden), muss 
 ein Detektor, welcher vor solchen Situationen warnen soll, nicht nur tatsächliche Deadlocks, sondern
 vor allem potenzielle, also nicht tatsächlich aufgetretene Deadlocks erkennen. Die Erkennung der 
@@ -225,7 +329,7 @@ Dabei wird für jede Routine ein Lock-Baum aufgebaut. Jeder in der Routine vorko
 In diesem Baum gibt es nun eine gerichtete Kante von $k_1$ nach $k_2$, wenn 
 $m_1$ das
 von der Routine momentan gehaltene Lock ist, welches zuletzt von der Routine 
-beansprucht worden ist, währen das Lock $m_2$ beansprucht wird~\cite{lock-tree}.
+geschlossen worden ist, währen das Lock $m_2$ schließt~\cite{lock-tree}.
 Ist es nun möglich, Knoten aus verschiedenen Bäumen, welche den selbe
 Mutex repräsentieren so zu verbinden, dass der entstehende Graph einen Zyklus 
 enthält, bedeutet dies, dass in dem Programm zyklisches Locking möglich ist. 
@@ -237,9 +341,9 @@ Man betrachte dazu das Programm in Abb.~\ref{Chap:Analyze-Sec:Mutex-Fig:ZyclicTr
 \end{figure}
 In Abb.~\ref{Chap:Analyze-Sec:Mutex-Fig:ZyclicTreeImg} sind die entsprechenden
 Lock-Bäume, sowie der enthaltene Zyklus graphisch dargestellt. Es sei allerdings 
-festzuhalten, dass besonders bei der Verwendung von RW-Locks nicht jeder 
+festzuhalten, dass besonders bei der Verwendung von RW-Locks ,nicht jeder 
 Zyklus auch direkt zu einem potenziellen Deadlock führen kann. Wie solche 
-false-positives verhinder werde wird in dem Kapitel zur Implementierung
+false-positives verhinder werden können, wird in dem Kapitel zur Implementierung
 des Detektors (\ref{Chap:Implement-Sec:Mutex}) noch genauer betrachtet.
 \begin{figure}[h!]
   \centering
@@ -251,42 +355,16 @@ des Detektors (\ref{Chap:Implement-Sec:Mutex}) noch genauer betrachtet.
 \end{figure}
 
 
-\subsection{Channel}
 
-
-Wie Mutexe können auch Channels zu Deadlocks führen. Diese treten auf,
-wenn ein Channel auf eine Send- oder Receive-Operation wartet, ohne dass
-während der Laufzeit des Programms ein Kommunikationspartner für die 
-Operation gefunden wird. Anders als bei Mutexen, bei denen immer eine Lock-
-und eine Unlock-Operation fest zusammen gehören können Channel-Operationen
-je nach dem wie dass Programm genau anläuft verschieden Kommunikationspartner 
-haben. Die Wahl der Kommunikationspaar kann außerdem, vor allem in Select-Statements
-quasi non-deterministisch ablaufen, was eine Voraussage von Potenziellen 
-Deadlocks deutlich verkompliziert. Aus diesem Grund beschränken wir uns 
-hierbei darauf tatsächlich auftretende Probleme zu erkennen, sie zu analysieren 
-und dann, soweit möglich Hinweise über die Probleme zu liefern, welche die 
-Erkennung und manuelle Beseitigung der Probleme erleichtern.
-
-
-\subsubsection{Ungepufferte Channel}\label{Chap:Analyze-Sec:Channel-SubSec:Dangling}
-Man betrachte das Programm in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:ExDangling}.
-\begin{figure}[h!]
-  \lstinputlisting{code/example-dangling-channel.txt}
-  \caption{Beispielprogramm mit hängendem Channel}
-  \label{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:ExDangling}
-\end{figure}
-Es gibt in diesem zwei mögliche Ausführungspfade. Man betrachtet zuerst den Fall, in dem 1 mit 3 synchronisiert. 
-Da eine go-Routine automatisch abgebrochen wird,  
-wenn die Main-Routine terminiert, entsteht hierbei kein Deadlock. Anders ist es, wenn 1 mit 2 synchronisiert. 
-In diesem Fall wird die Main-Routine blockiert, ohne dass es eine Möglichkeit gibt, dass sie sich wieder 
-befreit. Es kann also, abhängig davon, ob 1 oder 2 die Nachricht erhält zu einem Deadlock kommen. Was 
-allerdings beide Fälle gemeinsam haben ist, dass sie eine Channel-Operation besitzen, welche zwar 
-gestartet, allerdings nie ausgeführt wird.
+\subsubsection{Channel}
+Man betrachte nun die Erkennung von Situationen, in denen eine Channel-Operation
+zwar begonnen, aber nie ausgeführt worden ist. 
 In diesen Fällen gibt es in dem Trace eine Channel-Information, 
 welche ein Pre- aber kein Post-Event besitzt. Solch eine Situation bezeichnen wir als hängenden Channel. 
 Solche hängenden 
 Channel können auf einen potenziellen oder tatsächlich auftretenden Channel hindeuten.
-Es sei allerdings dazu gesagt, dass eine solche hängende Operation nicht immer zu einem Deadlock führen muss.
+Es sei allerdings auch hier dazu gesagt, dass eine solche hängende Operation nicht 
+immer zu einem ``echten'' Deadlock führen muss.
 Man betrachte dazu das Beispiel in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:ExDanglingWithout}.
 \begin{figure}[h!]
   \lstinputlisting{code/example-dangling-without.txt}
@@ -298,7 +376,7 @@ dabei aber die Main-Routine nicht blockiert wird, kommt es nicht zu einem Deadlo
 terminiert, sobald die Main-Routine terminiert. Solch eine Routine bezeichnen wir als leakende Routine.
 Sie führt hierbei nicht zu einem Deadlock, ist aber in der Regel dennoch eine ungewollte Situation.
 Es ist also sinnvoll, auch solche Situationen zu erkennen.\\\\
-Wir sind nun also in der Lage solche Situationen zu erkennen. Um solche Situationen verhindern 
+Es ist also möglich solche Situationen zu erkennen. Um solche Situationen verhindern 
 zu können, ist es sinnvoll, die möglichen Kommunikationspartner für diese 
 Operation zu finden um dem Nutzer bei der Suche und Beseitigung 
 solcher Situationen zu helfen. Für Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:ExDangling}
@@ -402,38 +480,25 @@ hängenden Operation ausgeführt werden und bildet somit einen potenziellen
 Kommunikation. Hierbei wird auch klar, warum es nicht nur ausreicht einen 
 Trace aufzuzeichnen, wenn eine Operation ausgeführt wird. Da für die 
 Post-Vector-Clocks gilt, dass $s_{2, post} \geq r_{post}$, kann allein aus der 
-Post-Vector-Clock nicht auf eine mögliche Kommunikation geschlossen werden.
-
-\subsubsection{Gebufferte Channel}\label{Chan:Analyze-Sec:Channel-SubSec:Buffered}
-Anders als in ungebufferten Kanälen müssen in gepufferten Kanälen Send und 
-Receive einer Nachricht nicht gleichzeitig ablaufen. Hierbei kann es 
-zu Situationen kommen, in dem eine Nachricht zwar erfolgreich gesendet, aber
-nie ausgelesen wird. Man betrachte dazu das Beispiel in 
-Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Buffered-Fig:Ex1}.
-\begin{figure}[h!]
-  \lstinputlisting{code/non-read-message.txt}
-  \caption{Beispielprogramm für nicht gelesenen Nachricht in gepuffertem Channel} 
-  \label{Chap:Analyze-Sec:Channel-SubSec:Buffered-Fig:Ex1}
-\end{figure}
-Es besitzt 2 Send- aber nur eine Receive-Operation. Wäre der Channel nicht 
-gepuffert, und hätte 1 mit 3 synchronisiert, würde 2 blockieren und es 
-würde zu einem Deadlock, bzw. dadurch dass 2 nicht in der Main-Routine liegt
-zu einer hängenden Operation kommen. Dadurch das der Channel allerdings gepuffert ist
-können sowohl 1 als auch 2 senden ohne zu blockieren. Da der Trace somit ein gültiges Post-Event dieser Operation besitzt, 
-wird dieses Problem nicht durch die in 
-Abschnitt~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling} beschriebenen Methode erkannt.
-Solche Situation lassen sich allerdings aus dem Trace einfach erkennen.
+Post-Vector-Clock nicht auf eine mögliche Kommunikation geschlossen werden.\\\\
+In gebufferten Channels ist nicht notwendig, dass Send und Receive gleichzeitig
+ausgeführt werden.
+Da der Trace somit bei einem Send ohne Receive, bzw.~einem Receive ohne gleichzeitigem
+Send ein gültiges Post-Event besitzt, 
+wird dieses Problem nicht direkt erkannt.\\
+Situationen, bei denen eine gesendet Nachricht auf einem Channel 
+nie ausgelesen wird lassen sich allerdings aus dem Trace direkt erkennen.
 Dazu wird der mit Vector-Clocks annotierte Trace durchlaufen. Auf diesem 
 wird nun für jeden Channel gezählt, wie oft erfolgreich gesendet bzw. erfolgreich empfangen 
 wurde (Anzahl der entsprechenden Elemente, bei denen die Post-Vector-Clock 
 nicht max(Int) ist). Ist die Anzahl der erfolgreichen Send größer als 
 die Anzahl der erfolgreichen Receive, bedeutet diese, dass nach Abschluss des 
-Programms auf dem entsprechenden Channel noch nicht gelesene Nachrichten vorhanden sind.\\\\
-In dem Beispiel in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling}
+Programms auf dem entsprechenden Channel noch nicht gelesene Nachrichten vorhanden sind.\\
+In dem Beispiel in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:NoSync}
 wird eine weitere Problematik mit gepufferten Channels deutlich. 
 Betrachtet man nur die Vector-Clock Informationen, dann scheint es, als wären 
 2 und 3 potenzielle Kommunikationspartner. Dies ist allerdings nicht der Fall. 
-In Go sind gepufferte Channels als FIFO Queue implementiert~\cite{chan-impl}. 
+Wir betrachten den Buffer eines Channels als FIFO-queue. 
 Das bedeutet, dass bei einem Receive immer diejenige Nachricht ausgegeben wird, 
 welche bereits am längsten in dem Puffer des Channels gehalten wird. Da 
 1 in dem Beispiel immer vor 2 ausgeführt wird und demnach in 3 immer die 
@@ -442,13 +507,13 @@ und sollte somit auch nicht als solches ausgegeben werden. Um solche Situationen
 zu erkennen, wird in dem Trace für jedes Post-Event gespeichert, die 
 wievielte Send- bzw. Receive-Operation auf diesem Channel bereits erfolgreich 
 ausgeführt worden sind. Bei der Suche nach möglichen Kommunikationspartnern 
-wird nun für gepufferte Channels überprüft, ob die Anzahl der gesendeten 
-Nachrichten in dem Send-Statement mit der Anzahl der empfangenen 
-Nachrichten in dem Receive-Statement übereinstimmt. Da die 
-Send- und Receive-Operation nicht gleichzeitig ausgeführt werden müssen, 
-ist es nicht notwendig die Vector-Clocks zu betrachten.
+wird nun für gepufferte Channels überprüft, ob die Differenz zwischen der 
+Anzahl der gesendeten 
+Nachrichten in dem Send-Statement und der Anzahl der empfangenen 
+Nachrichten in dem Receive-Statement kleiner als die maximale Kapazität
+des Channels ist. 
 
-\subsection{Close}
+\subsubsection{Close}
 Versuch ein geschlossener Channel zu senden kommt es zu einem Laufzeitfehler, 
 welcher in einem Programmabbruch führen kann. Solch eine Situation lässt sich 
 dadurch erkennen, dass eine Close- und eine Send-Operation 
@@ -489,13 +554,6 @@ Ausführungspfade durch die Select-Statements gegebenenfalls gegen unendlich geh
 ist es nicht möglich jede mögliche Kombination von Select-Cases auszuführen.
 Aus diesem Grund sammelt GFuzz während der Ausführung einer Ordnung Informationen 
 über diese, um die Qualität einer Ordnung abzuschätzen. Aus diesen wird 
-über 
-\begin{align}
-  \begin{split}
-    score = &\sum_j \log_2{CountChOpPair_j} + 10 \cdot \# CreateCh \\
-            &+ 10 \cdot \#CloseCh + 10 \cdot \sum_j MaxChBufFull_j
-  \end{split}
-\end{align}
 eine Wertung für die durchlaufenden Ordnung bestimmt, über welche die 
 Anzahl der Mutationen bestimmt werden. Hierbei bezeichnet $CountChOpPair_j$ 
 die Anzahl der neuen Ausführungen von Channel-Operationen pro Channel $j$, $CreateCh$
@@ -510,12 +568,9 @@ erhaltenen Score bezeichnet. Diese $\# newMut$ neuen Mutationen werden nun
 basierend auf der alten erzeugt, in eine Queue eingefügt und anschließend 
 durchlaufen. GFuzz beschränkt sich bei der Erkennung von Bugs auf die Erkennung
 von blockenden Bugs.\\\\
-Die Betrachtung von verschiedenen Pfaden soll nun auch für GoChan 
-\todo{gegebenenfall umbenennen} verwendet werden. Für jeden Durchlauf wird 
-der Trace aufgezeichnet und dieser basierend 
-auf~\ref{Chap:Back-Sec:Prob}
+Die Betrachtung von verschiedenen Pfaden von Select wird auch für GoChan 
+verwendet werden. Für jeden Durchlauf wird 
+der Trace aufgezeichnet und dieser
 analysiert. Die Auswahl der Pfade wird dabei vereinfacht. Anders als 
-in GFuzz basieren Ausführungsordnungen nicht auf schon versuchten Ordnungen, 
+in GFuzz basieren die betrachteten Ausführungsordnungen nicht auf schon versuchten Ordnungen, 
 sondern es wird eine Menge von vollständig zufälligen Ordnungen betrachtet. 
-Die Anzahl der Durchläufe basiert dabei auf der Anzahl der möglichen Pfade.
-Dies wird später (Kap.~\ref{Chap:Inst-Sec:Select}) noch genauer erläutert. 

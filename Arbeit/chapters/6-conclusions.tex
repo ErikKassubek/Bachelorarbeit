@@ -1,2 +1,13 @@
 \chapter{Zusammenfassung}\label{chap:conclusion}
-\todo{Zusammenfassung schreiben}
+Ziel dieser Arbeit war es einen Detektor für von Mutexen 
+und Channels erzeugte Concurrency-Bugs zu entwickeln und zu implementieren.\\
+Der implementierte Detektor vereinigt und erweitert dabei verschiedene Methoden 
+zur Erkennung solcher Probleme. Der Detektor erzeugt dynamisch einen Trace 
+eines vorliegenden Programms, welcher im Anschluss analysiert werden kann.
+Für Deadlocks durch Mutexe werden dabei unter anderem Lock-Bäume verwendet. 
+Für Channel-Operationen wird der Trace mit Vector-Clocks erweitert, 
+durch welche Schlussfolgerungen auf mögliche Kommunikationspartner oder 
+das potenzielle Senden auf geschlossene Channels erkannt werden. 
+Bei der Anwendung auf konstruierte Probleme und tatsächliche Programme 
+ist der so entwickelte Detektor in der Lage etwa $88.5\%$ aller betrachteten 
+Situationen richtig zu kategorisieren. 

@@ -1,0 +1,6 @@
+func main() {
+  var x sync.Mutex
+
+  x.Lock()
+  x.Lock()
+}

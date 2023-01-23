@@ -1,8 +1,13 @@
 \chapter{Instrumentierung}\label{Chap:Instrumenter}
+Um die Analyse eines Programms durchzuführen, wird der Programmcode 
+so verändert, dass die Aufzeichnung der Traces, sowie die Ausführung 
+der Analysen automatisiert abläuft. Um einem Programmcode nicht von Hand 
+verändern zu müssen wurde ein Instrumenter implementiert, welcher dies 
+automatisch durchführt.
 
 \section{Trace}\label{Chap:Instrumenter-Sec:Trace}
-Wie bereits in dem vorherigen Kapitel beschrieben soll, um das 
-Programm analysieren zu können ein Trace aufgezeichnet werden.\\
+Wie bereits beschrieben soll, um das 
+Programm analysieren zu können, ein Trace aufgezeichnet werden.\\
 Anders als in vielen anderen Programmen, welche den Trace von Go-Programmen
 analysieren, wie z.B.~\cite{GoAt2} oder~\cite{GoVis} wird dabei der Tracer 
 selbst implementiert und basiert nicht auf dem Go-Runtime-Tracer~\cite{GoRunTrace}. 

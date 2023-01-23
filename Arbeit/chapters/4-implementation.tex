@@ -20,8 +20,6 @@ Id zuzuordnen wird eine externe Bibliothek GoId~\cite{goid} verwendet.\\
 Auch die Ids für Channels und Mutexes werden durch laufende, atomare Zähler 
 implementiert, welche in den Objekten für Channels und Mutexes gespeichert werden.
 
-\todo{Implementierung: Gegebenenfalls Elemente aus Theoie hierher verschieben }
-
 \section{Mutex} \label{Chap:Implement-Sec:Mutex}
 Um potenzielle Deadlocks durch Mutexe erkennen zu können werden nun, wie in 
 Kap.~\ref{Chap:Back-Sec:Prob-SubSec:Mutex} beschrieben, Lock-Bäume verwendet.
@@ -151,8 +149,7 @@ die Position der Operation im Programmcode
 sowie die Pre- und Post-Vectorclocks der Operation. Eine Close Operation 
 wird dabei dadurch erkannt, dass die Pre- und Post-Vectorclocks übereinstimmen.\\\\
 Bevor der eigentliche VaT erzeugt wird werden erst die Vectorclocks zu allen
-Zeitpunkten bestimmt. Dazu wird für jede Routine wie in 
-Kap.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling} eine Vectorclock initialisiert. 
+Zeitpunkten bestimmt. Dazu wird für jede Routine eine Vectorclock initialisiert. 
 Anschließend werden die Elemente in der Reihenfolge durchlaufen, in der sie 
 in den Trace eingefügt wurden, also aufsteigend sortiert nach dem Timestamp 
 der Trace-Element. Für jeden Zeitpunkt wird nun eine Vectorclock berechnet,
@@ -240,4 +237,10 @@ unvergleichbar, dann nimmt das Programm an, das eine Send-Operation auf
 einen geschlossenen Channel möglich ist, und gibt eine entsprechende 
 Warnung zurück.
 
-\todo{Output}
+\section{Output}
+Da das Programm gegebenenfalls mehrfach analysiert wird ist es möglich, dass 
+die selben Probleme mehrfach erkannt werden. Es ist daher nicht sinnvoll 
+die Informationen direkt nach jedem Durchlauf auszugeben. Daher werden die 
+Fehler gesammelt, und dabei jeweils notiert, bei welchen Durchlaufen die 
+Fehler aufgetreten sind. Nach Abschluss aller Durchläufe werden die 
+gesammelten Fehler vollständig ausgegeben.

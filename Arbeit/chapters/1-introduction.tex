@@ -6,8 +6,7 @@ hat~\cite{ranking}. Ein Fokus der Sprache liegt dabei auf der Erstellung
 sicherer und effizienter nebenläufiger Programme. Go stellt verschiedene 
 Funktionen für die Erstellung solcher nebenläufiger Programme zur Verfügung.
 Die wichtigsten sind dieser Funktionen sind dabei Go-Routinen, Mutexe und 
-Channels.\\Bei Go-Routinen handelt es sich um leichtgewichtige Threads, welche 
-nebenläufig mit anderen Routinen auf dem selben Adressraum laufen~\cite{effectiveGo}.
+Channels.\\Go-Routinen erlauben das nebenläufige Ausführen mehrerer Codeteile.
 Mutexe erlauben die Synchronisation von Routinen, sowie die Lösung des Problems 
 des kritischen Ausschlusses. 
 Channel können ebenfalls für die Synchronisation verwendet werden,
@@ -51,4 +50,5 @@ wie gut er in der Lage ist, Probleme richtig einzusätzen. Für die
 tatsächlichen Programme werden dabei Programme aus GoBench~\cite{gobench}
 verwendet, welche eine Sammlung von Programmen mit Concurrency-Bugs aus 
 mehreren großen open-source Programmen besitzt. Zuletzt werden die 
-Erkenntnisse in Abschnitt~\ref{chap:conclusion} zusammengefasst. 
+Erkenntnisse in Abschnitt~\ref{chap:conclusion} zusammengefasst. Die Implementierung
+der beschriebenen Programme befindet sich in \url{https://github.com/ErikKassubek/GoChan}.
