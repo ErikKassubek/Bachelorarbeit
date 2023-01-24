@@ -1,6 +1,6 @@
 \chapter{Auswertung}\label{Chap:Eval}
-Im folgenden soll betrachtet werden, wie gut der beschriebene Detektor 
-in der Lage ist, Situationen wie in Kap. \ref{chap:introduction} 
+Im Folgenden soll betrachtet werden, wie gut der beschriebene Detektor 
+in der Lage ist, Situationen wie in Kap. \ref{chap:background-sec:Prob}
 beschrieben zu erkennen. Dabei werden sowohl künstlich konstruierte 
 Situationen, als auch tatsächliche Programme betrachtet. Für die Betrachtung 
 tatsächlicher Programme werden Programme aus GoBench bzw. Goker~\cite{gobench}
@@ -13,16 +13,14 @@ Anhang~\ref{Appendix-1}.
 \section{Standardprogramme}
 Für die Analyse wurden insgesammt 35 Standartprobleme betrachtet. 
 Dabei wurde überprüft, ob der Detektor in der Lage ist, das in dem 
-Programm erhaltene Problem richtig zu erkennen, bzw.~zu erkenne wenn 
+Programm erhaltene Problem richtig zu erkennen, bzw.~zu erkennen wenn 
 die vorliegende Situation nicht zu einem Problem führen kann. Eine 
 tabellarische Beschreibung der betrachteten Situationen, sowie der Ergebnisse 
-des Detektors ist in Tab.~\ref{App-Stand} in Anhang~\ref{Appendix-1} aufgeführt.
-Abb.~\ref{Chap:Eval-Sec:Stand-Fig:Total} - \ref{Chap:Eval-Sec:Stand-Fig:Mix}
-zeigen die Ergebnisse der Auswertung.\\\\
+des Detektors ist in Tab.~\ref{App-Stand} in Anhang~\ref{Appendix-1} aufgeführt.\\\\
 Von den 43 Programmen konnten 38 korrekt kategorisiert werden. Dabei 
 bestehen 18 Probleme aus Problemen mit Mutexen,
 18 aus Problemen mit Channel und 7 mit einem 
-Mix aus Mutexen und Channel. Abbildungen~ref{Chap:Eval-Sec:Stand-Fig:Total}
+Mix aus Mutexen und Channel. Abbildungen~\ref{Chap:Eval-Sec:Stand-Fig:Total}
 bis~\ref{Chap:Eval-Sec:Stand-Fig:Mix} geben an, welcher Anteil der 
 Betrachteten Standartprobleme korrekt erkannt wurde.\\\\
 Für Programme, bei denen der Fehler auf die Verwendung von Mutexen 

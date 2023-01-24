@@ -13,7 +13,7 @@ analysieren, wie z.B.~\cite{GoAt2} oder~\cite{GoVis} wird dabei der Tracer
 selbst implementiert und basiert nicht auf dem Go-Runtime-Tracer~\cite{GoRunTrace}. 
 Dies ermöglicht es, den Tracer genau auf die benötigten Informationen zuzuschneiden
 und so einen geringeren negativen Einfluss auf die Laufzeit des Programms zu erreichen.\\\\
-Um diesen Trace zu erzeugen, werden die Standartoperation auf Go durch Elemente
+Um diesen Trace zu erzeugen, werden die Standartobjekte und Operationen auf Go durch Objekte und Operationen 
 des Tracers ersetzt. Die Funktionsweisen dieser Ersetzungen sind im folgenden 
 angegeben. Dabei werden nur solche Ersetzungen angegeben, welche direkt 
 für die Erzeugung
@@ -31,23 +31,24 @@ speichern, zugreifen, werden nicht mit angegeben. Dabei sei $c$ ein
 Zähler, $nR$ ein Zähler für die Anzahl der Routinen, $nM$ ein Zähler für die 
 Anzahl der Mutexe und $nC$ ein Zähler für die Anzahl der Channels. $nM$ und $nC$
 werden bei der Erzeugung eines neuen Mutex bzw. eines neuen Channels atomarisch 
-Inkrementiert. Den erzeugten Elementen wird er neue Wert als $id$ zugeordnet. All diese 
+inkrementiert. Den erzeugten Elementen wird der neue Wert als $id$ zugeordnet. All diese 
 Zähler seien global und zu Beginn als $0$ initialisiert. Außerdem bezeichnet 
 $mu$ einen Mutex, $rmu$ einen RW-Mutex, $ch$ einen Channel und $B$ bzw. $B_i$
 mit $i\in\mathbb{N}$ den 
 Körper einer Operation. Zusätzlich
 sei $id$ die $Id$ der Routine, in der eine Operation ausgeführt wird,
-$[signal(t, i)]^{id}$ bedeute, dass der das entsprechende Element (hier als 
+$[signal(t, i)]^{id}$ bedeute, dass das entsprechende Element (hier als 
 Beispiel $signal(t, i))$, in den Trace der Routine mit id $id$ eingeführt wird
 und $[+]^i$ bedeute, das in die Liste der Traces ein neuer, leerer Trace 
 eingefügt wird, welcher für die Speicherung des Traces der Routine $i$ 
 verwendet wird. 
 $\langle a|b\rangle$ bedeutet, dass ein Wert je nach Situation auf $a$ oder $b$ gesetzt 
-wird. Welcher Wert dabei verwendet wird, ist aus der obigen Beschreibung der 
-Trace-Elemente erkennbar. $\text{e}_1$ bis $\text{e}_n$ bezeichnet die Selektoren in einem Select statement.
+wird. Welcher Wert dabei verwendet wird, ist aus der Beschreibung der 
+Trace-Elemente in~\ref{chap:background-sec:trace} erkennbar. 
+$\text{e}_1$ bis $\text{e}_n$ bezeichnet die Selektoren in einem Select statement.
 $\text{e}_i^*$ bezeichnet dabei einen Identifier für einen Selektor, der sowohl die 
 Id des beteiligten Channels beinhaltet, als auch die Information, ob es sich um ein 
-Send oder Receive handelt und $\text{e}_i^m$ die Message, die in einem Case 
+Send oder Receive handelt. $\text{e}_i^m$ bezeichnet die Nachricht, die in einem Case 
 empfangen wurde. 
 \begin{tabular}{lcl}
   go B & $\Rightarrow$ & nr := atomicInc(nR); ts := atomicInc(c); [ signal(ts, nr) ]$^\text{nr}$;\\
@@ -74,7 +75,7 @@ empfangen wurde.
   rmu.(Try)(R)Lock() & $\Rightarrow$ & ts := atomicInc(c); rmu.(Try)(R)Lock();\\
     & & [ lock(ts, rmu.id, $\langle \text{-|t|r|tr}\rangle$, $\langle \text{0|1}\rangle$) ]$^\text{id}$;\\
   rmu.Unlock() & $\Rightarrow$ & ts := atomicInc(c); rmu.Unlock(); [ unlock(ts, rmu.id) ]$^\text{id}$;
-\end{tabular}
+\end{tabular}\\$ $\\
 Für Receive, Send und Close auf Channels,  allen Operation auf Mutexen sowie 
 der Erzeugung von Strukturen als Ersatz für die eigentlichen Mutexe und Channels 
 sind Funktionen implementiert, welche die Entsprechenden Operationen 
@@ -95,7 +96,7 @@ Neben den Ersetzungen der einzelnen Operationen, werden auch die Select-Statemen
 verändert, um einen der Fälle bevorzugt auswählen zu können, wie in Kap.~\ref{Chap:Back-Sec:Select}.
 beschrieben. Die Implementierung basiert dabei zum größten Teil auf~\cite{gfuzz}.
 Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Select-Fig:GFuzz_Inst} zeigt ein 
-Beispiel für die Instrumentierung eines 
+Beispiel für die Instrumentierung eines Select-Konstrukts.
 \begin{figure}[h!]
   \begin{minipage}[t]{0.3\textwidth}
     \lstinputlisting[xrightmargin=-50pt]{code/gfuzz-select-pre.txt}
@@ -114,24 +115,19 @@ ersetzt. Die Fetch-Order speichert für jede Select-Operation den Index des bevo
 Case. Für eine gewisse, festgelegte Zeit $T$ wird somit nur auf die in der 
 \texttt{Fetch-Order} spezifizierten Operation gewartet. Wird diese in der 
 vorgegebenen Zeit nicht ausgeführt, geht das Programm wieder in die Ausführung
-der ursprünglichen Select-Operation um zu verhindern, dass es zu einem 
-Deadlock kommt, welcher in dem originalen-Code nicht vorgekommen wäre.
-Das selbe gilt auch, wenn für die Select-Operation fälschlicherweise kein 
+der ursprünglichen Select-Operation über um zu verhindern, dass es zu einem 
+Deadlock kommt, welcher in dem originalen Code nicht vorgekommen wäre.
+Dasselbe gilt auch, wenn für die Select-Operation fälschlicherweise kein 
 gültiges Case ausgewählt worden ist. Anders als in~\cite{gfuzz} beschrieben,
 wird für ein Select in dem selben Durchlauf immer der selbe Channel priorisiert, 
 auch wenn die Operation mehrfach durchlaufen wird. Um für jede Ausführung einen
-eigenen Case zu priorisiere, müsste, da die Ordnung bereits vor dem 
+eigenen Case zu priorisieren müsste, da die Ordnung bereits vor dem 
 Durchlauf festgelegt werden soll, der Ablauf des Programms bereits 
-bekannt sein. Dies ist allerdings nur möglich, wenn die Wahl der Cases der 
+bekannt sein oder eine unendliche Anzahl von ausgewählten Cases für jedes Select
+vorhanden sein. Dies ist allerdings nur möglich, wenn die Wahl der Cases der 
 Select-Operationen keine Einfluss auf die Ausführung anderer Select-Cases 
 hat. Dass dadurch nicht alle möglichen Abläufe durchlaufen werden können, 
-muss dabei in kauf genommen werden.
-
-
-
-
-
-
+muss dabei in Kauf genommen werden.
 
 \section{Automatisierter Instrumenter}\label{Chap:Instrumenter-Sec:Instrumenter}
 Um den Trace zu erzeugen, müssen verschiedene Operationen durch Funktionen
@@ -140,8 +136,8 @@ Programmcode ist eine händische Instrumentierung nicht machbar.
 Da sich der Tracer auch negativ auf die Laufzeit des Programms 
 auswirken kann, ist es in vielen Situationen nicht erwünscht, ihn in den 
 eigentlichen Release-Code einzubauen, sondern eher in eine eigenständige 
-Implementierung, welche nur für den Tracer verwendet werden. Um dies zu
-automatisieren wurde ein zusätzliches Programm implementiert, welches in der 
+Implementierung, welche nur für die Analyse verwendet wird. Um dies zu
+automatisieren wurde ein Programm implementiert, welches in der 
 Lage ist, den Tracer in normalen Go-Code einzufügen.\\\\
 
 Der automatische Instrumenter besteht aus zwei Teilen. 
@@ -149,8 +145,8 @@ Zum einen werden alle
 in dem Programm vorhandenen ``.go'' Dateien instrumentiert. 
 Zum anderen 
 wird, basierend auf einem Template, eine neue Main-Datei erzeugt.
-Diese bestimmt die zu durchlaufenden Ordnungen der Select-Operationen 
-und führt diese nacheinander aus. 
+Diese bestimmt die zu durchlaufenden Ordnungen der Select-Operationen,
+führt diese nacheinander aus und konsolidiert die gefundenen Probleme. 
 
 \subsection{Instrumentierung der Dateien}
 Bevor die einzelnen Dateien instrumentiert werden, wird der Ordner mit 
@@ -169,36 +165,40 @@ Der Baum wird insgesamt drei mal durchlaufen.
 \paragraph{1. Durchlauf:} Im ersten Durchlauf wird der Import der 
 GoChan-Bibliothek eingefügt und die Main-Funktion des 
 Programms sowie Channels in Funktionsdeklarationen instrumentiert.
-Zuerst wird in jede Datei der Import der GoChan-Bibliothek eingeführt. In Go 
-müssen alle importierten Bibliotheken verwendet werden. Andernfalls kommt es 
-zu einem Compiling-Error. Um zu verhindern, dass dies bei einer Datei, die weder
-Mutex noch Channel-Operationen besitzt geschieht, wird nach der abgeschlossenen 
-Instrumentierung das ``goimport'' tool aufgerufen, welches nicht verwendete import 
-automatisch entfernt. Die Instrumentierung der Main-Funktion findet nur 
+Zuerst wird in jede Datei der Import der GoChan-Bibliothek eingeführt.
+Die Instrumentierung der Main-Funktion findet nur 
 in der Main-Datei des Programms statt. Dabei wird der goChan-Analyzer initialisiert,
-sowie den Start der Analyze durch eine defer-Statement vorbereitet. In der 
+sowie den Start der Analyse durch eine defer-Statement vorbereitet. In der 
 Initialisierung des Analyzers werden die Datenstrukturen zur Speicherung 
 des Traces erzeugt. Außerdem wird eine zusätzliche Routine mit einem 
-Timer gestartet. Läuft dieser Timer ab (default: 10s), nimmt der Analyzer an, 
+Timer gestartet. Läuft dieser Timer ab (default: 20s), nimmt der Analyzer an, 
 dass es zu einem tatsächlichen Deadlock gekommen ist, und startet die Analyze, 
 auch wenn das Programm noch nicht abgeschlossen ist. In diesem Fall wird das 
-Programm nach der Analyze automatisch abgebrochen. Für Programme, die von 
+Programm nach der Analyse automatisch abgebrochen. Für Programme, die von 
 selbst eine längere Laufzeit haben muss die Dauer des Timers entsprechen 
 angepasst werden. Zusätzlich wird in die Datei mit der Main-Funktion eine 
 globale Variable aufgenommen, welche die FetchOrder für die Select-Case 
 des momentanen Durchlaufs speichert. Anschließend werden in allen Funktionen, 
 welche Channels als Parameter oder Rückgabewerte haben, diese durch die 
-entsprechenden Go-Chan-Objekte ersetzt.
+entsprechenden Go-Chan-Objekte ersetzt. Außerdem wird die Main-Datei um ein 
+globales Objekt zur Speicherung der Fetch-Order, also der bevorzugten Cases 
+für die Select-Cases, erweitert. Dies wird nur getan, wenn das Programm 
+mindestens eine Select besitzt.
+
 \paragraph{2. Durchlauf} Im zweiten Durchlauf werden die restlichen 
 Channel Operationen instrumentiert. Hierbei werden alle Knoten des 
 AST durchlaufen. Beinhaltet dieser eine Channel-Operation (z.B. Erzeugung 
-einses Channels, Send, Receive usw.) wird sie durch die entsprechende 
-Operation aus dem Go-Chan Analyzer ersetzt. Dabei muss beachtet werden,
-dass solche Operationen in den verschiedensten Operationen (z.B. in defer, 
+eines Channels, Send, Receive usw.) wird sie durch die entsprechende 
+Operation aus dem Go-Chan-Tracer ersetzt. Dabei muss beachtet werden,
+dass solche Operationen in den verschiedensten Konstrukten (z.B. in defer, 
 range usw.) enthalten sein können, welche jeweils einzeln betrachtet und 
 ersetzt werden müssen. Der Channel selber wird dabei durch ein Objekt ersetzt, 
-welches den eigentlichen Channel, die Id des Channels, seine Kapazität sowie 
+welches den eigentlichen Channel (allerdings auf Message-Objekt, welche 
+sowohl die eigentliche Nachricht als auch Informationen über den Sender und 
+dessen Zeitstempel besitzt), die Id des Channels, seine Kapazität, 
 die Anzahl der bereits erfolgreich durchgeführten Send und Receive Operationen
+sowie Informationen über die Position der Erzeugung des Channels im Code
+und ein Boolean zur Speicherung ob der Channel geschlossen wurde
 speichert. Die Definition dieses Struct wird, wie die Funktionen auf diesem 
 Objekt durch GoChan definiert.\\\\Auch die Erzeugung von neuen Go-Routinen 
 wird hier instrumentiert. Ein Beispiel zur Instrumentierung der Erzeugung einer 
@@ -217,9 +217,9 @@ neuen Go-Routine findet sich in Abb.~\ref{Chap:Instrumenter-Sec:Instrumenter-Fig
 \texttt{SpawnPre} erzeugt dabei das \texttt{signal} Element in dem Trace 
 und gibt außerdem die Id der erzeugenden Routine zurück, welche in \texttt{SpawnPost}
 für die Erzeugung des \texttt{wait} Elements benötigt wird. Das umschließen 
-des ganzen mit einer weiteren Funktion erleichtert die Implementierung 
+des Ganzen mit einer weiteren Funktion erleichtert die Implementierung 
 des Instrumenters, ist aber nicht unbedingt notwendig.\\\\
-Zusätzlich werden auch die Select-Statements instrumentiert. 
+Zusätzlich werden hier auch die Select-Statements instrumentiert. 
 Zum einen wird hier das Select-Statement wie in~\ref{Chap:Back-Sec:Select} 
 beschrieben durch ein Switch-Statement mit mehreren Select-Statements 
 ersetzt, um einen der Cases zu bevorzugen. 
@@ -245,7 +245,8 @@ Zuerst wird die \texttt{goChan.PreSelect} Funktion aufgerufen, welche das
 Pre-Event in dem Trace erzeugt. Die Parameter dieser Funktion geben an, 
 ob das Select-Statement einen Default-Case besitzt (in diesem Fall false),
 sowie für welche Channels es Cases gibt, und ob es sich bei diesen 
-um Send- oder Receive-Statements handelt. Anders als in dem Original-Code 
+um Send- oder Receive-Statements handelt.\\
+Anders als in dem Original-Code 
 werden in dem instrumentierten Code auf Channels nicht nur die Nachrichten selbst, 
 sondern auch Informationen über die sendende Routine verschickt. Da in einem 
 Select-Case die Channel-Operationen nicht direkt ersetzt werden können, 
@@ -254,17 +255,14 @@ diese Nachrichten erzeugt werden. In dem Beispiel git es einen Case,
 auf den dies Zutrifft. Durch \texttt{sel\_RAjWwhTH := goChan.BuildMessage(1)}
 wird diese erzeugt. \texttt{RAjWwhTH} ist dabei lediglich eine zufällige 
 Zeichenkette, um unterschiedliche Nachrichten voneinander trennen zu können. 
-Anschließend beginnt das switch Statement. \texttt{goChanFetchOrder} ist 
+Anschließend beginnt das Switch-Statement. \texttt{goChanFetchOrder} ist 
 dabei die globale Map, die für jedes Select-Statement den für diesen 
 Durchlauf bevorzugte Case angibt. \texttt{1} ist dabei die Id des 
-select-Cases. Dadurch, dass die Anzahl 
-der möglichen Ids sehr groß gewählt ist und diese dann zufällig zugeteilt 
-werden, ist die Wahrscheinlichkeit verschwindend gering, dass mehrere 
-Select-Cases die selbe Id- erhalten.\\Auf den Cases werden nun normale 
+Select. Auf den Cases werden nun normale 
 Channel-Operationen ausgeführt. Da aber nicht nur die eigentlichen 
 Nachrichten versendet werden, müssen bei Receive-Statements mit anschließendem 
 Assignement die eigentliche Nachricht aus dem Channel extrahiert werden. Außerdem 
-wird bei einem Send-Statement die Nachricht durch die vorher erzeugte ausgetauscht.
+wird bei einem Send-Statement die Nachricht durch die vorher Erzeugte ausgetauscht.
 Innerhalb des Cases wird die \texttt{goChan.Post} Funktion aufgerufen, um wenn 
 der Case ausgewählt wurde das \text{post}-Event in dem Trace zu erzeugen.\\
 Neben der eigentlichen Instrumentierung der Select-Statements werden die Select-
@@ -278,26 +276,35 @@ durch, von dem GoChan-Analyzer zur Verfügung gestellt Funktionen ersetzt,
 welche das eigentliche Locking als auch die Aufzeichnung des Traces übernehmen. 
 Da es hierbei keine speziellen Strukturen wie select o.ä.\ gibt, ist eine 
 einfache direkte Ersetzung der Operationen möglich. Die Objekte, welche die 
-Mutexe dabei ersetzen speichern dabei lediglich den eigentlichen Mutex, welcher 
-das Locking tatsächlich ausführt, sowie die Id des Mutex. Für Mutex und RW-Mutex 
-ist dabei jeweils ein eigenes Objekt definiert.
+Mutexe dabei ersetzen speichern dabei den eigentlichen Mutex, welcher 
+das Locking tatsächlich ausführt, Informationen über die Position der Erzeugung des 
+Mutex im Programmcode sowie die Id des Mutex. Für Mutex und RW-Mutex 
+ist dabei jeweils ein eigenes Objekt definiert.\\\\
+
+In Go 
+müssen alle importierten Bibliotheken verwendet werden. Andernfalls kommt es 
+zu einem Compiling-Error. Um zu verhindern, dass dies bei einer Datei, die weder
+Mutex noch Channel-Operationen besitzt geschieht, wird nach der abgeschlossenen 
+Instrumentierung das ``goimport'' tool aufgerufen, welches nicht verwendete Imports 
+automatisch entfernt.
 
 
 \subsection{Neue Main-Datei}
 Der in~\ref{Chap:Instrumenter-Sec:Instrumenter} erzeugt Code ist nun 
-prinzipiell Lauffähig. Allerdings wird er nur einmal durchlaufen. Aufgrund der 
+unter Angabe der bevorzugten Select-Cases
+prinzipiell lauffähig. Allerdings wird er nur einmal durchlaufen. Aufgrund der 
 Select-Statements soll das Programm nun aber mehrfach, mit verschiedenen 
 Select-Orders durchlaufen werden. Dazu wird eine neue Main-Datei erzeugt, mit 
 welcher das eigentliche Programm gestartet wird. Diese Datei wird über ein 
 Template erzeugt, mit welchem, basierend auf den Aufzeichnungen der instrumentierten 
-Select-Cases die neue Datei erzeugt wird. Zuerst erzeugen wir eine Map, die 
+Select-Cases die neue Datei erzeugt wird. Zuerst wird eine Map erzeugt, welche 
 für jedes Select-Statement die Anzahl der Cases, also die Anzahl der Cases in 
-dem Switch Statements speichert. Anschließend werden die \texttt{FetchOrder}
+dem Switch-Statements speichert. Anschließend werden die \texttt{FetchOrder}
 für die eigentlichen Durchläufe erzeugt. Dazu wird für jedes Select-Statement 
 eine gültige Case-Id zufällig ausgewählt. Der so erzeugte Ablauf wird nun, 
 wenn der selbe Ablauf nicht bereits erzeugt worden ist, gespeichert. 
 Dabei wird gezählt, wie oft ein Ablauf erzeugt worden ist, welcher bereits 
-zuvor erzeugt worden ist. Erreicht dieser Wert einen vorgegebenen maximalwert,
+zuvor erzeugt worden ist. Erreicht dieser Wert einen vorgegebenen Maximalwert,
 dann nimmt das Programm an, dass genug verschiedene Abläufe erzeugt werden. 
 Außerdem kann eine maximale Anzahl an Durchläufen festgelegt werden, um zu 
 verhinder, dass die Dauer der Analyse zu lange wird, wenn sehr viele Select-Statements,
@@ -307,7 +314,7 @@ ausgeführt, wobei die Ordnung als Command-Line-Argument übergeben wird
 (also z.B. \texttt{exec.Command(./Examples/select/select -order="0,1")}, 
 wobei hierbei für das Select mit Id 0 der Case 1 bevorzugt ausgewählt
 wird). Für das Programm wird nun der Trace aufgezeichnet und dieser 
-anschließend analysiert (s. \ref{Chap:Implement}).
+anschließend analysiert.
 
 \todo{Consoliedierng der Ergebnisse}
 
@@ -378,5 +385,5 @@ liegt dabei bei $14 \pm 2\ \%$. Da der Overhead aber linear davon abhängt,
 wie groß der Anteil der Mutex- und Channel-Operationen im Verhältnis zu 
 der Größe bzw. der Laufzeit des gesamten Programms ist, kann dieser Wert abhängig 
 von dem tatsächlichen Programm start schwanken. Dies wird unter anderem klar, wenn man 
-den Overhead für ht-cat ($9 \pm 3\ \%$) und go-dsp ($60\pm 18\ \%$) welche $51 \pm 21$ 
+den Overhead für ht-cat ($9 \pm 3\ \%$) und go-dsp ($60\pm 18\ \%$) betrachtet, welche $51 \pm 21$ 
 Prozentpunkte aufeinander liegen. 

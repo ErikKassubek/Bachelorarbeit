@@ -5,13 +5,15 @@ func main() {
 
 	var v sync.RWMutex 
 
-	go func() {
+	// Routine 1
+
+	go func() {                  // Routine 2
 		v.Lock()
 		x <- 1
 		v.Unlock()
 	}()
-	go func() { y <- 1; <-x }() 
-	go func() { <-y }()         
+	go func() { y <- 1; <-x }()  // Routine 3
+	go func() { <-y }()          // Routine 4  
 
 	select {
 	case <-a:

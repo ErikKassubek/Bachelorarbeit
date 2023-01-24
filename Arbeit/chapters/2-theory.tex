@@ -121,7 +121,7 @@ Laufzeitfehler und das Programm wird abgebrochen. Versucht das Programm
 auf einem geschlossenen Channel zu lesen, wir ein Default-Wert zurückgegeben,
 ohne dass die Routine blockiert.
 
-\section{Probleme}\label{chap:background-sec:trace}
+\section{Probleme}\label{chap:background-sec:Prob}
 \subsection{Mutex}\label{Chap:Back-Sec:Prob-SubSec:Mutex}
 Durch die Verwendung von Mutexen in nebenläufigen Programmen kann es 
 zu sogenannten Deadlocks kommen. Blockieren sich dabei mehrere Routinen 
@@ -228,7 +228,8 @@ Er wird aber um Informationen
 separat aufgezeichnet. Außerdem wird, anders als in~\cite{PPDP18} ein globaler
 Program-Counter für alle Routinen und nicht ein separater Counter für jede 
 Routine verwendet. Dies ermöglicht es, bessere Rückschlüsse über den genauen 
-Ablauf des Programms zu ziehen.
+Ablauf des Programms zu erziehen. Zusätzlich speichert der Trace die Anzahl 
+der schon ausgeführten Send- oder Receive-Operationen für gebufferte Channel.
 Die Syntax des Traces in EBNF gibt sich 
 folgendermaßen:
 \begin{align*}
@@ -299,8 +300,6 @@ Man betrachte als Beispiel das folgende Programm in Go:
   \caption{Beispielprogramm für Tracer}
   \label{Chap:Tracer-Sec:Trace-Fig:Example}
 \end{figure}
-% Erweitert man diesen mit dem Tracer, erhält man folgendes Programm:
-% \lstinputlisting{code/03-tracer/example_code_post.txt}
 Dieser ergibt den folgenden Trace:
 \begin{align*}
   [&[signal(1, 2),\ signal(2, 3),\ signal(3, 4),\ pre(4, a?, default),\ post(5, default)]\\
@@ -310,14 +309,13 @@ Dieser ergibt den folgenden Trace:
 \end{align*}
 Aus diesem lässt sich der relevante Ablauf des Programms rekonstruieren.
 
-
 \subsection{Analyze}
 Nach dem das Programm durchlaufen und der Trace aufgezeichnet wurde, 
-wird dieser anschließend Analysiert. Dabei werden für die Erkennung von 
+wird dieser anschließend analysiert. Dabei werden für die Erkennung von 
 Problemen mit Mutexen und Channels zwei verschiedene Ansätze verwendet.
 
 \subsubsection{Mutexe}
-Man betrachte zuerst die Erkennung von eines zyklischen Locking. 
+Man betrachte zuerst die Erkennung von zyklischem Locking. 
 Da solche Situationen nur in ganz besonderen Situation auftreten 
 (in Abb.~\ref{Chap:Analyze-Sec:Mutex-Fig:Zyclic} müssen Zeilen 
 7 und 14 genau gleichzeitig ausgeführt werden, ohne dass Zeile 8 oder 15 ausgeführt werden), muss 
@@ -329,8 +327,8 @@ Dabei wird für jede Routine ein Lock-Baum aufgebaut. Jeder in der Routine vorko
 In diesem Baum gibt es nun eine gerichtete Kante von $k_1$ nach $k_2$, wenn 
 $m_1$ das
 von der Routine momentan gehaltene Lock ist, welches zuletzt von der Routine 
-geschlossen worden ist, währen das Lock $m_2$ schließt~\cite{lock-tree}.
-Ist es nun möglich, Knoten aus verschiedenen Bäumen, welche den selbe
+geschlossen worden ist, währen das Lock $m_2$ geschlossen wird~\cite{lock-tree}.
+Ist es nun möglich, Knoten aus verschiedenen Bäumen, welche den selben
 Mutex repräsentieren so zu verbinden, dass der entstehende Graph einen Zyklus 
 enthält, bedeutet dies, dass in dem Programm zyklisches Locking möglich ist. 
 Man betrachte dazu das Programm in Abb.~\ref{Chap:Analyze-Sec:Mutex-Fig:ZyclicTreeCode}
@@ -341,10 +339,10 @@ Man betrachte dazu das Programm in Abb.~\ref{Chap:Analyze-Sec:Mutex-Fig:ZyclicTr
 \end{figure}
 In Abb.~\ref{Chap:Analyze-Sec:Mutex-Fig:ZyclicTreeImg} sind die entsprechenden
 Lock-Bäume, sowie der enthaltene Zyklus graphisch dargestellt. Es sei allerdings 
-festzuhalten, dass besonders bei der Verwendung von RW-Locks ,nicht jeder 
+festzuhalten, dass besonders bei der Verwendung von RW-Locks, nicht jeder 
 Zyklus auch direkt zu einem potenziellen Deadlock führen kann. Wie solche 
-false-positives verhinder werden können, wird in dem Kapitel zur Implementierung
-des Detektors (\ref{Chap:Implement-Sec:Mutex}) noch genauer betrachtet.
+False-Positives verhinder werden können, wird in dem Abschnitt zur Implementierung
+des Detektors (Abs.~\ref{Chap:Implement-Sec:Mutex}) noch genauer betrachtet.
 \begin{figure}[h!]
   \centering
   \includegraphics[width=0.5\textwidth]{img/tree_example.eps}
@@ -356,7 +354,7 @@ des Detektors (\ref{Chap:Implement-Sec:Mutex}) noch genauer betrachtet.
 
 
 
-\subsubsection{Channel}
+\subsubsection{Channel}\label{Chap:Theo-Sec:Analyze-SubSec:Channel}
 Man betrachte nun die Erkennung von Situationen, in denen eine Channel-Operation
 zwar begonnen, aber nie ausgeführt worden ist. 
 In diesen Fällen gibt es in dem Trace eine Channel-Information, 
@@ -376,9 +374,9 @@ dabei aber die Main-Routine nicht blockiert wird, kommt es nicht zu einem Deadlo
 terminiert, sobald die Main-Routine terminiert. Solch eine Routine bezeichnen wir als leakende Routine.
 Sie führt hierbei nicht zu einem Deadlock, ist aber in der Regel dennoch eine ungewollte Situation.
 Es ist also sinnvoll, auch solche Situationen zu erkennen.\\\\
-Es ist also möglich solche Situationen zu erkennen. Um solche Situationen verhindern 
+Um solche Situationen verhindern 
 zu können, ist es sinnvoll, die möglichen Kommunikationspartner für diese 
-Operation zu finden um dem Nutzer bei der Suche und Beseitigung 
+Operation zu bestimmen um dem Nutzer bei der Suche und Beseitigung 
 solcher Situationen zu helfen. Für Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:ExDangling}
 soll also angegeben werden können, dass die Send-Operation in 1 sowohl mit 2 als auch mit 3 
 synchronisieren kann. Dabei sei allerdings zu beachten, dass nur weil eine Send- und eine 
@@ -395,7 +393,7 @@ aber nur eine Send-Operation gibt, kommt es zu einem hängenden Channel. Betrach
 Channel \texttt{x} könnte man davon ausgehen, dass 1 nach 2 senden kann, was zu einem Deadlock
 führen würde. Dies ist aber nicht möglich. Da der Channel \texttt{y} in 1 nach \texttt{x} sendet, 
 in 2 allerdings von \texttt{x} empfangen muss, ist eine Synchronisierung auf \texttt{x} von 1 nach 
-2 nicht möglich und die beiden Operationen bilden demnach keine möglichen Kommunikationspartner.\\\\
+2 nicht möglich. Die beiden Operationen bilden demnach keine möglichen Kommunikationspartner.\\\\
 Um mögliche Kommunikationspartner zu erkennen, nicht mögliche Kommunikationspartner wie in 
 Abb~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:NoSync} aber auszuschließen, werden
 Vector-Clocks verwendet. Die grundlegende Idee basiert auf~\cite{PPDP18}.\\
@@ -419,11 +417,11 @@ wird nun mit der lokalen Vector-Clock $vc$ der empfangenden Routine, bzw. der Wa
   \lstinputlisting[frame=none, numbers=none]{code/vector-clock.txt}
 \end{figure}\\
 wobei $n$ die Anzahl der Routinen ist.\\
-Für alle andern Elemente, z.B. Pre usw. wird einfach die lokale Vector-Clock der Routine übernommen, 
-ohne diese zu veränden. Da nun die Vector-Clocks zu jedem Zeitpunk bestimmt wurde, kann jedem 
+Für alle andern Elemente, z.B. Pre usw., wird einfach die lokale Vector-Clock der Routine übernommen, 
+ohne diese zu verändern. Da nun die Vector-Clocks zu jedem Zeitpunk bestimmt wurde, kann jedem 
 Send- und Receive-Trace-Element eine Pre- und eine Post-Vector-Clock zugeordnet werden. 
 Dabei handelt es sich um die Vector-Clocks, die bei Erzeugung des Pre- bzw. Post-Events in 
-der Routine, in der die Operation ausgeführ wurde vorlag. Für hängende Operationen, 
+der Routine, in der die Operation ausgeführt wurde vorlag. Für hängende Operationen, 
 bei denen kein Post-Element existiert, werden alle Werte der Post-Vector-Clock auf 
 max(Int32) gesetzt.
 Man betrachte das Beispiel in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:PorgVC}.
@@ -436,12 +434,13 @@ Man betrachte das Beispiel in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling
 Man betrachte den Fall, in dem 3 mit 4 und dann 1 mit 5 synchronisiert und 2 eine hängende Operation bildet.
 In diesem Fall erhält man folgenden Trace:
 \begin{align*}
-  [&[signal(1, 2), signale(2, 3), pre(1, x?), post(7, 1, x?, 6, 1), pre(8, x?), post(13, 1, x?, 11, 2)]\\
+  [&[signal(1, 2), signal(2, 3), pre(1, x?), post(7, 1, x?, 6, 1), pre(8, x?), post(13, 1, x?, 11, 2)]\\
   &[wait(9, 2), pre(10, x!), post(11, 1, x!, 2), pre(12, 1?)]\\
   &[wait(4, 3), pre(5, 1!), post(6, 2, 1!, 1),]
   ]
 \end{align*}
 Aus diesem Trace lassen sich nun die Vector-Clocks für die einzelnen Channel-Operationen berechnen.
+\todo{Vector clock entwicklung graphisch}
 Diese werden im Folgenden in der Form $^{vc}a^{vc'}$ mit der Pre-Vector-Clock $vc$ und der 
 Post-Vector-Clock $vc'$ und der Channel-Operation $a$. Für Close gilt, 
 dass die Pre-Vectorclock gleich der Post-Vectorclock ist. Andere Elemente 
@@ -464,12 +463,12 @@ unvergleichbar, sind sie unabhängig und können somit gleichzeitig auftreten.
 Man erkennt also zwei Operationen, welche eine mögliche Kommunikation durchführen 
 können daran, dass sie auf dem selben Channel definiert sind, eine Send-
 und eine Receive-Operation definieren und dass 
-entweder ihre Pre- oder Vector-Clock (oder beide) unvergleichbar sind.
+ ihre Pre- oder Vector-Clocks unvergleichbar sind.
 Um alternative Kommunikationspartner für hängende Kanäle zu finden, werden also
 die Pre- und Post-Vector-Clocks der Channels mit dem selben Channel verglichen.\\
 Man betrachte die hängende Receive-Operation in dem obigen Beispiel. Es gibt 
 in dem Programm 2 Send-Operationen, welche als Kommunikationspartner für 
-die hängende Operation $r$ in frage kommen. Vergleicht man die Vector-Clocks der 
+die hängende Operation $r$ in Frage kommen. Vergleicht man die Vector-Clocks der 
 Send-Operationen mit denen der hängenden Operation wird aber klar, dass nur 
 eine der beiden Operationen tatsächlich möglich ist. Für die Send-Operation 
 in der 2. Routine (der selben wie die hängende Operation) $s_1$ gilt 
@@ -480,14 +479,14 @@ hängenden Operation ausgeführt werden und bildet somit einen potenziellen
 Kommunikation. Hierbei wird auch klar, warum es nicht nur ausreicht einen 
 Trace aufzuzeichnen, wenn eine Operation ausgeführt wird. Da für die 
 Post-Vector-Clocks gilt, dass $s_{2, post} \geq r_{post}$, kann allein aus der 
-Post-Vector-Clock nicht auf eine mögliche Kommunikation geschlossen werden.\\\\
+Post-Vector-Clock nicht auf eine mögliche oder unmögliche Kommunikation geschlossen werden.\\\\
 In gebufferten Channels ist nicht notwendig, dass Send und Receive gleichzeitig
 ausgeführt werden.
 Da der Trace somit bei einem Send ohne Receive, bzw.~einem Receive ohne gleichzeitigem
 Send ein gültiges Post-Event besitzt, 
 wird dieses Problem nicht direkt erkannt.\\
-Situationen, bei denen eine gesendet Nachricht auf einem Channel 
-nie ausgelesen wird lassen sich allerdings aus dem Trace direkt erkennen.
+Situationen, bei denen gesendet Nachrichten auf einem Channel 
+nie ausgelesen werden, lassen sich aus dem Trace erkennen.
 Dazu wird der mit Vector-Clocks annotierte Trace durchlaufen. Auf diesem 
 wird nun für jeden Channel gezählt, wie oft erfolgreich gesendet bzw. erfolgreich empfangen 
 wurde (Anzahl der entsprechenden Elemente, bei denen die Post-Vector-Clock 
@@ -511,12 +510,13 @@ wird nun für gepufferte Channels überprüft, ob die Differenz zwischen der
 Anzahl der gesendeten 
 Nachrichten in dem Send-Statement und der Anzahl der empfangenen 
 Nachrichten in dem Receive-Statement kleiner als die maximale Kapazität
-des Channels ist. 
+des Channels ist. In diesem Fall wird davon ausgegangen, dass die beiden 
+Operationen gültige Kommunikationspartner bilden.
 
 \subsubsection{Close}
-Versuch ein geschlossener Channel zu senden kommt es zu einem Laufzeitfehler, 
-welcher in einem Programmabbruch führen kann. Solch eine Situation lässt sich 
-dadurch erkennen, dass eine Close- und eine Send-Operation 
+Versuch ein Programm auf einem geschlossenen Channel zu senden kommt es zu einem Laufzeitfehler, 
+welcher in einem Programmabbruch führt. Solch eine Situation lässt sich 
+dadurch erkennen, dass eine Close- und eine Send-Operation auf dem selben Channel
 gleichzeitig ablaufen können, dass also die Pre- oder Post-Vectorclock 
 der Send-Operation unvergleichbar mit der Vectorclock der Close-Operation 
 ist. Situationen, bei denen die Vectorclocks der Send-Operation streng später 
@@ -530,19 +530,14 @@ auf welchen Channels Nachrichten gesendet werden unterschiedliche Programmteile
 auszuführen. Dies erschwert die Analyse des Programs, da der 
 tatsächliche Programmablauf dabei praktisch nicht-deterministisch werden 
 kann~\cite{select-spec}. Da der aufgezeichnete Trace immer nur einen 
-Programmablauf widerspiegelt, führt dies zu Problemen, da 
+Programmablauf betrachtet, führt dies zu Problemen, da 
 nicht betrachtete Ausführungspfade zu Deadlocks oder anderen Problemen 
 führen können. Eine Möglichkeit besteht darin, das Programm mehrfach auszuführen, 
-und dabei immer unterschiedliche Select-Cases zu erzwingen. Dies ist der Ansatz,
-welcher für den GFuzz-Detektor~\cite{gfuzz} gewählt wurde. Dazu werden die 
+und dabei immer unterschiedliche Select-Cases zu erzwingen. Ein solcher 
+Ansatz wird unter anderem in~\cite{gfuzz} verwendet. Dazu werden die 
 Select-Statements in dem Programmcode so verändert, dass aus den vorhandenen 
-Cases eines gezielt ausgewählt werden kann.
-Durch die Switch-Operation lässt sich einer der Fälle in der ursprünglichen 
-Select-Operation auswählen, welche bevorzugt ausgeführt werden soll. Nur 
-wenn dieser innerhalb einer voreingestellten Zeit nicht ausgeführt wird, 
-wird die ursprüngliche Select-Operation vollständig ausgeführt um zu verhindern, 
-dass es durch diese Instrumentierung zu einem Deadlock kommt, welche ohne 
-sie nicht aufgetreten wäre. Der Ablauf eines Programms bezüglich seiner 
+Cases eines gezielt bevorzugt werden kann.
+Der Ablauf eines Programms bezüglich seiner 
 Select-Statements kann nun als Liste von Tupeln 
 $[(s_0, c_0, e_0), \ldots, (s_n, c_n, e_n)]$ dargestellt werden. Dabei 
 bezeichnet $s_i (0 \leq i \leq n)$ die ID einer Select-Operation, $c_i$ 
@@ -555,22 +550,14 @@ ist es nicht möglich jede mögliche Kombination von Select-Cases auszuführen.
 Aus diesem Grund sammelt GFuzz während der Ausführung einer Ordnung Informationen 
 über diese, um die Qualität einer Ordnung abzuschätzen. Aus diesen wird 
 eine Wertung für die durchlaufenden Ordnung bestimmt, über welche die 
-Anzahl der Mutationen bestimmt werden. Hierbei bezeichnet $CountChOpPair_j$ 
-die Anzahl der neuen Ausführungen von Channel-Operationen pro Channel $j$, $CreateCh$
-die Anzahl der neu erzeugten Channels, $CloseCh$ die Anzahl der neu geschlossenen 
-Channels und $MaxChBufFull_j$ die neue maximale Anzahl an 
-gepufferten Nachrichten in jedem Channel $j$. Neu bedeutet hierbei, dass die
-entsprechende Operation noch nicht, auch nicht in vorherigen Durchläufen, 
-aufgetreten ist. Die Anzahl der Mutationen 
-einer Ordnung gibt sich nun als $\# nuwMut = \lceil 5 \cdot \nicefrac{score}{maxScode} \rceil$, 
-wobei $score$ den Score der Ordnung und $maxScore$ den bisher maximal 
-erhaltenen Score bezeichnet. Diese $\# newMut$ neuen Mutationen werden nun 
-basierend auf der alten erzeugt, in eine Queue eingefügt und anschließend 
-durchlaufen. GFuzz beschränkt sich bei der Erkennung von Bugs auf die Erkennung
-von blockenden Bugs.\\\\
+Anzahl der Mutationen bestimmt werden. \\\\
 Die Betrachtung von verschiedenen Pfaden von Select wird auch für GoChan 
-verwendet werden. Für jeden Durchlauf wird 
+verwendet. Für jeden Durchlauf wird 
 der Trace aufgezeichnet und dieser
 analysiert. Die Auswahl der Pfade wird dabei vereinfacht. Anders als 
-in GFuzz basieren die betrachteten Ausführungsordnungen nicht auf schon versuchten Ordnungen, 
-sondern es wird eine Menge von vollständig zufälligen Ordnungen betrachtet. 
+in GFuzz basieren die betrachteten Ausführungsordnungen nicht auf schon versuchten Ordnungen,
+sondern es wird eine Menge von vollständig zufälligen Ordnungen betrachtet.
+Die Sammlung von Informationen über die einzelnen Abläufe bedeutet einen 
+deutlichen Mehraufwand, sowohl bei der Implementierung, als auch bei der eigentlichen 
+Bestimmung der für die Abschätzung benötigten Werte. Da der Nutzen dabei eher gering ist,
+wird darauf verzichtet.

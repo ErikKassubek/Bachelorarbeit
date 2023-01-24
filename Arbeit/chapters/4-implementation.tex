@@ -24,8 +24,8 @@ implementiert, welche in den Objekten für Channels und Mutexes gespeichert werd
 Um potenzielle Deadlocks durch Mutexe erkennen zu können werden nun, wie in 
 Kap.~\ref{Chap:Back-Sec:Prob-SubSec:Mutex} beschrieben, Lock-Bäume verwendet.
 Diese werden basierend auf dem aufgezeichneten Trace aufgebaut. Dazu werden die Traces der 
-einzelnen Routinen nacheinander durchlaufen. Für jede Routine erzeugen wir eine Liste \texttt{currentLocks} aller 
-Locks, die momentan von der Routine gehalten werden. Die einzelnen Elemente des Trace einer 
+einzelnen Routinen nacheinander durchlaufen. Für jede Routine wird eine Liste \texttt{currentLocks} aller 
+Locks erzeugt, die momentan von der Routine gehalten werden. Die einzelnen Elemente des Trace einer 
 Routine werden nun durchlaufen. Handelt es sich dabei um ein Lock Event eines Locks \texttt{x}, 
 wird eine s.g. \texttt{dependendency} erzeugt und gespeichert. Diese beinhaltet 
 das Lock \texttt{x} sowie eine Liste aller von der Routine momentan gehaltenen 
@@ -125,9 +125,9 @@ Problemen läuft in mehreren Schritten ab. Zuerst werden die Vectorclock-Informa
 der einzelnen Operationen bestimmt und mit diesen ein Vectorclock-Annotated-Trace 
 (VaT) erzeugt. Anschließend wird nach hängenden Events (pre ohne post) und 
 nicht-leere Channels, also gebufferte Channels, welche bei Terminierung 
-des Programms noch Nachrichten in ihrem Buffer beinhalten gesucht. 
+des Programms noch Nachrichten in ihrem Buffer beinhalten, gesucht. 
 Werden solche Probleme entdeckt, bestimmt der Analyzer mögliche andere 
-Kommunikationspartner für Send-Operationen auf Channels. Zum Schluss 
+Kommunikationspartner für Send- und Receive-Operationen auf Channels. Zum Schluss 
 wird noch nach Situationen gesucht, bei denen es zu einem Send auf einen 
 geschlossenen Channel kommen kann, da solche Situationen zu Laufzeitfehlern 
 führen, welche den Abbruch eines Programms zur Folge haben.
@@ -135,7 +135,7 @@ Receives auf geschlossenen Channels werden nicht betrachtet, da diese
 lediglich einen Null-Wert zurückgeben und nicht blocken, somit also nicht 
 zu Laufzeitfehlern führen. 
 
-\paragraph{Bestimmung der Vectorclocks}
+\paragraph{Bestimmung der Vectorclocks und hängenden Events}
 Basierend auf dem aufgezeichneten Trace soll nun ein Vectorclock annotierter Trace 
 (VaT) erzeugt werden. Dieser besteht aus einer Reihe von \texttt{vcn}'s, 
 welche jeweils eine Send-, Receive- oder Close-Operation repräsentieren.
@@ -152,13 +152,13 @@ Bevor der eigentliche VaT erzeugt wird werden erst die Vectorclocks zu allen
 Zeitpunkten bestimmt. Dazu wird für jede Routine eine Vectorclock initialisiert. 
 Anschließend werden die Elemente in der Reihenfolge durchlaufen, in der sie 
 in den Trace eingefügt wurden, also aufsteigend sortiert nach dem Timestamp 
-der Trace-Element. Für jeden Zeitpunkt wird nun eine Vectorclock berechnet,
+der Trace-Elemente. Für jeden Zeitpunkt wird nun eine Vectorclock berechnet,
 wobei für jeden Timestamp immer diejenige Vectorclock gespeichert wird, die 
 der Vectorclock entspricht, auf welcher die entsprechende Operation ausgeführt wurde.
 Für die Berechnung der Vectorclocks werden signal-wait Paare wie das Senden 
 einer Nachricht von signal nach wait betrachtet.\\
 Für send (post) und Signal bzw. Receive (post) und Wait werden nun die Vectorclocks 
-wie in Kap.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling} beschrieben aktualisiert.
+aktualisiert.
 Für Send und Signal wird lediglich der eigene Timestamp in der eigenen 
 Vectorclock um eins erhöht. Für die Aktualisierung bei einem Receive oder Wait 
 wird die Vectorclock zur Zeit von Send oder Signal benötigt. Da diese in jedem 
@@ -183,22 +183,12 @@ Zeitstempel der Pre- und Post-Elemente aus der Liste der Vectorclocks
 Wird kein Post-Element gefunden, handelt es sich also um ein hängendes Event, 
 wird die Pre-Vectorclock auf die Vectorclock des Pre-Events und alle Elemente 
 der Post-Vectorclock auf \texttt{maxInt}, als den maximal möglichen Wert 
-gesetzt. 
+gesetzt. In diesem Fall wird der entsprechende Channel außerdem in die Liste der
+hängenden Channels aufgenommen. 
 \\
-Für Close-Elemente gibt es keine nur ein Element in dem Trace. Aus diesem Grund 
+Für Close-Elemente gibt es nur ein Element in dem Trace. Aus diesem Grund 
 besitzt das Element nur eine Vectorclock. Pre- und Post-Vectorclock werden 
 dabei auf die gleiche Vectorclock gesetzt.
-
-\paragraph{Suche nach hängenden Events} Die Suche nach hängenden Events 
-wird auf dem ursprünglichen Trace ausgeführt. Dazu wird der Trace jeder einzelnen 
-Routine durchlaufen. Für Pre- und PreSelect-Event wird dabei überprüft, ob 
-ein entsprechendes Post-Event existiert. Ein Element gilt dabei als 
-entsprechendes Post-Event, wenn es sich nach dem Pre- oder PreSelect-Event 
-befindet und dabei auf dem selben Channel und der selben Operation (Send oder 
-Receive) arbeitet. Wird eine solche Situation gefunden, wird eine 
-Nachricht, welche die Situation beschreibt zwischengespeichert
-und nach dem Durchlaufen aller Routinen die Liste der gefundenen 
-Situationen zurückgegeben.
 
 \paragraph{Suche nach nicht-leeren Channels} 
 Um nicht-leere Channels, also gebufferte Channels, bei denen nicht alle 
@@ -213,20 +203,20 @@ Programms noch ungelesene Nachrichten in dem Channel befanden.
 Für jeden dieser Fälle wird eine entsprechende Nachricht zurückgegeben. 
 
 \paragraph{Suche nach potenziellen Kommunikationspartnern}
-Zur Suche nach alternativen Kommunikationspartner werden Kombinationen
+Zur Suche nach alternativen Kommunikationspartner werden alle Kombinationen
 von zwei Elementen in dem VaT betrachtet. Dabei werden all diejenigen 
 Elemente verglichen, bei welchen beide Operationen auf dem selben Channel 
 ausgeführt werden und eines der 
 Elemente ein Send- und das andere eine Receive-Operation ist. Zwei Operationen
 werden als potenzielle Kommunikationspartner angesehen, wenn der Channel 
-ungebuffert ist und entweder die Pre- oder die Vectorclocks der beiden 
+ungebuffert ist und die Pre- oder die Vectorclocks der beiden 
 Operationen unvergleichbar sind, oder wenn der Channel gebuffert ist
 Anzahl der Send-Operationen der Anzahl der Receive-Operationen auf dem Channel 
 entspricht. Für den gebufferten Channel müssen Send- und Receive nicht 
 gleichzeitig ausgeführt werden. Aus diesem Grund müssen die Vectorclocks 
-nicht unvergleichbar sein. Allerdings sind gebufferte Channel als FIFO-Queue 
-implementiert. Die $n$-te Receive-Operation erhält also die Nachricht der 
-$n$-ten Send-Operation.
+nicht unvergleichbar sein. 
+\todo{Kommunikationspartner für gebufferte Channelt}
+\todo{Nachricht wird erzeugt}
 
 \paragraph{Senden auf geschlossenen Channel}
 Für die Suche nach Situationen, die dazu führen können, dass auf einem 
@@ -235,12 +225,17 @@ Trace vorhandenen Close-Operationen mit den Vectorclocks aller Send-Operationen
 auf dem selben Channel verglichen. Ist mindestens eine der beiden Vectorclocks 
 unvergleichbar, dann nimmt das Programm an, das eine Send-Operation auf 
 einen geschlossenen Channel möglich ist, und gibt eine entsprechende 
-Warnung zurück.
+Warnung zurück. Es kommt auch zu einem Send auf einem geschlossenen Channel, 
+wenn die Vectorclock der Close-Operation streng vor den Vectorclocks 
+der Send-Operation sind. In diesem Fall kommt es aber in jedem Fall zu einem 
+Send auf einen geschlossenen Channel und damit zu einem Laufzeitfehler, 
+welcher durch den Detektor aufgefangen und erkannt wird.
 
 \section{Output}
 Da das Programm gegebenenfalls mehrfach analysiert wird ist es möglich, dass 
 die selben Probleme mehrfach erkannt werden. Es ist daher nicht sinnvoll 
 die Informationen direkt nach jedem Durchlauf auszugeben. Daher werden die 
-Fehler gesammelt, und dabei jeweils notiert, bei welchen Durchlaufen die 
+Fehler gesammelt, und dabei jeweils gespeichert, bei welchen Durchlaufen die 
 Fehler aufgetreten sind. Nach Abschluss aller Durchläufe werden die 
 gesammelten Fehler vollständig ausgegeben.
+\todo{Beispiel zu Ausgabe zu show mit selece}
