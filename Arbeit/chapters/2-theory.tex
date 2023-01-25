@@ -122,6 +122,7 @@ auf einem geschlossenen Channel zu lesen, wir ein Default-Wert zurückgegeben,
 ohne dass die Routine blockiert.
 
 \section{Probleme}\label{chap:background-sec:Prob}
+
 \subsection{Mutex}\label{Chap:Back-Sec:Prob-SubSec:Mutex}
 Durch die Verwendung von Mutexen in nebenläufigen Programmen kann es 
 zu sogenannten Deadlocks kommen. Blockieren sich dabei mehrere Routinen 
@@ -493,25 +494,43 @@ wurde (Anzahl der entsprechenden Elemente, bei denen die Post-Vector-Clock
 nicht max(Int) ist). Ist die Anzahl der erfolgreichen Send größer als 
 die Anzahl der erfolgreichen Receive, bedeutet diese, dass nach Abschluss des 
 Programms auf dem entsprechenden Channel noch nicht gelesene Nachrichten vorhanden sind.\\
-In dem Beispiel in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:NoSync}
-wird eine weitere Problematik mit gepufferten Channels deutlich. 
-Betrachtet man nur die Vector-Clock Informationen, dann scheint es, als wären 
-2 und 3 potenzielle Kommunikationspartner. Dies ist allerdings nicht der Fall. 
-Wir betrachten den Buffer eines Channels als FIFO-queue. 
-Das bedeutet, dass bei einem Receive immer diejenige Nachricht ausgegeben wird, 
-welche bereits am längsten in dem Puffer des Channels gehalten wird. Da 
-1 in dem Beispiel immer vor 2 ausgeführt wird und demnach in 3 immer die 
-Nachricht aus 1 empfangen wird, bilden 2 und 3 kein mögliches Kommunikationspaar
-und sollte somit auch nicht als solches ausgegeben werden. Um solche Situationen 
-zu erkennen, wird in dem Trace für jedes Post-Event gespeichert, die 
-wievielte Send- bzw. Receive-Operation auf diesem Channel bereits erfolgreich 
-ausgeführt worden sind. Bei der Suche nach möglichen Kommunikationspartnern 
-wird nun für gepufferte Channels überprüft, ob die Differenz zwischen der 
-Anzahl der gesendeten 
-Nachrichten in dem Send-Statement und der Anzahl der empfangenen 
-Nachrichten in dem Receive-Statement kleiner als die maximale Kapazität
-des Channels ist. In diesem Fall wird davon ausgegangen, dass die beiden 
-Operationen gültige Kommunikationspartner bilden.
+\begin{figure}[h!]
+  \centering
+  \lstinputlisting{code/buffered_not_possible.txt}
+  \caption{Beispielprogramm für die Betrachtung der Vector-Clocks}
+  \label{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:BufferedNoSync}
+\end{figure}
+Theoretisch ist es einem gebufferten Channel möglich bei einem Send mit 
+jedem Receive auf dem selben Channel zu kommunizieren, welches nicht 
+streng vor dem Send ausgeführt werden muss. In der Praxis geben sich allerdings 
+Situationen in welchen eine Synchronisation zwischen Send- und Receive nicht 
+möglich ist. Man betrachte dazu das Beispiel in 
+Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:BufferedNoSync}.
+Auf den ersten Blick scheint es möglich, dass alle Send (1-4) mit allen 
+Receive (5-9) kommunizieren könnten. Dies ist aber nicht der Fall.
+Angenommen 1 und 2 senden, bevor es zu einem Receive kommt. Da gebufferte 
+Channel in der Praxis wie FIFO Queue funktionieren, kann 2 nicht mit 5 
+Synchronisieren, da bei dem Receive auf 5 zuerst der Wert aus 1 empfangen 
+werden würde. Um bestimmen zu können, auf welchen Operationen eines 
+gebufferten Channel tatsächlich das eine Kommunikation möglich ist, 
+werden für jedes Paar von Send-Receive Operationen die folgenden Werte aus 
+dem VAT bestimmt: 
+\begin{itemize}
+  \item $S_p$: Anzahl der Send Operationen, vor der betrachteten Send-Operation 
+    in der selben Routine ausgeführt werden,
+  \item $S_u$: Anzahl der Send-Operationen, welche unvergleichbar mit der 
+    betrachteten Send-Operation sind,
+  \item $R_p$: Anzahl der Receive Operationen, vor der betrachteten Receive-Operation 
+    in der selben Routine ausgeführt werden,
+  \item $R_u$: Anzahl der Receive-Operationen, welche unvergleichbar mit der 
+    betrachteten Receive-Operation sind.
+\end{itemize}
+Ein Paar von Send-Receive Operationen werden nun genau dann als mögliche 
+Kommunikationspartner gesehen, wenn 
+\begin{align}
+  S_p &\leq R_p - R_u  \label{Form:1}\\
+  \text{und }\qquad S_p +  S_u &\geq R_p + R_u \label{Form:2}
+\end{align}
 
 \subsubsection{Close}
 Versuch ein Programm auf einem geschlossenen Channel zu senden kommt es zu einem Laufzeitfehler, 

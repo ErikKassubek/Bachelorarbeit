@@ -203,18 +203,28 @@ Programms noch ungelesene Nachrichten in dem Channel befanden.
 Für jeden dieser Fälle wird eine entsprechende Nachricht zurückgegeben. 
 
 \paragraph{Suche nach potenziellen Kommunikationspartnern}
-Zur Suche nach alternativen Kommunikationspartner werden alle Kombinationen
+Zur Suche nach alternativen Kommunikationspartner von ungebufferten Channels
+werden alle Kombinationen
 von zwei Elementen in dem VaT betrachtet. Dabei werden all diejenigen 
 Elemente verglichen, bei welchen beide Operationen auf dem selben Channel 
 ausgeführt werden und eines der 
 Elemente ein Send- und das andere eine Receive-Operation ist. Zwei Operationen
-werden als potenzielle Kommunikationspartner angesehen, wenn der Channel 
-ungebuffert ist und die Pre- oder die Vectorclocks der beiden 
-Operationen unvergleichbar sind, oder wenn der Channel gebuffert ist
-Anzahl der Send-Operationen der Anzahl der Receive-Operationen auf dem Channel 
-entspricht. Für den gebufferten Channel müssen Send- und Receive nicht 
+werden als potenzielle Kommunikationspartner angesehen, wenn die Pre- oder
+Vectorclocks der beiden 
+Operationen unvergleichbar sind.\\
+Für den gebufferten Channel müssen Send- und Receive nicht 
 gleichzeitig ausgeführt werden. Aus diesem Grund müssen die Vectorclocks 
-nicht unvergleichbar sein. 
+nicht unvergleichbar sein. Um mögliche Kommunikationspartner zu erkennen 
+wird daher vor der Betrachtung aller möglicher Kombination
+die in Abschnitt \ref{Chap:Theo-Sec:Analyze-SubSec:Channel} beschriebenen 
+Werten für jedes Element in dem VAT ermittelt und in dem VAT-Element abgespeichert.
+Bei dem Vergleich wird bei gebufferten Channels nun überprüft, 
+ob Die Formeln \eqref{Form:1} und \eqref{Form:2} aus \ref{Chap:Theo-Sec:Analyze-SubSec:Channel}
+erfüllt sind. In diesem Fall wird angenommen, dass die beiden Operationen 
+theoretisch miteinander Kommunizieren können.\\
+Anschließend wird für alle Send-Operationen eine Nachricht erzeugt, 
+welche die Send-Operation und alle möglichen Recive-Operationen enthält und 
+diese anschließend zurückgegeben.
 \todo{Kommunikationspartner für gebufferte Channelt}
 \todo{Nachricht wird erzeugt}
 
