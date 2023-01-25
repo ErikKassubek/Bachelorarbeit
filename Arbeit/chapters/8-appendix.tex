@@ -113,3 +113,62 @@
   und Nein, das das Problem nicht richtig kategorisiert wurde.}
   \label{App-Goker}
   \end{longtable}
+
+
+\chapter{Bespielprogramm}\label{Appendix-2}
+Man betrachte das folgende Beispielprogramm.
+  \lstinputlisting{code/show.txt}
+Nach der Instrumentierung erhält man
+\lstinputlisting{code/show_inst.txt}
+sowie die neue Main-Datei
+\lstinputlisting{code/show_main.txt}
+
+Dieses Programm besitzt den folgenden Output:
+\begin{verbatim}
+Determine switch execution order
+Start Program Analysis
+Analyse Program:   0%   1,0
+Analyse Program:  50%   1,1
+Analyse Program: 100%
+
+Finish Analysis
+
+Found Problems:
+
+Found while examine the following orders:   1,0  1,1
+Potential Cyclic Mutex Locking:
+Lock: /home/.../output/show/main.go:109
+  Hs:
+    /home/.../output/show/main.go:108
+Lock: /home/.../output/show/main.go:100
+  Hs:
+    /home/.../output/show/main.go:99
+
+
+Found while examine the following orders:   1,0
+Possible Send to Closed Channel:
+    Close: /home/.../output/show/main.go:48
+    Send: /home/.../output/show/main.go:112
+
+Found while examine the following orders:   1,1
+Found dangling Events for Channels created at:  
+    /home/.../output/show/main.go:41
+    /home/.../output/show/main.go:32
+
+Found while examine the following orders:   1,1
+1 unread message(s) in Channel created at /home/.../output/show/main.go:33
+
+Found while examine the following orders:   1,1
+  Possible Communication Partners:
+    /home/.../output/show/main.go:112
+    -> /home/.../output/show/main.go:65
+    -> /home/.../output/show/main.go:103
+
+Found while examine the following orders:   1,1
+  Possible Communication Partners:
+    /home/.../output/show/main.go:39
+    -> /home/.../output/show/main.go:41
+\end{verbatim}
+Die Pfade wurden dabei hier für eine bessere Lesbarkeit gekürzt.
+Die Positionsangaben beziehen sich dabei immer auf die Position im 
+instrumentieren Code.   

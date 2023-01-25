@@ -1,2 +1,14 @@
 \chapter*{Zusammenfassung}
-\todo{Zusammenfassung (Abstract) schreiben}
+Go ist eine Programmiersprache, welche einen besonderen Fokus auf 
+die Erzeugung von effizienten nebenläufigen Programmen legt. Dazu 
+stellt Go s.g. Go-Routinen als leichtgewichtige Threads sowie 
+Mutexe und Channels zur Synchronisation von und Kommunikation zwischen 
+solchen Routinen bereit. Solche Konstrukte können aber leicht zu 
+Concurrency-Bugs führen, welche auf Grund ihre starken Abhängigkeit von der 
+genauen Ausführung des Programms nur schwer erkennbar sind.\\
+Diese Arbeit entwickelt und implementiert einen dynamischen Detektor zur
+Erkennung solcher Probleme. Der Detektor verbindet dabei die Detektion 
+von Bugs durch Mutexe mit Lock-Bäumen, sowie die Betrachtung von 
+Bugs auf Channels, sowie deren potenzielle Kommunikationspartner mit Hilfe von 
+Vector-Clocks. Außerdem ist der Detektor in der 
+Lage mehrere, durch Select-Statement verzweigte Ausführungspfade zu betrachten.

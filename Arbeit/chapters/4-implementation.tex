@@ -5,6 +5,27 @@ Das folgende Kapitel soll sich nun mit der Implementierung der Analyze des in
 Kap.~\ref{Chap:Instrumenter-Sec:Trace} erstellten 
 Trace befassen.
 
+\section{Ablauf}
+Um das Programm zu Analysieren wird der instrumentierte Code ausgeführt.
+Besitzt es Select-Statements, dann wird es mehrfach durchgeführt, 
+wobei jeweils eine andere, zufällige Ordnung für die Select-Cases 
+betrachtet wird. Die betrachteten Ordnungen werden vor dem Durchlaufen 
+der Programme erzeugt. Dabei kann vom Nutzer sowohl eine maximale 
+Gesamtanzahl an Durchläufen angegeben werden. Zum anderen wird die 
+Anzahl auch anhand der Dichte des Select-Cases beschränkt. Dazu wird 
+eine neue, gültige Ordnung zufällig erzeugt und überprüft, ob diese 
+Ordnung bereits zuvor erzeugt worden ist. Wenn sie neu ist, wird sie in 
+die Liste der zu durchlaufenden Ordnungen eingefügt. Dabei wird gezählt,
+wie oft eine Ordnung bereits zuvor erzeugt worden war. Auch für diesen 
+Wert kann ein Maximalwert gesetzt werden.\\
+Anschließend wird das Programm für jede der bestimmten Ordnungen analysiert.
+Da das Programm gegebenenfalls mehrfach analysiert wird ist es wahrscheinlich, dass 
+die selben Probleme mehrfach erkannt werden. Es ist daher nicht sinnvoll 
+die Informationen direkt nach jedem Durchlauf auszugeben. Daher werden die 
+Fehler gesammelt, und dabei jeweils gespeichert, bei welchen Durchlaufen die 
+Fehler aufgetreten sind. Nach Abschluss aller Durchläufe werden die 
+gesammelten Fehler vollständig ausgegeben.
+
 \section{Aufzeichung des Trace}
 Der Trace wird wie in Kap.~\ref{Chap:Instrumenter-Sec:Trace}
 beschriebenen erzeugt. Er wird dabei durch ein Slice von Slices 
@@ -225,8 +246,6 @@ theoretisch miteinander Kommunizieren können.\\
 Anschließend wird für alle Send-Operationen eine Nachricht erzeugt, 
 welche die Send-Operation und alle möglichen Recive-Operationen enthält und 
 diese anschließend zurückgegeben.
-\todo{Kommunikationspartner für gebufferte Channelt}
-\todo{Nachricht wird erzeugt}
 
 \paragraph{Senden auf geschlossenen Channel}
 Für die Suche nach Situationen, die dazu führen können, dass auf einem 
@@ -241,11 +260,9 @@ der Send-Operation sind. In diesem Fall kommt es aber in jedem Fall zu einem
 Send auf einen geschlossenen Channel und damit zu einem Laufzeitfehler, 
 welcher durch den Detektor aufgefangen und erkannt wird.
 
-\section{Output}
-Da das Programm gegebenenfalls mehrfach analysiert wird ist es möglich, dass 
-die selben Probleme mehrfach erkannt werden. Es ist daher nicht sinnvoll 
-die Informationen direkt nach jedem Durchlauf auszugeben. Daher werden die 
-Fehler gesammelt, und dabei jeweils gespeichert, bei welchen Durchlaufen die 
-Fehler aufgetreten sind. Nach Abschluss aller Durchläufe werden die 
-gesammelten Fehler vollständig ausgegeben.
-\todo{Beispiel zu Ausgabe zu show mit selece}
+
+\section{Beispiel}
+In Anhang~\ref{Appendix-2} findet sich ein Beispielprogramm inklusive
+originalem und instrumentierten Code, der neuen Main-Datei und
+dem erhalten Ausgabe. 
+\todo{Beispiel beschreiben}

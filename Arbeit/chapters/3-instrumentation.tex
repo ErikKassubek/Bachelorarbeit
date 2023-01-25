@@ -86,10 +86,7 @@ dessen momentane
 Zeitstempel bekannt sein. Daher wird bei der eigentlichen
 Send-Operation nicht nur die eigentliche Information gesendet, sondern ein  
 Objekt, welches die Information, sowie die Id der sendenden Routine und deren
-Zeitstempel beinhaltet.\\Für die anderen Operationen sind Funktionen 
-definiert, die in die entsprechenden Strukturen eingefügt werden, um so
-die Aufzeichnung in dem Trace zu gewehrleisten. Die eigentlichen Operationen
-werden in diesen Fällen aber weiterhin in dem eigentlichen Code vorgenommen.
+Zeitstempel beinhaltet.
 
 \section{Select}\label{Chap:Inst-Sec:Select}
 Neben den Ersetzungen der einzelnen Operationen, werden auch die Select-Statements 
@@ -314,11 +311,8 @@ ausgeführt, wobei die Ordnung als Command-Line-Argument übergeben wird
 (also z.B. \texttt{exec.Command(./Examples/select/select -order="0,1")}, 
 wobei hierbei für das Select mit Id 0 der Case 1 bevorzugt ausgewählt
 wird). Für das Programm wird nun der Trace aufgezeichnet und dieser 
-anschließend analysiert.
-
-\todo{Consoliedierng der Ergebnisse}
-
-
+anschließend analysiert. Die dabei für jeden Durchlauf gefundenen Probleme 
+und Informationen werden gesammelt und am Ende ausgegeben. 
 
 
 \subsection{Laufzeit}\label{Chap:Tracer-Sec:Laufzeit}

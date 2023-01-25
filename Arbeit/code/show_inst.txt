@@ -1,0 +1,116 @@
+package main
+
+import (
+	"os"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/ErikKassubek/GoChan/goChan"
+)
+
+func main() {
+	var order string
+	if len(os.Args) > 0 {
+		order = os.Args[1]
+	}
+	order_split := strings.Split(order, ";")
+	for _, ord := range order_split {
+		ord_split := strings.Split(ord, ",")
+		id, err1 := strconv.Atoi(ord_split[0])
+		c, err2 := strconv.Atoi(ord_split[1])
+		if err1 == nil && err2 == nil {
+			goChanFetchOrder[id] = c
+		}
+	}
+	goChan.Init(20)
+	defer goChan.RunAnalyzer()
+	defer time.Sleep(time.Millisecond)
+	var m = goChan.NewMutex()
+	var n = goChan.NewMutex()
+
+	c := goChan.NewChan[int](int(0))
+	d := goChan.NewChan[int](int(1))
+	func() {
+		GoChanRoutineIndex := goChan.SpawnPre()
+		go func() {
+			goChan.SpawnPost(GoChanRoutineIndex)
+			{
+				d.Send(1)
+				{
+					goChan.PreSelect(true, d.GetIdPre(true))
+					switch goChanFetchOrder[1] {
+					case 0:
+						select {
+
+						case sel_XVlBzgba := <-d.GetChan():
+							d.Post(true, sel_XVlBzgba)
+							c.Close()
+						case <-time.After(2 * time.Second):
+							select {
+							case sel_XVlBzgba := <-d.GetChan():
+								d.Post(true, sel_XVlBzgba)
+								c.Close()
+
+							default:
+								goChan.PostDefault()
+								c.Receive()
+
+							}
+						}
+					case 1:
+						select {
+						default:
+							goChan.PostDefault()
+							c.Receive()
+						case <-time.After(2 * time.Second):
+							select {
+							case sel_XVlBzgba := <-d.GetChan():
+								d.Post(true, sel_XVlBzgba)
+								c.Close()
+
+							default:
+								goChan.PostDefault()
+								c.Receive()
+
+							}
+						}
+					default:
+						select {
+						case sel_XVlBzgba := <-d.GetChan():
+							d.Post(true, sel_XVlBzgba)
+							c.Close()
+
+						default:
+							goChan.PostDefault()
+							c.Receive()
+
+						}
+					}
+				}
+			}
+		}()
+	}()
+	func() {
+		GoChanRoutineIndex := goChan.SpawnPre()
+		go func() {
+			goChan.SpawnPost(GoChanRoutineIndex)
+			{
+				m.Lock()
+				n.Lock()
+				n.Unlock()
+				m.Unlock()
+				c.Receive()
+			}
+		}()
+	}()
+
+	n.Lock()
+	m.Lock()
+	m.Unlock()
+	n.Unlock()
+	c.Send(1)
+
+}
+
+var goChanFetchOrder = make(map[int]int)

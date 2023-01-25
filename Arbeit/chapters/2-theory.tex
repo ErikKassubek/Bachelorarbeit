@@ -237,8 +237,8 @@ folgendermaßen:
   \begin{matrix*}[l]
     T & = & ''\ [\ '',\ \{\ U\ \},\ ''\ ]\ ''; & \text{Trace}\\
     U & = & ''\ [\ '',\ \{\ t\ \},\ ''\ ]\ ''; & \text{lokaler Trace} \\
-    t & = & signal(t, i)\ |\ wait(t, i)\ |\ pre(t, as)\ |\ post(t, i, x!, n) & \text{Event}\\
-      &   & |\ post(t, i, x?, t', n') |\ post(t, default)\ 
+    t & = & signal(t, i)\ |\ wait(t, i)\ |\ pre(t, as)\ |\ post(t, i, x!) & \text{Event}\\
+      &   & |\ post(t, i, x?, t') |\ post(t, default)\ 
       |\ close(t, x)\  
       & \\
       &   & |\ lock(t, y, b, c) |\ unlock(t, y); & \\
@@ -264,17 +264,15 @@ Channels und $y$ die Id eines Locks darstellt. Die Events haben dabei folgende B
     $as$ eine Liste aller Channels für die es einen 
     Case in dem Statement gibt. Besitzt das Statement einen Default-Case, wird
     dieser ebenfalls in diese List aufgenommen.
-  \item \texttt{post(t, i, x!, n)}: Dieses Event wird in dem Trace gespeichert, nachdem 
+  \item \texttt{post(t, i, x!)}: Dieses Event wird in dem Trace gespeichert, nachdem 
     eine Send-Operation auf $x$ erfolgreich abgeschlossen wurde. 
-    $i$ gibt dabei die Id der sendenden Routine an. $n$ zählt die wievielte 
-    erfolgreiche Send-Operation die zugrundeliegende Operation im Programmablauf war.
-  \item \texttt{post(t, i, x?, t', n)}: Dieses Event wird in dem Trace gespeichert, nachdem 
+    $i$ gibt dabei die Id der sendenden Routine an.
+  \item \texttt{post(t, i, x?, t')}: Dieses Event wird in dem Trace gespeichert, nachdem 
     eine Receive-Operation des Channels $x$ erfolgreich abgeschlossen wurde. 
     $i$ gibt dabei die Id der sendenden Routine an. $t'$ gibt den Zeitstempel an,
     welcher bei dem Pre-Event der sendenden Routine galt. Durch die Speicherung der Id und des 
     Zeitstempels der sendenden Routine bei einer Receive-Operation lassen sich 
-    die Send- und Receive-Operationen eindeutig zueinander zuordnen. $n$ zählt die wievielte 
-    erfolgreiche Receive-Operation die zugrundeliegende Operation im Programmablauf war.
+    die Send- und Receive-Operationen eindeutig zueinander zuordnen.
   \item \texttt{post(t, default)}: Wird in einem Select-Statement der Default-Case ausgeführt,
     wird dies in dem Trace der entsprechenden Routine durch $post(t, default)$ 
     gespeichert.
@@ -304,9 +302,9 @@ Man betrachte als Beispiel das folgende Programm in Go:
 Dieser ergibt den folgenden Trace:
 \begin{align*}
   [&[signal(1, 2),\ signal(2, 3),\ signal(3, 4),\ pre(4, a?, default),\ post(5, default)]\\
-  &[wait(8, 2),\ lock(9, 1, -, 1),\ pre(10, x!),\ post(16, 2, x!, 1),\ unlock(17, 1)]\\
-  &[wait(11, 3),\ pre(12, y!),\ post(13, 3, y!, 1),\ pre(14, x?),\ post(15, 2, x?, 10, 1)]\\
-  &[wait(6, 4),\ pre(7, y?),\ post(18, 3, y?, 12, 1)]]
+  &[wait(8, 2),\ lock(9, 1, -, 1),\ pre(10, x!),\ post(16, 2, x!),\ unlock(17, 1)]\\
+  &[wait(11, 3),\ pre(12, y!),\ post(13, 3, y!),\ pre(14, x?),\ post(15, 2, x?, 10)]\\
+  &[wait(6, 4),\ pre(7, y?),\ post(18, 3, y?, 12)]]
 \end{align*}
 Aus diesem lässt sich der relevante Ablauf des Programms rekonstruieren.
 

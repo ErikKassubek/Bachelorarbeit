@@ -1,0 +1,31 @@
+func main() {
+	var m sync.Mutex
+	var n sync.Mutex
+
+	c := make(chan int)
+	d := make(chan int, 1)
+
+	go func() {
+		d <- 1
+		select {
+		case <-d:
+			close(c)
+		default:
+			<-c
+		}
+	}()
+
+	go func() {
+		m.Lock()
+		n.Lock()
+		n.Unlock()
+		m.Unlock()
+		<-c
+	}()
+
+	n.Lock()
+	m.Lock()
+	m.Unlock()
+	n.Unlock()
+	c <- 1
+}
