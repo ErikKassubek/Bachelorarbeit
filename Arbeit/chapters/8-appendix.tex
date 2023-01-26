@@ -7,7 +7,7 @@
   Potenzielles Deadlock durch zyklisches Locking von drei Locks & Ja \\ \hline
   \makecell[l]{Locking von zwei Locks, welche keinen Deadlock bilden, da Locking nicht\\zyklisch ist} & Ja \\ \hline
   \makecell[l]{Zyklisches Locking welches durch Gate-Locks nicht zu einem Deadlock\\führen kann} & Ja \\ \hline
-  \makecell[l]{Potenzielles Deadlock, welches durch Verschachtlung mehrerer\\Routinen (fork/join) verschleiert wird} & Nein \\ \hline
+  \makecell[l]{Potenzielles zyklisches Deadlock, welches durch Verschachtlung mehrerer\\Routinen (fork/join) verschleiert wird} & Nein \\ \hline
   Deadlock durch doppeltes Locken & Ja \\ \hline
   Tatsächliches Deadlock durch zyklisches Locking von Locks in zwei Routinen & Ja \\ \hline
   Tatsächliches Deadlock durch zyklisches Locking von Locks in drei Routinen & Ja \\ \hline
@@ -32,7 +32,7 @@
     potenziellen Kommunikationspartner} & Ja \\ \hline
   \makecell[l]{Keine Probleme bei [$R_0$: \{$c_1^1$$\leftarrow$1; $c_1^1$$\leftarrow$1\} , $R_1$: \{$\leftarrow$$c_1^1$\}, $R_2$: \{$\leftarrow$$c_1^1$\}]} & Ja \\ \hline
   \makecell[l]{Kein Kommunikationspartner wenn Receive in Fork bei ungebuffertem Channel\\$[$$R_0$: \{$c_1^0$ $\leftarrow$ 1; fork $R_1$\}, $R_1$: \{$\leftarrow$ $c_1^0$\}$]$} & Ja \\ \hline
-  \makecell[l]{Mögliche Kommunikationspartner wenn Receive in Fork bei gebuffertem Channel\\$[$$R_0$: \{$c_1^1$ $\leftarrow$ 1; fork $R_1$\}, $R_1$: \{$\leftarrow$ $c_1^1$\}$]$} & Nein \\ \hline
+  \makecell[l]{Mögliche Kommunikationspartner wenn Receive in Fork bei gebuffertem Channel\\$[$$R_0$: \{$c_1^1$ $\leftarrow$ 1; fork $R_1$\}, $R_1$: \{$\leftarrow$ $c_1^1$\}$]$} & Ja \\ \hline
   \makecell[l]{Deadlock bei Wahl eines bestimmten Select-Case\\$[$$R_0$: \{$\leftarrow$$c_3^0$\}, $R_1$: \{$c_1^0$ $\leftarrow$ 1\}, $R_2$: \{$c_2^0$ $\leftarrow$ 1\},\\$R_3$: \{select \{ case $\leftarrow$ $c_1^0$ $\Rightarrow$ \{$c_3^0$ $\leftarrow$ 1\}, case $\leftarrow$ $c_2^0$ $\Rightarrow$ \{$\leftarrow$ $c_3^0$\}\}\}$]$} & Ja \\ \hline
   \makecell[l]{Deadlock bei Wahl eines bestimmten Select-Case\\$[$$R_0$: \{$\leftarrow$$c_3^0$\}, $R_1$: \{$c_1^0$ $\leftarrow$ 1\}\\$R_2$: \{select \{ case $\leftarrow$ $c_1^0$ $\Rightarrow$ \{$c_3^0$ $\leftarrow$ 1\}; default $\Rightarrow$ \{$\leftarrow$ $c_3^0$\}\}\}$]$} & Ja \\ \hline
   Tatsächliches Send auf geschlossenen Channel & Ja \\ \hline
@@ -93,7 +93,6 @@
   moby 29733           & Blocking      & Communication Deadlock & Konditionelle Variable & Ja                                   \\ \hline
   moby 30408           & Blocking      & Communication Deadlock & Konditionelle Variable & Ja                                   \\ \hline
   etcd 6873            & Blocking      & Mixed Deadlock         & Channel\&Mutex         & Ja                                   \\ \hline
-  etcd 7492            & Blocking      & Mixed Deadlock         & Channel\&Mutex         & Nein                                 \\ \hline
   etcd 7902            & Blocking      & Mixed Deadlock         & Channel\&Mutex         & Ja                                   \\ \hline
   istio 16224           & Blocking      & Mixed Deadlock         & Channel\&Mutex         & Ja                                   \\ \hline
   kubernetes 10182           & Blocking      & Mixed Deadlock         & Channel\&Mutex         & Ja                                   \\ \hline
@@ -101,11 +100,6 @@
   kubernetes 26980           & Blocking      & Mixed Deadlock         & Channel\&Mutex         & Ja                                   \\ \hline
   kubernetes 6632            & Blocking      & Mixed Deadlock         & Channel\&Mutex         & Ja                                   \\ \hline
   serving 2137            & Blocking      & Mixed Deadlock         & Channel\&Mutex         & Ja                                   \\ \hline
-  moby 4951            & Blocking      & Resource Deadlock      & AB-BA Deadlock         & Ja                                   \\ \hline
-  moby 7559            & Blocking      & Resource Deadlock      & Double Locking         & Ja                                   \\ \hline
-  serving 5865            & NonBlocking   & Go-Specific            & Misuse channel         & Ja                                   \\ \hline
-  serving 2137            & Blocking      & Mixed Deadlock         & Channel\&Lock          & Ja                                   \\ \hline
-  serving 4829            & Blocking      & Resource Deadlock      & Double Locking         & Ja                                   \\ \hline
   \caption{Für Auswertung betrachteten 
   Programme aus Gobench~\cite{gobench} sowie 
   Information (Ok?) ob die Situation korrekt erkannt wurde. Ja bedeutet, dass 

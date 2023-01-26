@@ -17,7 +17,7 @@ Programm erhaltene Problem richtig zu erkennen, bzw.~zu erkennen wenn
 die vorliegende Situation nicht zu einem Problem führen kann. Eine 
 tabellarische Beschreibung der betrachteten Situationen, sowie der Ergebnisse 
 des Detektors ist in Tab.~\ref{App-Stand} in Anhang~\ref{Appendix-1} aufgeführt.\\\\
-Von den 43 Programmen konnten 38 korrekt kategorisiert werden. Dabei 
+Von den 43 Programmen konnten 39 korrekt kategorisiert werden. Dabei 
 bestehen 18 Probleme aus Problemen mit Mutexen,
 18 aus Problemen mit Channel und 7 mit einem 
 Mix aus Mutexen und Channel. Abbildungen~\ref{Chap:Eval-Sec:Stand-Fig:Total}
@@ -27,8 +27,7 @@ Für Programme, bei denen der Fehler auf die Verwendung von Mutexen
 basiert, konnten 17 der 18 Probleme richtig kategorisiert werden. 
 Dies entspricht ca. $94.4\%$.\\
 Bei den Programmen, bei welchen es durch Channel zu Problemen kommen kann, 
-konnten 16 der 18 Programme richtig kategorisiert werden, was einem 
-Anteil von ca. $88.9\%$ entspricht.\\
+konnten ebenfalls 17 der 18 Programme.\\
 Bei Programmen, welche sowohl Mutexe als auch Channels verwenden liegt 
 die Erfolgsquote mit 5 aus 7 ($71.4\%$) am niedrigstem. Da der Detektor 
 zwei verschiedene Methoden verwendet, um Probleme mit Mutexen und Probleme 
@@ -40,7 +39,7 @@ kann. Es ist daher nicht verwunderlich, dass hierbei eine höhere Fehlerquote
 betrachtet werden kann, als wenn man die beiden Situationen einzeln
 betrachtet.\\
 Insgesamt hat der Detektor für die betrachteten Programme eine 
-Trefferwahrscheinlichkeit von $88.4\%$. \\
+Trefferwahrscheinlichkeit von $90.7\%$. \\
 Es sei noch dazu gesagt, dass die betrachteten Programme immer so implementiert 
 worden sind, dass die entsprechenden Situationen auch in dem Durchlauf 
 auftreten. Es ist allerdings auch möglich, dass Situationen bei den Durchläufen 
@@ -81,11 +80,11 @@ Detektor die entsprechenden Situationen erkennt.
 \end{minipage}
 
 \section{GoKer}
-Für die Analyse wurden insgesamt 35 Programme betrachtet. Die betrachteten 
+Für die Analyse wurden insgesamt 34 Programme betrachtet. Die betrachteten 
 Programme und deren Ergebnisse befinden sich in Tab.~\ref{App-Goker} 
 in Anhang~\ref{Appendix-1}. Von den Programmen betrafen 15 die 
 Verwendung von Resource wie Mutexen (14 korrekt erkannt), 11 die 
-Verwendung von Kommunikationen und 9 eine Kombination aus Mutexen und 
+Verwendung von Kommunikationen (10 korrekt erkannt) und 8 eine Kombination aus Mutexen und 
 Channel (7 korrekt erkannt).
 Die Erfolgsraten des Detektors für die Programme aus GoKer 
 (Abb.~\ref{Chap:Eval-Sec:Goker-Fig:Total} bis~\ref{Chap:Eval-Sec:Goker-Fig:Mix})
