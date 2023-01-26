@@ -537,7 +537,27 @@ Kommunikationspartner gesehen, wenn
   S_p &\leq R_p - R_u  \label{Form:1}\\
   \text{und }\qquad S_p +  S_u &\geq R_p + R_u \label{Form:2}
 \end{align}
-\todo{betrachtung aller möglichen Pfade durch permutation}
+Nachdem nun alle möglichen Kommunikationspartner ermittelt wurden, 
+können die möglichen Ausführungspfade betrachtet werden, um zu überprüfen, 
+ob diese zu Problemen führen. Der Detektor geht dazu alle vorhandenen Send-Operationen 
+durch und ordnet Schrittweise jeder Operation eine Receive-Operation zu, so dass 
+die Send- und Receive-Operation potenzielle Kommunikationspartner 
+bilde und keine zwei Send-Operationen die selbe Receive-Operation 
+besitzen. Es kann nun vorkommen, dass ein Teil der Send-Operationen bereits eine 
+Receive-Operation zugeordnet bekommen haben, einer weiteren Send-Operation 
+aber kein gültiges Receive zugeordnet werden kann. Dies bedeutet, dass 
+wenn der Ablauf des Programm wie in den bereits zugeordneten Paaren geschieht, die Operation, 
+welcher keine gültige Receive-Operation zugeordnet werden kann, keinen 
+gültigen Kommunikationspartner besitzt. Dies bedeutet, dass es zu einem 
+Deadlock, einer hängenden Routine, oder einer nicht ausgelesenen Nachricht 
+in einem gebufferten Channel kommt. In diesem Fall kann eine Warnung 
+ausgegeben werden. Das selbe wird auch umgekehrt durchgeführt. Es wird als 
+versucht jeder Receive-Operation eine Send-Operation zuzuordnen. 
+Auch hier kann eine Situation, in welcher keine gültige Zuordnung für eine
+der Operationen möglich ist, zu einem Bug führen.
+\todo{umschreiben, genauer}
+
+
 
 \subsubsection{Close}
 Versuch ein Programm auf einem geschlossenen Channel zu senden kommt es zu einem Laufzeitfehler, 
