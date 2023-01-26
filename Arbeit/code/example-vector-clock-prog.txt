@@ -1,10 +1,16 @@
 func main() {
   x := make(chan int)
+
+  // Routine 2
   go func() { 
     x <- 1                // 1
     <- x                  // 2 
   }()
+
+  //Routine 3
   go func() { x <- 1 }()  // 3
+
+  // Routine 1
   <- x                    // 4
   <- x                    // 5
 }

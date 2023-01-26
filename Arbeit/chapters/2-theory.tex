@@ -293,13 +293,13 @@ Channels und $y$ die Id eines Locks darstellt. Die Events haben dabei folgende B
 \end{itemize}
 
 
-Man betrachte als Beispiel das folgende Programm in Go:
-\begin{figure}
+Man betrachte als Beispiel das Programm in Abb.~\ref{Chap:Tracer-Sec:Trace-Fig:Example}.\\
+\begin{figure}[h]
   \lstinputlisting{code/example_code_pre.txt}
   \caption{Beispielprogramm für Tracer}
   \label{Chap:Tracer-Sec:Trace-Fig:Example}
 \end{figure}
-Dieser ergibt den folgenden Trace:
+Dabei ergibt sich der folgende Trace:
 \begin{align*}
   [&[signal(1, 2),\ signal(2, 3),\ signal(3, 4),\ pre(4, a?, default),\ post(5, default)]\\
   &[wait(8, 2),\ lock(9, 1, -, 1),\ pre(10, x!),\ post(16, 2, x!),\ unlock(17, 1)]\\
@@ -394,7 +394,7 @@ führen würde. Dies ist aber nicht möglich. Da der Channel \texttt{y} in 1 nac
 in 2 allerdings von \texttt{x} empfangen muss, ist eine Synchronisierung auf \texttt{x} von 1 nach 
 2 nicht möglich. Die beiden Operationen bilden demnach keine möglichen Kommunikationspartner.\\\\
 Um mögliche Kommunikationspartner zu erkennen, nicht mögliche Kommunikationspartner wie in 
-Abb~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:NoSync} aber auszuschließen, werden
+Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:NoSync} aber auszuschließen, werden
 Vector-Clocks verwendet. Die grundlegende Idee basiert auf~\cite{PPDP18}.\\
 In einem ersten Durchlauf wird dabei der Trace mit Vector-Clock Informationen nach der Methode 
 von Fidge~\cite{Fidge} erweitert. Für jede Routine 
@@ -433,20 +433,28 @@ Man betrachte das Beispiel in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling
 Man betrachte den Fall, in dem 3 mit 4 und dann 1 mit 5 synchronisiert und 2 eine hängende Operation bildet.
 In diesem Fall erhält man folgenden Trace:
 \begin{align*}
-  [&[signal(1, 2), signal(2, 3), pre(1, x?), post(7, 1, x?, 6, 1), pre(8, x?), post(13, 1, x?, 11, 2)]\\
-  &[wait(9, 2), pre(10, x!), post(11, 1, x!, 2), pre(12, 1?)]\\
-  &[wait(4, 3), pre(5, 1!), post(6, 2, 1!, 1),]
+  [&[signal(1, 2), signal(2, 3), pre(1, x?), post(7, 1, x?, 6), pre(8, x?), post(13, 1, x?, 11)]\\
+  &[wait(9, 2), pre(10, x!), post(11, 1, x!), pre(12, x?)]\\
+  &[wait(4, 3), pre(5, x!), post(6, 2, x!)]
   ]
 \end{align*}
-Aus diesem Trace lassen sich nun die Vector-Clocks für die einzelnen Channel-Operationen berechnen.
-\todo{Vector clock entwicklung graphisch}
-Diese werden im Folgenden in der Form $^{vc}a^{vc'}$ mit der Pre-Vector-Clock $vc$ und der 
-Post-Vector-Clock $vc'$ und der Channel-Operation $a$. Für Close gilt, 
+Aus diesem Trace lassen sich nun die Vector-Clocks für die einzelnen Operationen berechnen.
+Der Ablauf des Programs, welcher dem Trace entspricht, inklusive der Vector-Clocks 
+ist in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:VC} gegeben.
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.5\textwidth]{img/vector_clock_graph.eps}
+  \caption{Ablaufdiagramm mit Vector-Clocks für das Beispiel in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:PorgVC}}
+  \label{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:VC}
+\end{figure}
+Von diesen lassen sich nun die Pre- und Post-Vector-Clocks direkt ablesen.
+Für den Vectorclock-Annotierte-Trace (VAT) werden diese in der Form $^{vc}a^{vc'}$ 
+mit der Pre-Vector-Clock $vc$ und der 
+Post-Vector-Clock $vc'$ und der Channel-Operation $a$ angegeben. Für Close gilt, 
 dass die Pre-Vectorclock gleich der Post-Vectorclock ist. Andere Elemente 
-werden in den Vectorclock-Annotierte-Trace (VAT) nicht aufgenommen, da sie 
-für die anschließende Analyse nicht benötigt wird.
-Der 
-VAT gibt sich in diesem Fall also als
+werden in den VAT nicht aufgenommen, da sie 
+für die anschließende Analyse nicht benötigt werden.
+Der VAT gibt sich in diesem Fall also als
 \begin{align*}
   [&[^{[2,0,0]}x?^{[3,0,2]}, ^{[3,0,2]}x?^{[4,2,2]}]\\
   &[^{[1, 1, 0]}x!^{[1, 2, 0]}, ^{[1, 2, 0]}x?^{[max, max, max]}]\\
