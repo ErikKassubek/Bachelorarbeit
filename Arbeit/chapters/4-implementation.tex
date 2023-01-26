@@ -143,25 +143,23 @@ worden sind.
 \section{Channels}\label{Chap:Analyse-Sec:Channel}
 Die Analyse des Programs zur Erkennung und Beschreibung von durch Channels ausgelösten 
 Problemen läuft in mehreren Schritten ab. Zuerst werden die Vectorclock-Informationen 
-der einzelnen Operationen bestimmt und mit diesen ein Vectorclock-Annotated-Trace 
-(VaT) erzeugt. Anschließend wird nach hängenden Events (pre ohne post) und 
-nicht-leere Channels, also gebufferte Channels, welche bei Terminierung 
-des Programms noch Nachrichten in ihrem Buffer beinhalten, gesucht. 
-Werden solche Probleme entdeckt, bestimmt der Analyzer mögliche andere 
-Kommunikationspartner für Send- und Receive-Operationen auf Channels. Zum Schluss 
-wird noch nach Situationen gesucht, bei denen es zu einem Send auf einen 
+der einzelnen Operationen bestimmt und mit diesen ein vectorclock-annotated Trace 
+(VaT) erzeugt. Basierend auf diesen sucht der Analyzer nach potenziellen 
+Situationen, welche zu blockenden Message-Bugs oder nicht gelesene
+Nachrichten auf gebufferten Channels führen können. Zum Schluss 
+wird nach Situationen gesucht, bei denen es zu einem Send auf einen 
 geschlossenen Channel kommen kann, da solche Situationen zu Laufzeitfehlern 
 führen, welche den Abbruch eines Programms zur Folge haben.
 Receives auf geschlossenen Channels werden nicht betrachtet, da diese 
 lediglich einen Null-Wert zurückgeben und nicht blocken, somit also nicht 
 zu Laufzeitfehlern führen. 
 
-\paragraph{Bestimmung der Vectorclocks und hängenden Events}
-Basierend auf dem aufgezeichneten Trace soll nun ein Vectorclock annotierter Trace 
-(VaT) erzeugt werden. Dieser besteht aus einer Reihe von \texttt{vcn}'s, 
+\paragraph{Bestimmung der vectorclock-annotierten Trace VAT}
+Basierend auf dem aufgezeichneten Trace soll nun ein vectorclock-annotierter Trace 
+(VAT) erzeugt werden. Dieser besteht aus einer Reihe von \texttt{vcn}'s, 
 welche jeweils eine Send-, Receive- oder Close-Operation repräsentieren.
 Andere Operation, wie z.B. signal-wait werden zwar bei der Berechnung der Vectorclocks 
-beachtet, allerdings nicht in den VaT aufgenommen, da sie für die weitere 
+beachtet, allerdings nicht in den VAT aufgenommen, da sie für die weitere 
 Analyse nicht benötigt werden. Ein \texttt{vcn} beinhaltet dabei die Channel-Id,
 die Routine, ob es sich um Send- oder Receive handelt (bei Close beliebig gesetzt),
 ein Counter für die Anzahl der bereits erfolgreich abgeschlossenen Send- bzw.
@@ -169,7 +167,7 @@ Receive-Operationen bei der Ausführung des Send- oder Receive (bei Close -1),
 die Position der Operation im Programmcode
 sowie die Pre- und Post-Vectorclocks der Operation. Eine Close Operation 
 wird dabei dadurch erkannt, dass die Pre- und Post-Vectorclocks übereinstimmen.\\\\
-Bevor der eigentliche VaT erzeugt wird werden erst die Vectorclocks zu allen
+Bevor der eigentliche VAT erzeugt wird werden erst die Vectorclocks zu allen
 Zeitpunkten bestimmt. Dazu wird für jede Routine eine Vectorclock initialisiert. 
 Anschließend werden die Elemente in der Reihenfolge durchlaufen, in der sie 
 in den Trace eingefügt wurden, also aufsteigend sortiert nach dem Timestamp 
@@ -193,7 +191,7 @@ werden und die Vectorclock somit wie in Kap.~\ref{Chap:Analyze-Sec:Channel-SubSe
 beschrieben aktualisiert werden.\\
 Für alle anderen Element, also alle Pre-Elemente, Close-Operationen und Mutex-Operationen 
 werden die Vectorclocks lediglich kopiert.\\\\
-Nach der Berechnung der Vectorclocks kann nun der VaT bestimmt werden. 
+Nach der Berechnung der Vectorclocks kann nun der VAT bestimmt werden. 
 Dazu wird nun der Trace für die einzelnen Routinen durchlaufen. Bei jedem 
 Pre- und PreSelect-Element wird eine \texttt{vcn} erzeugt. Dazu wird der restliche Trace 
 der selben Routine durchlaufen um das zugehörige Post-Element zu finden. 
@@ -211,22 +209,18 @@ Für Close-Elemente gibt es nur ein Element in dem Trace. Aus diesem Grund
 besitzt das Element nur eine Vectorclock. Pre- und Post-Vectorclock werden 
 dabei auf die gleiche Vectorclock gesetzt.
 
-\paragraph{Suche nach nicht-leeren Channels} 
-Um nicht-leere Channels, also gebufferte Channels, bei denen nicht alle 
-gesendeten Nachrichten gelesen wurden, zu finden, wird der Vectorclock annotierte
-Trace durchlaufen und für jeden Channel in dem Programm gezählt, wie viele 
-erfolgreiche Send- und Receive-Operationen auf dem Channel erfolgreich ausgeführt 
-wurden. Eine Operation gilt in dem VaT als erfolgreich ausgeführt, wenn 
-das erste Element der Vector-Clock nicht ``maxInt'' entspricht. Gibt es 
-eine Differenz zwischen der Anzahl der gesendeten und der empfangen Nachrichten, 
-dann lässt sich daraus schließen, dass sich bei der Terminierung des 
-Programms noch ungelesene Nachrichten in dem Channel befanden.
-Für jeden dieser Fälle wird eine entsprechende Nachricht zurückgegeben. 
-
-\paragraph{Suche nach potenziellen Kommunikationspartnern}
+\paragraph{Erkennung pottenzieller Communication-Bugs}
+Basierend auf dem VAT können nun tatsächlich aufgetretene oder potenzielle 
+Communication-Bugs erkannt werden. Dabei wird nach Channel-Operationen 
+gesucht, welche bei bestimmten Abläufen keine gültigen Kommunikationspartner
+besitzen. Dies führt zu einem blocken Bug, durch das warten auf 
+Sends oder Receives oder das Senden von Nachrichten auf gebufferten 
+Channels, ohne das die Nachricht jemals ausgelesen wird.\\  
+Zuerst werden basierend auf dem VAT alle potenziellen Kommunikationspartner 
+für Send-Receive Paare bestimmt.
 Zur Suche nach alternativen Kommunikationspartner von ungebufferten Channels
 werden alle Kombinationen
-von zwei Elementen in dem VaT betrachtet. Dabei werden all diejenigen 
+von zwei Elementen in dem VAT betrachtet. Dabei werden all diejenigen 
 Elemente verglichen, bei welchen beide Operationen auf dem selben Channel 
 ausgeführt werden und eines der 
 Elemente ein Send- und das andere eine Receive-Operation ist. Zwei Operationen
@@ -241,12 +235,37 @@ die in Abschnitt \ref{Chap:Theo-Sec:Analyze-SubSec:Channel} beschriebenen
 Werten für jedes Element in dem VAT ermittelt und in dem VAT-Element abgespeichert.
 Bei dem Vergleich wird bei gebufferten Channels nun überprüft, 
 ob Die Formeln \eqref{Form:1} und \eqref{Form:2} aus \ref{Chap:Theo-Sec:Analyze-SubSec:Channel}
-erfüllt sind. In diesem Fall wird angenommen, dass die beiden Operationen 
-theoretisch miteinander Kommunizieren können.\\
-\todo{Beschreibung der Implementierung zur erkennung von Ausführungspfaden, welche 
-zu Bugs führen}
+erfüllt sind. In diesem Fall wird angenommen, dass die beiden Operationen
+miteinander Kommunizieren können.\\
+Basierend auf diesen möglichen Kommunikationspartnern werden nun alle möglichen
+Kommunikationsabläufe betrachtet. Für die Betrachtung aller Abläufe 
+wird Backtracking verwendet. Zuerst wird schrittweise rekursiv für jede Send-Operation 
+in dem Trace eine potenzielle Receive-Operation als Kommunikationspartner 
+in einen partiellen Kommunikationsablauf eingefügt, sofern die 
+Receive-Operation einen gültigen Kommunikationspartner bildet. Ein Receive 
+ist ein potenzieller Kommunikationspartner, wenn eine Kommunikation 
+basierend auf dem VAT möglich ist, die Receive-Operation noch von keiner 
+anderen Send-Operation als Partner verwendet wird. Besitzt ein solcher Pfad 
+einen Kommunikationspartner für jedes Send-Statement in dem Trace, bedeutet dies, 
+dass der entsprechende Ablauf nicht zu einem Bug führen kann. Ist es hingegen 
+nicht möglich einem Send ein gültiges Receive zuzuordnen, dann führt der 
+entsprechende Ablauf zu einem potenziellen Bug. Bevor dieser zurückgegeben 
+werden kann muss erst noch überprüft werden, ob es sich um eine 
+gültige Ausführungsordnung handelt, wie in Abschnitt~\ref{Chap:Theo-Sec:Analyze-SubSec:Channel} 
+beschrieben. Ist diese der Fall, wird eine entsprechende Nachricht ausgegeben, 
+welche die Operation, welche zu dem Bug führt, sowie den partiellen
+Ausführungspfad, bei welchem der Bug auftreten kann, enthält.\\In beiden 
+Fällen, in denen das Hinzufügen weiterer Send-Operationen nicht mehr möglich ist 
+wird nun Backtracking verwendet, um die weiteren Ausführungspfade zu betrachten.
+Da die Reihenfolge, mit welcher die Send-Statements in den partiellen 
+Ausführungspfad eingefügt werden werden, insbesondere welche Operation als erstes 
+betrachtet wird, Auswirkung auf die Detektion von Problemen haben kann, 
+wird das ganze für jede zyklische Permutation der Send-Operationen wiederholt. \\
+Das Ganze wird anschließenden ein zweites Mal ausgeführt, wobei die Rollen 
+von Send und Receive hierbei vertauscht sind. Es wird also für jedes Receive 
+eine Send-Operation gesucht. 
 
-\paragraph{Senden auf geschlossenen Channel}
+\paragraph{Erkennung von potenziellem Senden auf geschlossenem Channel}
 Für die Suche nach Situationen, die dazu führen können, dass auf einem 
 geschlossenen Channel gesendet wird, werden die Vectorclock aller in dem 
 Trace vorhandenen Close-Operationen mit den Vectorclocks aller Send-Operationen
@@ -264,4 +283,3 @@ welcher durch den Detektor aufgefangen und erkannt wird.
 In Anhang~\ref{Appendix-2} findet sich ein Beispielprogramm inklusive
 originalem und instrumentierten Code, der neuen Main-Datei und
 dem erhalten Ausgabe. 
-\todo{Beispiel beschreiben}

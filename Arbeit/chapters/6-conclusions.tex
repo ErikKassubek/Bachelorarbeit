@@ -2,13 +2,26 @@
 Ziel dieser Arbeit war es einen Detektor für von Mutexen 
 und Channels erzeugte Concurrency-Bugs zu entwickeln und zu implementieren.\\
 Der implementierte Detektor vereinigt und erweitert dabei verschiedene Methoden 
-zur Erkennung solcher Probleme. Der Detektor erzeugt dynamisch einen Trace 
-eines vorliegenden Programms, welcher im Anschluss analysiert werden kann.
-Für Deadlocks durch Mutexe werden dabei unter anderem Lock-Bäume verwendet. 
-Für Channel-Operationen wird der Trace mit Vector-Clocks erweitert, 
-durch welche Schlussfolgerungen auf mögliche Kommunikationspartner oder 
-das potenzielle Senden auf geschlossene Channels erkannt werden. 
-Bei der Anwendung auf konstruierte Probleme und tatsächliche Programme 
-ist der so entwickelte Detektor in der Lage knapp $91\%$ aller betrachteten 
-Situationen richtig zu kategorisieren. 
-\todo{Bisschem mehr}
+zur Erkennung solcher Probleme.\\
+Der Tracer und Analyzer wird dabei in den originalen Programmcode eingefügt.
+Dazu wurde ein Programm entwicklelt, welches in der Lage ist diese Instrumentierung
+automatisch auszuführen.\\
+Der Detektor erzeugt dynamisch einen Trace 
+eines vorliegenden Programms, welcher im Anschluss analysiert werden kann.\\
+Für Deadlocks durch Mutexe werden dabei Lock-Bäume zur Erkennung von zyklischem 
+Locking verwendet, sowie nach doppeltem Locking gesucht.\\
+Für Communication-Bugs, welche durch Mutexe erzeugt werden
+werden Pre- und Post-Vectorclocks bestimmt, welche eine Berechnung
+von potenziellen Kommunikationspartnern ermöglicht. Mit diesen lässt sich 
+durch die Unordnung der Kommunikationspartner nach Programmabläufen suchen, 
+bei welchen Kommunikationsoperationen kein gültigen Kommunikationspartner 
+besitzen und daher den Code blockieren, oder bei gebufferten Channels 
+Nachrichten versenden, welche nie gelesen werden. \\
+Mit Hilfe der Vectorclocks lassen sich außerdem Situationen erkennen, 
+in welchen ein Send auf einen geschlossenen Channel passieren könnte.\\
+Zur Betrachtung von verschiedenen durch Selects verzweigte Ablaufpfade
+kann das Programm mehrfach durchlaufen werden, wobei jeweils ein 
+anderer Ablauf bevorzugt werden kann.\\\\
+Bei der Anwendung des Detektors auf konstruierte und tatsächliche Programme 
+ist er in der Lage knapp $91\%$ aller betrachteten 
+Situationen richtig zu erkennen. 

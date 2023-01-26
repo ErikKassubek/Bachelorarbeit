@@ -550,8 +550,8 @@ wenn der Ablauf des Programm wie in den bereits zugeordneten Paaren geschieht, d
 welcher keine gültige Receive-Operation zugeordnet werden kann, keinen 
 gültigen Kommunikationspartner besitzt. Dies bedeutet, dass es zu einem 
 Deadlock, einer hängenden Routine, oder einer nicht ausgelesenen Nachricht 
-in einem gebufferten Channel kommt. In diesem Fall kann eine Warnung 
-ausgegeben werden. Das selbe wird auch umgekehrt durchgeführt. Es wird als 
+in einem gebufferten Channel kommt. In diesem Fall wird eine Warnung 
+mit den entsprechenden Informationen ausgegeben. Das selbe wird auch umgekehrt durchgeführt. Es wird als 
 versucht jeder Receive-Operation eine Send-Operation zuzuordnen. 
 Auch hier kann eine Situation, in welcher keine gültige Zuordnung für eine
 der Operationen möglich ist, zu einem Bug führen.\\
@@ -564,7 +564,6 @@ Eine Ausführungsordnung sei daher nur dann gültig, wenn für jede Operation $O
 welche in der Ordnung betrachtet wird auch alle anderen Operationen aus 
 der selben Routine, welche vor $O$ ausgeführt werden in der Ausführungsordnung 
 vorhanden sind.
-\todo{umschreiben, genauer}
 
 
 
