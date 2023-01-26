@@ -554,7 +554,16 @@ in einem gebufferten Channel kommt. In diesem Fall kann eine Warnung
 ausgegeben werden. Das selbe wird auch umgekehrt durchgeführt. Es wird als 
 versucht jeder Receive-Operation eine Send-Operation zuzuordnen. 
 Auch hier kann eine Situation, in welcher keine gültige Zuordnung für eine
-der Operationen möglich ist, zu einem Bug führen.
+der Operationen möglich ist, zu einem Bug führen.\\
+Nicht alle so betrachteten Ordnungen bilden gültige Ordnungen. Man betrachte 
+dazu erneut Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:PorgVC}. 
+Es ist hierbei prinzipiell möglich, dass 2 mit 6 kommuniziert. Wenn 
+allerdings 3 mit 5 kommuniziert ist dies nicht möglich, da 1 vor 2 kommunizieren 
+muss und daher eine Kommunikation zwischen 2 und 6 nicht mehr möglich ist. 
+Eine Ausführungsordnung sei daher nur dann gültig, wenn für jede Operation $O$ 
+welche in der Ordnung betrachtet wird auch alle anderen Operationen aus 
+der selben Routine, welche vor $O$ ausgeführt werden in der Ausführungsordnung 
+vorhanden sind.
 \todo{umschreiben, genauer}
 
 
