@@ -41,15 +41,15 @@ Sie besitzen dabei die folgenden Operationen:
     lediglich zurückgegeben, ob sie erfolgreich war oder nicht. Ein Programmierer 
     kann in diesem Fall selber entscheiden, wie das Programm weiter ablaufen 
     soll, ob also z.B. der kritische Bereich übersprungen werden soll.
-  \item Unlock: Diese Operation öffnet einen geschlossenen Mutex. Der versuch ein 
-    geöffnetes Schloss zu öffnen führt zu einem Laufzeitfehler. 
+  \item Unlock: Diese Operation öffnet einen geschlossenen Mutex. Der Versuch ein 
+    geöffnetes Mutex zu öffnen führt zu einem Laufzeitfehler. 
     Theoretisch verhalten sich Mutexe in Go wie binäre Semaphore, d.h.~es ist möglich, 
     dass eine Routine ein 
-    geschlossenes Lock freigibt, obwohl das Lock von einer anderen Routine
-    geschlossen wurde. Da dies allerdings in der Praxis sehr leicht zu einem 
-    unvorhersehbaren Verhalten führen kann, ist es fasst immer üblich, 
-    dass ein Lock immer nur von derjenigen Routine freigegeben werden
-    soll, von der es beansprucht wurde. Im weiteren wird daher angenommen, 
+    geschlossenes Mutex freigibt, obwohl das Mutex von einer anderen Routine
+    geschlossen wurde. Da dies in der Praxis sehr leicht zu einem 
+    unvorhersehbaren Verhalten führen kann, ist es fast immer üblich, 
+    ein Mutex immer nur von derjenigen Routine freizugeben, von der es beansprucht wurde. 
+    Im weiteren wird daher angenommen, 
     dass ein Mutex immer von der Routine geöffnet wird, von welchem es 
     geschlossen wurde.
 \end{itemize}
