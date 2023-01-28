@@ -1,21 +1,11 @@
 func main() {
 	x := make(chan int, 2)
 
-	go func() {
-		x <- 1  // 1
-		x <- 1  // 2
-	}()
+	x <- 1    // 1
 
 	go func() {
-		x <- 1  // 3
-		x <- 1  // 4
+		x <- 2  // 2
 	}()
 
-	<-x       // 5
-	<-x       // 6
-	<-x       // 7
-	<-x       // 8
-	<-x       // 9
-
-	time.Sleep(time.Second)
+	<-x       // 3
 }

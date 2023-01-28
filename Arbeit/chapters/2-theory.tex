@@ -505,17 +505,6 @@ Post-Vector-Clocks gilt, dass $s_{2, post} \geq r_{post}$, kann allein aus der
 Post-Vector-Clock nicht auf eine mögliche oder unmögliche Kommunikation geschlossen werden.\\\\
 In gebufferten Channels ist nicht notwendig, dass Send und Receive gleichzeitig
 ausgeführt werden.
-Da der Trace somit bei einem Send ohne Receive, bzw.~einem Receive ohne gleichzeitigem
-Send ein gültiges Post-Event besitzt, 
-wird dieses Problem nicht direkt erkannt.\\
-Situationen, bei denen gesendet Nachrichten auf einem Channel 
-nie ausgelesen werden, lassen sich aus dem Trace erkennen.
-Dazu wird der mit Vector-Clocks annotierte Trace durchlaufen. Auf diesem 
-wird nun für jeden Channel gezählt, wie oft erfolgreich gesendet bzw. erfolgreich empfangen 
-wurde (Anzahl der entsprechenden Elemente, bei denen die Post-Vector-Clock 
-nicht max(Int) ist). Ist die Anzahl der erfolgreichen Send größer als 
-die Anzahl der erfolgreichen Receive, bedeutet diese, dass nach Abschluss des 
-Programms auf dem entsprechenden Channel noch nicht gelesene Nachrichten vorhanden sind.\\
 \begin{figure}[h!]
   \centering
   \lstinputlisting{code/buffered_not_possible.txt}
@@ -528,31 +517,31 @@ streng vor dem Send ausgeführt werden muss. In der Praxis geben sich allerdings
 Situationen in welchen eine Synchronisation zwischen Send- und Receive nicht 
 möglich ist. Man betrachte dazu das Beispiel in 
 Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:BufferedNoSync}.
-Auf den ersten Blick scheint es möglich, dass alle Send (1-4) mit allen 
-Receive (5-9) kommunizieren könnten. Dies ist aber nicht der Fall.
-Angenommen 1 und 2 senden, bevor es zu einem Receive kommt. Da gebufferte 
-Channel in der Praxis wie FIFO Queue funktionieren, kann 2 nicht mit 5 
-Synchronisieren, da bei dem Receive auf 5 zuerst der Wert aus 1 empfangen 
-werden würde. Um bestimmen zu können, auf welchen Operationen eines 
-gebufferten Channel tatsächlich das eine Kommunikation möglich ist, 
-werden für jedes Paar von Send-Receive Operationen die folgenden Werte aus 
-dem VAT bestimmt: 
-\begin{itemize}
-  \item $S_p$: Anzahl der Send Operationen, vor der betrachteten Send-Operation 
-    in der selben Routine ausgeführt werden,
-  \item $S_u$: Anzahl der Send-Operationen, welche unvergleichbar mit der 
-    betrachteten Send-Operation sind,
-  \item $R_p$: Anzahl der Receive Operationen, vor der betrachteten Receive-Operation 
-    in der selben Routine ausgeführt werden,
-  \item $R_u$: Anzahl der Receive-Operationen, welche unvergleichbar mit der 
-    betrachteten Receive-Operation sind.
-\end{itemize}
-Ein Paar von Send-Receive Operationen auf einem gebufferten Channel werden nun 
-genau dann als mögliche Kommunikationspartner gesehen, wenn 
+Auf den ersten Blick scheint es möglich, dass beide Send (1, 2) mit dem 
+Receive kommunizieren könnten. Dies ist aber nicht der Fall.
+Es ist klar ersichtlich, dass 1 von 2 ausgeführt wird. Da der Buffer von 
+gebufferten Channels in der Praxis als FIFO-Queues funktionieren, 
+bedeutet dies, dass in 3 in jedem Fall die Nachricht aus 1 empfangen wird.
+Allgemein kann man sagen, dass das $n$-te Send mit dem $n$-ten Receive 
+kommuniziert. 
+Dies ist aus den Vectorclocks nicht direkt ablesbar. Das 1 vor 2 ausgeführt 
+werden muss ist aber aus den Vectorclocks ablesbar. Um zu überprüfen, 
+ob eine Kommunikation möglich werden daher für jede Send $s$ Operation 
+die Anzahl der Send Operationen auf dem selben Channel bestimmt, welche streng vor $s_i$ 
+ausgeführt werden ($\#s_{i, <}$) sowie die Anzahl der Operationen, welche nebenläufig mit $s_i$ 
+ausgeführt werden ($\#s_{i, \not\gtreqless}$). Das selbe wird auch für jedes Receive-Statements $r_i$
+bestimmt ($\#r_{i, <}, \#r_{i, \not\gtreqless}$). Damit ein Send-Receive Paar $s_i - r_j$ auf 
+einem gebufferten Channel nun basierend auf der FIFO-Queue möglich ist, 
+also eine mögliche Kommunikation bilden muss gelten, dass 
 \begin{align}
-  S_p &\leq R_p - R_u  \label{Form:1}\\
-  \text{und }\qquad S_p +  S_u &\geq R_p + R_u \label{Form:2}
+  \#s_{i, <} + \#s_{i, \not\gtreqless} &\geq \#r_{j, <} + \#r_{j, \not\gtreqless} \label{Form:1}\\
+  \#s_{i, <} & \leq \#r_{j, <} \label{Form:2}
 \end{align}
+
+
+
+
+
 Nachdem nun alle möglichen Kommunikationspartner ermittelt wurden, 
 können die möglichen Ausführungspfade betrachtet werden, um zu überprüfen, 
 ob diese zu Problemen führen. Der Detektor geht dazu alle vorhandenen Send-Operationen 
