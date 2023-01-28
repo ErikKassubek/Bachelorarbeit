@@ -26,7 +26,7 @@ Fehler gesammelt, und dabei jeweils gespeichert, bei welchen Durchlaufen die
 Fehler aufgetreten sind. Nach Abschluss aller Durchläufe werden die 
 gesammelten Fehler vollständig ausgegeben.
 
-\section{Aufzeichung des Trace}
+\section{Aufzeichnung des Trace}
 Der Trace wird wie in Kap.~\ref{Chap:Instrumenter-Sec:Trace}
 beschriebenen erzeugt. Er wird dabei durch ein Slice von Slices 
 gespeichert, wobei jeder Slice den Trace einer Routine 
@@ -48,10 +48,10 @@ Diese werden basierend auf dem aufgezeichneten Trace aufgebaut. Dazu werden die 
 einzelnen Routinen nacheinander durchlaufen. Für jede Routine wird eine Liste \texttt{currentLocks} aller 
 Locks erzeugt, die momentan von der Routine gehalten werden. Die einzelnen Elemente des Trace einer 
 Routine werden nun durchlaufen. Handelt es sich dabei um ein Lock Event eines Locks \texttt{x}, 
-wird eine s.g. \texttt{dependendency} erzeugt und gespeichert. Diese beinhaltet 
+wird eine s.g. \texttt{Dependendency} erzeugt und gespeichert. Diese beinhaltet 
 das Lock \texttt{x} sowie eine Liste aller von der Routine momentan gehaltenen 
 Locks, dem s.g. \texttt{holdingSet hs}. Dieses entspricht gerade \texttt{currentLocks}. 
-Diese \texttt{dependendency} stellt also 
+Diese \texttt{Dependendency} stellt also 
 eine Menge von Kanten von in dem Lockgraphen der Routine da. 
 Anschließend wird \texttt{x} in \texttt{currentLocks} eingefügt.
 Ist das handelt es sich bei dem Element um ein unlock Event auf dem Lock \texttt{x}, dann wird das 
@@ -59,7 +59,7 @@ letzte Vorkommen von \texttt{x} auf \texttt{currentLocks} entfernt.\\
 Nachdem der Trace einer Routine durchlaufen wurde, wird überprüft ob sich noch Elemente in 
 \texttt{currentLocks} befinden. Ist dies der Fall, handelt es sich um Locks, welche zum Zeitpunkt der Terminierung 
 des Programms noch nicht wieder freigegeben worden sind. Dies deutet darauf hin, dass die
-entsprechende Routine nicht beendet wurde, z.B. weil das Programm bzw. die Main-Routine beendet wurden.
+entsprechende Routine nicht beendet wurde, z.B. weil das Programm bzw.\ die Main-Routine beendet wurden.
 Dies kann einfach durch die entsprechende Logik des Programms zustande gekommen sein, es kann aber auch 
 auf einen tatsächlich auftretenden Deadlock, z.B. durch doppeltes Locking des selben Locks in einer Routine, ohne dass 
 es zwischenzeitlich wieder freigegeben wurde. In diesem Fall wird eine Warnung ausgegeben.\\

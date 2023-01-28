@@ -14,7 +14,7 @@ Routinen verwendet werden. Programmierer werden dabei angehalten, Channel
 anstelle von gemeinsamen Variablen zu verwenden, da bei diesen die Wahrscheinlichkeit
 für das Auftreten von Concurrency-Bugs geringer ist~\cite{sharedMemory}.\\
 Solche Bugs (z.B. Deadlocks), welche durch die Nebenläufigkeit von Programmen sowie ihrer 
-Synchronisationmechanismen entstehen sind in der Praxis aber dennoch sehr weit 
+Synchronisationsmechanismen entstehen sind in der Praxis aber dennoch sehr weit 
 verbreitet~\cite{numberBugs}.\\\\
 Diese Arbeit beschäftigt sich mit der Entwicklung und Implementierung
 eines dynamischen Detektors ``GoChan'' für die automatische Erkennung
@@ -27,7 +27,7 @@ iGoodLock~\cite{iGoodLock} und UNDEAD~\cite{Undead} sowie
 Gopherlyzer-GoScout~\cite{PPDP18} und GFuzz~\cite{gfuzz} zur 
 Erkennung und Analyse von 
 durch Mutenxen und Channels erzeugten Bugs.\\
-GoChan basiert dabei aus zwei Programmen, einem Insturmentierer und einem 
+GoChan basiert dabei aus zwei Programmen, einem Instrumenter und einem 
 Analyzer, für welche jeweils eine 
 Implementierung vorliegt. Für die Analyze wird das zu analysierende Programm 
 mehrfach durchlaufen. Bei jedem Durchlauf zeichnet der Analyzer relevante 
@@ -37,7 +37,7 @@ um verschiedene Ausführungspfade zu analysiere, welche durch die Verwendung
 verschiedener Pfade in Select-Operationen erzeugt werden. Um den Trace eines 
 Programmdurchlaufs aufzeichnen zu können und bei Select-Operationen verschiedene 
 Ausführungspfade zu erzwingen, muss der zu analysierende Programmcode 
-verändert werden. Dies kann durch den Insturmentierer automatisiert erfolgen.\\\\
+verändert werden. Dies kann durch den Instrumenter automatisiert erfolgen.\\\\
 Der Aufbau dieser Arbeit ist wie folgt. Zuerst wird in Abschnitt~\ref{chap:background}
 die theoretische Funktionsweise des Detektors beschrieben und dargelegt, 
 welche Art von Situationen der Detektor erkennen soll. 

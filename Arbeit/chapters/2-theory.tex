@@ -121,7 +121,9 @@ Laufzeitfehler und das Programm wird abgebrochen. Versucht das Programm
 auf einem geschlossenen Channel zu lesen, wir ein Default-Wert zurückgegeben,
 ohne dass die Routine blockiert.
 
-\section{Probleme}\label{chap:background-sec:Prob}
+\section{Betrachtete Probleme}\label{chap:background-sec:Prob}
+Dieser Abschnitt betrachtet die Arten von Problemen, welche durch den Detektor 
+erkannt werden sollen. 
 
 \subsection{Mutex}\label{Chap:Back-Sec:Prob-SubSec:Mutex}
 Durch die Verwendung von Mutexen in nebenläufigen Programmen kann es 
@@ -208,9 +210,24 @@ hierbei darauf tatsächlich auftretende Probleme zu erkennen, sie zu analysieren
 und dann, soweit möglich Hinweise über die Probleme zu liefern, welche die 
 Erkennung und manuelle Beseitigung der Probleme erleichtern.\\\\
 Ein weiterer möglicher kritischer Fehler bei Channels liegt in dem 
-Senden auf einem geschlossenen Channel. Da dies zu einem Abbruch des 
-Programms führen kann. Dies sollte also unter allen Umständen vermieden werden.
-Das Empfangen auf einem geschlossen Channel ist hingegeben kein Problem. 
+Senden auf einem geschlossenen Channel. Man betrachte dazu das Beispiel in 
+Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Close-Fig:close}. 
+\begin{figure}[h!]
+  \lstinputlisting{code/example_send_to_closed.txt}
+  \caption{Beispielprogramm für Senden auf geschlossenem Channel} 
+  \label{Chap:Analyze-Sec:Channel-SubSec:Close-Fig:close}
+\end{figure}
+Das Programm 
+versucht in Zeile 4 auf dem Channel \texttt{x} zu senden und in Zeile 
+$\texttt{7}$ zu empfangen. In Zeile 10 wird \texttt{x} geschlossen. Da alle 
+drei Operationen nebenläufig Ablaufen ist es möglich, dass der Channel 
+geschlossen wird, bevor das Senden abgeschlossen wird.
+Das Senden auf einem geschlossenen Channel führt dazu, dass das Programm 
+abgebrochen wird. 
+Das Empfangen auf einem geschlossen Channel ist hingegeben kein Problem.
+Hierbei wird lediglich ein Default-Wert ausgegeben, ohne das die Operation
+blockiert. 
+
 
 \section{Detektor}
 Der Detektor basiert auf zwei Schritten. Zuerst wird das Programm 
@@ -354,31 +371,30 @@ des Detektors (Abs.~\ref{Chap:Implement-Sec:Mutex}) noch genauer betrachtet.
 
 
 \subsubsection{Channel}\label{Chap:Theo-Sec:Analyze-SubSec:Channel}
-Man betrachte nun die Erkennung von Situationen, in denen eine Channel-Operation
-zwar begonnen, aber nie ausgeführt worden ist. 
-In diesen Fällen gibt es in dem Trace eine Channel-Information, 
-welche ein Pre- aber kein Post-Event besitzt. Solch eine Situation bezeichnen wir als hängenden Channel. 
-Solche hängenden 
-Channel können auf einen potenziellen oder tatsächlich auftretenden Channel hindeuten.
-Es sei allerdings auch hier dazu gesagt, dass eine solche hängende Operation nicht 
-immer zu einem ``echten'' Deadlock führen muss.
-Man betrachte dazu das Beispiel in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:ExDanglingWithout}.
+Man möchte nun Situationen auf Channels erkennen, in welchen eine 
+Routine versucht eine Nachricht zu versenden oder zu empfangen, es aber 
+keinen möglichen Kommunikationspartner gibt. Für ungebufferte 
+Channels, sowie in manchen Fällen bei gebufferten Channels kann dies zu einer 
+blockade der entsprechenden Routine führen. Befindet sich die Situation in 
+der Main-Routine, dann kann es dazu führen, dass das gesamte Programm 
+nicht terminieren kann. Bei anderen Routinen, wie z.B. in 
+Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:ExDanglingWithout}, 
 \begin{figure}[h!]
   \lstinputlisting{code/example-dangling-without.txt}
   \caption{Hängender Channel ohne Deadlock}
   \label{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:ExDanglingWithout}
 \end{figure}
-Da auf dem Channel \texttt{x} nie gesendet wird, kommt es es in Zeile~3 zu einer hängenden Channel-Operation. Da 
-dabei aber die Main-Routine nicht blockiert wird, kommt es nicht zu einem Deadlock und die Go-Routine 
-terminiert, sobald die Main-Routine terminiert. Solch eine Routine bezeichnen wir als leakende Routine.
-Sie führt hierbei nicht zu einem Deadlock, ist aber in der Regel dennoch eine ungewollte Situation.
-Es ist also sinnvoll, auch solche Situationen zu erkennen.\\\\
-Um solche Situationen verhindern 
-zu können, ist es sinnvoll, die möglichen Kommunikationspartner für diese 
-Operation zu bestimmen um dem Nutzer bei der Suche und Beseitigung 
-solcher Situationen zu helfen. Für Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:ExDangling}
-soll also angegeben werden können, dass die Send-Operation in 1 sowohl mit 2 als auch mit 3 
-synchronisieren kann. Dabei sei allerdings zu beachten, dass nur weil eine Send- und eine 
+in welcher eine Nicht-Main-Routine blockiert (das Receive auf \texttt{x} findet 
+keinen Send-Partner) wird die entsprechende Routine bei der Terminierung 
+der Main-Routine automatisch abgebrochen. Man bezeichne einen solchen Fall 
+als hängende Routine. Mit gebufferten Channels kann es passieren, 
+das eine Send-Operation zwar erfolgreich ausgeführt wird, die entsprechende
+Nachricht aber nie ausgelesen wird.\\\\
+
+
+Um solche Situationen zu erkennen werden alle möglichen Paaren von Kommunikationspartner,
+betrachtet, und dabei überprüft, ob diese Zuordnung zu Send- oder Receive-Operationen führt, 
+welche keine möglichen Partner besitzen. Dabei sei zu beachten, dass nur weil eine Send- und eine 
 Receive-Operation auf dem selben Channel und in unterschiedlichen Routine geschehen, nicht 
 in jedem Fall eine Kommunikation zwischen diesen möglich ist. Man betrachte dazu das Beispiel in 
 Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:NoSync}.
@@ -413,7 +429,7 @@ wird nun mit der lokalen Vector-Clock $vc$ der empfangenden Routine, bzw. der Wa
 \texttt{q} verrechnet und ersetzt diese. Dabei gilt\\
 \begin{figure}[h]
   \centering
-  \lstinputlisting[frame=none, numbers=none]{code/vector-clock.txt}
+  \lstinputlisting[frame=none, numbers=none, xleftmargin=0.35\textwidth, xrightmargin=0.35\textwidth]{code/vector-clock.txt}
 \end{figure}\\
 wobei $n$ die Anzahl der Routinen ist.\\
 Für alle andern Elemente, z.B. Pre usw., wird einfach die lokale Vector-Clock der Routine übernommen, 
@@ -457,7 +473,7 @@ für die anschließende Analyse nicht benötigt werden.
 Der VAT gibt sich in diesem Fall also als
 \begin{align*}
   [&[^{[2,0,0]}x?^{[3,0,2]}, ^{[3,0,2]}x?^{[4,2,2]}]\\
-  &[^{[1, 1, 0]}x!^{[1, 2, 0]}, ^{[1, 2, 0]}x?^{[max, max, max]}]\\
+  &[^{[1, 1, 0]}x!^{[1, 2, 0]}, ^{[1, 2, 0]}x?^{[\max, \max, \max]}]\\
   &[^{[2, 0, 1]}x!^{[2, 0, 2]}]]
 \end{align*}
 Man bezeichne zwei Vector-Clocks $vc$ und $vc'$ als vergleichbar, wenn
@@ -531,8 +547,8 @@ dem VAT bestimmt:
   \item $R_u$: Anzahl der Receive-Operationen, welche unvergleichbar mit der 
     betrachteten Receive-Operation sind.
 \end{itemize}
-Ein Paar von Send-Receive Operationen werden nun genau dann als mögliche 
-Kommunikationspartner gesehen, wenn 
+Ein Paar von Send-Receive Operationen auf einem gebufferten Channel werden nun 
+genau dann als mögliche Kommunikationspartner gesehen, wenn 
 \begin{align}
   S_p &\leq R_p - R_u  \label{Form:1}\\
   \text{und }\qquad S_p +  S_u &\geq R_p + R_u \label{Form:2}

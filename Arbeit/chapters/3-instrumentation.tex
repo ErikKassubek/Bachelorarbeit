@@ -258,7 +258,7 @@ Durchlauf bevorzugte Case angibt. \texttt{1} ist dabei die Id des
 Select. Auf den Cases werden nun normale 
 Channel-Operationen ausgeführt. Da aber nicht nur die eigentlichen 
 Nachrichten versendet werden, müssen bei Receive-Statements mit anschließendem 
-Assignement die eigentliche Nachricht aus dem Channel extrahiert werden. Außerdem 
+Assignment die eigentliche Nachricht aus dem Channel extrahiert werden. Außerdem 
 wird bei einem Send-Statement die Nachricht durch die vorher Erzeugte ausgetauscht.
 Innerhalb des Cases wird die \texttt{goChan.Post} Funktion aufgerufen, um wenn 
 der Case ausgewählt wurde das \text{post}-Event in dem Trace zu erzeugen.\\
@@ -380,4 +380,4 @@ wie groß der Anteil der Mutex- und Channel-Operationen im Verhältnis zu
 der Größe bzw. der Laufzeit des gesamten Programms ist, kann dieser Wert abhängig 
 von dem tatsächlichen Programm start schwanken. Dies wird unter anderem klar, wenn man 
 den Overhead für ht-cat ($9 \pm 3\ \%$) und go-dsp ($60\pm 18\ \%$) betrachtet, welche $51 \pm 21$ 
-Prozentpunkte aufeinander liegen. 
+Prozentpunkte auseinander liegen. 

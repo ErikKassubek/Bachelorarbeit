@@ -1,0 +1,11 @@
+func main() {
+  c := make(chan int)
+  go func() {
+    x <- 1
+  }()
+  go func() {
+    <- x
+  }()
+  
+  close(x)
+}
