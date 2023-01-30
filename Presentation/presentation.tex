@@ -103,7 +103,7 @@
     showstringspaces=false, 
     stringstyle=\color{Blue3},
     tabsize=2,
-    xleftmargin=2em,
+    % xleftmargin=2em,
     escapeinside=``,
     moredelim=**[is][\only<+>{\color{black}\lstset{style=highlight}}]{@}{@},
     language=Go, % this is it !
@@ -167,7 +167,7 @@
 }
 
 \author[Erik Kassubek]{Erik Kassubek} 
-\title[Dynamic Analysis of Go-Programs]{Dynamic Analysis of Message Passing Go-Programs}
+\title[Dynamic Analysis of Concurrent Go-Programs]{Dynamic Analysis of Concurrent Go-Programs}
 \subtitle{Bachelorarbeit - Kolloquium}
 \institute[]{Institut für Informatik\\Albert-Ludwigs-Universität Freiburg}
 \date{14.02.2023}
@@ -204,42 +204,69 @@
 % ============== Mutex ===============
 
 \begin{frame}{Mutex}
-  \lstinputlisting{code/mutex-example.txt}
+  \begin{minipage}{0.49\textwidth}
+    \lstinputlisting{code/mutex-example.txt}
+  \end{minipage}
+  \hfill
+  \uncover<2>{\vrule{}}
+  \hfill
+  \begin{minipage}{0.49\textwidth}
+    \uncover<2>{\lstinputlisting{code/mutex-rw.txt}}
+  \end{minipage}
 \end{frame}
 
-\begin{frame}{RWMutex}
-  \lstinputlisting{code/mutex-rw.txt}
+\begin{frame}{Mutex}
+  \begin{minipage}[t]{0.49\textwidth}
+    \lstinputlisting{code/mutex-zyclic.txt}
+  \end{minipage}
+  \hfill
+  \uncover<2>{\vrule{}}
+  \hfill
+  \begin{minipage}[t]{0.49\textwidth}
+    \uncover<2>{\lstinputlisting{code/mutex-double.txt}}
+  \end{minipage}
 \end{frame}
 
-\begin{frame}{Mutex: Zyklisches Locking}
-  \lstinputlisting{code/mutex-zyclic.txt}
-\end{frame}
-
-\begin{frame}{Mutex: Doppeltes Locking}
-  \lstinputlisting{code/mutex-double.txt}  
-\end{frame}
 
 % ============== Channel =============
 
-\begin{frame}{Channel - unbuffered}
+\begin{frame}{Channel - Unbuffered}
   \begin{minipage}{0.49\textwidth}
     \lstinputlisting{code/channel-un-example.txt}
   \end{minipage}
   \hfill
+  \uncover<2>{\vrule{}}
+  \hfill
   \begin{minipage}{0.49\textwidth}
-    \lstinputlisting{code/channel-un-block.txt}
+    \uncover<2>{\lstinputlisting{code/channel-un-block.txt}}
   \end{minipage}
 \end{frame}
 
-\begin{frame}{Channel - buffered}
-  \lstinputlisting{code/channel-buf-example.txt}
+\begin{frame}{Channel - Buffered}
+  \begin{minipage}{0.49\textwidth}
+    \lstinputlisting{code/channel-buf-example.txt}
+  \end{minipage}
+  \hfill
+  \uncover<2>{\vrule{}}
+  \hfill
+  \begin{minipage}{0.49\textwidth}
+    \uncover<2>{\lstinputlisting{code/channel-buf-block.txt}}
+  \end{minipage}
 \end{frame}
 
-\begin{frame}{Channel - close}
-  \begin{itemize}
-    \item Schließt Channel $\Rightarrow$ keine weiter Kommunikation möglich
-    \item Send auf geschlossenem Channel $\Rightarrow$ Laufzeitfehler
-  \end{itemize}
+\begin{frame}{Channel - Close}
+  \begin{minipage}{0.49\textwidth}
+    \begin{itemize}
+      \item Schließt Channel $\Rightarrow$ keine weiter Kommunikation möglich
+      \item Send auf geschlossenem Channel $\Rightarrow$ Laufzeitfehler
+    \end{itemize}
+  \end{minipage}
+  \hfill
+  \uncover<2>{\vrule{}}
+  \hfill
+  \begin{minipage}{0.49\textwidth}
+    \uncover<2>{\lstinputlisting{code/channel-ex-close.txt}}
+  \end{minipage}
 \end{frame}
 
 % ========== Main =============
@@ -250,8 +277,40 @@
       \item Erkennung von problematischen Situationen
       \item Analyse von problematischen Situationen 
     \end{itemize}
+    \item<2> Dynamische Analyse
+    \begin{itemize}
+      \item<2> Instrumentierung
+      \item<2> Programm (mehrfach) ausführen
+      \item<2> Verhalten aufzeichnen $\Rightarrow$ Trace
+      \item<2> Trace analysieren
+    \end{itemize}
   \end{itemize}  
 \end{frame}
+
+\begin{frame}{Detektor - Instrumentierung}
+  \textcolor{red}{TODO: Instrumentierung}
+\end{frame}
+
+\begin{frame}{Detektor - Select}
+  \textcolor{red}{TODO: Instrumentierung Select}
+\end{frame}
+
+\begin{frame}{Detektor - Programm ausführen}
+  \textcolor{red}{TODO: Programm ausführen}
+\end{frame}
+
+\begin{frame}{Detektor - Trace}
+  \textcolor{red}{TODO: Trace}
+\end{frame}
+
+\begin{frame}{Detektor - Analyse - Mutexe}
+  \textcolor{red}{TODO: Analyse Mutexe}
+\end{frame}
+
+\begin{frame}{Detektor - Analyse - Channel}
+  \textcolor{red}{TODO: Analyse Channel}
+\end{frame}
+
 
 
 % ===== Quellen =====
