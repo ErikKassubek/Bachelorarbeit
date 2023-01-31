@@ -1,0 +1,10 @@
+go func() {
+  select {
+    case c <- 1:
+      func1()
+    case a := <- d:
+      func2(a)
+    default:
+      func3()
+  }
+}()

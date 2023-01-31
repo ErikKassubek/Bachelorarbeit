@@ -1,0 +1,24 @@
+goChan.PreSelect(false, c.GetIdPre(true), 
+                 d.GetIdPre(false))
+sel_RAjWwhTH := goChan.BuildMessage(1)
+switch goChanFetchOrder[1] {
+case 0:
+	select {
+	case sel_VlBzgbaiCM := <-c.GetChan():
+		c.Post(true, sel_VlBzgbaiCM)
+		a := sel_VlBzgbaiCM.GetInfo()
+		func1(a)
+	case <-time.After(time.Second):
+		....
+	}
+case 1:
+	select {
+	case d.GetChan() <- sel_RAjWwhTH:
+		d.Post(false, sel_RAjWwhTH)
+		func2()
+	case <-time.After(time.Second):
+		....
+	}
+default:
+	....
+}

@@ -287,21 +287,60 @@
   \end{itemize}  
 \end{frame}
 
+\begin{frame}{Detektor - Trace}
+  \textcolor{red}{TODO: Trace}
+\end{frame}
+
 \begin{frame}{Detektor - Instrumentierung}
-  \textcolor{red}{TODO: Instrumentierung}
+  \begin{itemize}
+    \item Veränderung des Programmcodes
+    \item Ersetze Mutexe/Channel durch eigene Objekte
+    \item Funktionen auf Objekten:
+    \begin{itemize}
+      \item Ausführung der eigentlichen Operation
+      \item Aufzeichnung der Operation
+    \end{itemize}
+    \item Aufzeichnung von Fork
+    \item Aufzeichnung / Kontrolle über Select
+  \end{itemize}
 \end{frame}
 
 \begin{frame}{Detektor - Select}
-  \textcolor{red}{TODO: Instrumentierung Select}
+  \begin{minipage}{0.49\textwidth}
+    \begin{itemize}
+      \item Wartet gleichzeitig auf mehrere Channel-Operationen
+      \item Erste ausführbare Funktion wird ausgeführt
+      \item Wenn mehrere gleichzeitig $\Rightarrow$ Zufälliger Case
+      \item Ohne Default $\Rightarrow$ Blockiert
+    \end{itemize}
+  \end{minipage}
+  \hfill
+  \vrule{}
+  \hfill
+  \begin{minipage}{0.49\textwidth}
+    \lstinputlisting{code/select-example.txt}
+  \end{minipage}
+\end{frame}
+
+\begin{frame}{Detektor - Select - Instrumentierung}
+  \begin{minipage}{0.49\textwidth}
+    \begin{minipage}{0.49\textwidth}
+      \lstinputlisting{code/select-pre.txt}
+    \end{minipage}
+  \end{minipage}
+  \hfill
+  \vrule{}
+  \hfill
+  \begin{minipage}{0.49\textwidth}
+    \lstinputlisting{code/select-post.txt}
+  \end{minipage}
 \end{frame}
 
 \begin{frame}{Detektor - Programm ausführen}
   \textcolor{red}{TODO: Programm ausführen}
 \end{frame}
 
-\begin{frame}{Detektor - Trace}
-  \textcolor{red}{TODO: Trace}
-\end{frame}
+
 
 \begin{frame}{Detektor - Analyse - Mutexe}
   \textcolor{red}{TODO: Analyse Mutexe}
