@@ -51,8 +51,8 @@ Id des beteiligten Channels beinhaltet, als auch die Information, ob es sich um 
 Send oder Receive handelt. $\text{e}_i^m$ bezeichnet die Nachricht, die in einem Case 
 empfangen wurde. 
 \begin{tabular}{lcl}
-  go B & $\Rightarrow$ & nr := atomicInc(nR); ts := atomicInc(c); [ signal(ts, nr) ]$^\text{nr}$;\\
-    & & [+]$^\text{nr}$; go \{ ts' := atomicInc(c); [ wait(ts, nr) ]$^\text{id}$; B\};\\
+  go B & $\Rightarrow$ & nr := atomicInc(nR); ts := atomicInc(c); [ signal(ts, nr) ]$^\text{id}$;\\
+    & & [+]$^\text{nr}$; go \{ ts' := atomicInc(c); [ wait(ts, nr) ]$^\text{nr}$; B\};\\
   ch <- i & $\Rightarrow$ & ts := atomicInc(c); [ pre(ts, ch.id, true) ]$^\text{id}$; ch <- \{i, id, ts\};\\
     & & ts' := atomicInc(c); [ post(ts', ch.id, true, id) ]$^\text{id}$\\
   <- ch & $\Rightarrow$ & ts := atomicInc(c); [ pre(ts, ch.id, false) ]$^\text{id}$;\\
@@ -74,7 +74,7 @@ empfangen wurde.
   mu.Unlock() & $\Rightarrow$ & ts := atomicInc(c); mu.Unlock(); [ unlock(ts, mu.id) ]$^\text{id}$;\\
   rmu.(Try)(R)Lock() & $\Rightarrow$ & ts := atomicInc(c); rmu.(Try)(R)Lock();\\
     & & [ lock(ts, rmu.id, $\langle \text{-|t|r|tr}\rangle$, $\langle \text{0|1}\rangle$) ]$^\text{id}$;\\
-  rmu.Unlock() & $\Rightarrow$ & ts := atomicInc(c); rmu.Unlock(); [ unlock(ts, rmu.id) ]$^\text{id}$;
+  rmu.RUnlock() & $\Rightarrow$ & ts := atomicInc(c); rmu.RUnlock(); [ unlock(ts, rmu.id) ]$^\text{id}$;
 \end{tabular}\\$ $\\
 Für Receive, Send und Close auf Channels,  allen Operation auf Mutexen sowie 
 der Erzeugung von Strukturen als Ersatz für die eigentlichen Mutexe und Channels 
@@ -89,7 +89,7 @@ Objekt, welches die Information, sowie die Id der sendenden Routine und deren
 Zeitstempel beinhaltet.
 
 \section{Select}\label{Chap:Inst-Sec:Select}
-Neben den Ersetzungen der einzelnen Operationen, werden auch die Select-Statements 
+Neben den Ersetzungen der einzelnen Operationen, werden die Select-Statements zusätzlich
 verändert, um einen der Fälle bevorzugt auswählen zu können, wie in Kap.~\ref{Chap:Back-Sec:Select}.
 beschrieben. Die Implementierung basiert dabei zum größten Teil auf~\cite{gfuzz}.
 Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Select-Fig:GFuzz_Inst} zeigt ein 

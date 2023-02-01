@@ -11,5 +11,174 @@
   eprint    = {1807.03585},
   timestamp = {Mon, 13 Aug 2018 16:46:39 +0200},
   biburl    = {https://dblp.org/rec/journals/corr/abs-1807-03585.bib},
-  bibsource = {dblp computer science bibliography, https://dblp.org}
+  bibsource = {dblp computer science bibliography, https://dblp.org},
+  keywords = {1}
+}
+
+@inproceedings{gcatch,
+author = {Liu, Ziheng and Zhu, Shuofei and Qin, Boqin and Chen, Hao and Song, Linhai},
+title = {Automatically Detecting and Fixing Concurrency Bugs in Go Software Systems},
+year = {2021},
+isbn = {9781450383172},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3445814.3446756},
+doi = {10.1145/3445814.3446756},
+booktitle = {Proceedings of the 26th ACM International Conference on Architectural Support for Programming Languages and Operating Systems},
+pages = {616–629},
+numpages = {14},
+keywords = {Static Analysis, Bug Fixing, Concurrency Bugs, Go, Bug Detection},
+location = {Virtual, USA},
+series = {ASPLOS '21},
+keywords = {1}
+}
+
+@inproceedings{gfuzz,
+author = {Liu, Ziheng and Xia, Shihao and Liang, Yu and Song, Linhai and Hu, Hong},
+title = {{Who Goes First? Detecting Go Concurrency Bugs via Message Reordering}},
+year = {2022},
+isbn = {9781450392051},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3503222.3507753},
+doi = {10.1145/3503222.3507753},
+booktitle = {Proceedings of the 27th ACM International Conference on Architectural Support for Programming Languages and Operating Systems},
+pages = {888–902},
+numpages = {15},
+keywords = {Bug Detection, Concurrency Bugs, Dynamic Analysis, Fuzzing, Go},
+location = {Lausanne, Switzerland},
+series = {ASPLOS '22},
+keywords = {1}
+}
+
+@article{GoAt1,
+author = {{Taheri}, Saeed and {Gopalakrishnan}, Ganesh},
+title = "{Automated Dynamic Concurrency Analysis for Go}",
+journal = {arXiv e-prints},
+keywords = {Computer Science - Distributed, Parallel, and Cluster Computing, Computer Science - Software Engineering},
+year = 2021,
+month = may,
+eid = {arXiv:2105.11064},
+pages = {arXiv:2105.11064},
+archivePrefix = {arXiv},
+eprint = {2105.11064},
+primaryClass = {cs.DC},
+adsurl = {https://ui.adsabs.harvard.edu/abs/2021arXiv210511064T},
+adsnote = {Provided by the SAO/NASA Astrophysics Data System},
+keywords = {1}
+}
+
+@inproceedings{GoAt2,  
+author={Taheri, Saeed and Gopalakrishnan, Ganesh},  
+booktitle={2021 IEEE International Symposium on Workload Characterization (IISWC)},   
+title={GoAT: Automated Concurrency Analysis and Debugging Tool for Go},   
+year={2021},  
+pages={138-150},  
+doi={10.1109/IISWC53511.2021.00023},
+keywords = {1}}
+
+@manuel{GoRunTrace,
+  title = {Go Documentation: trace},
+  author = {{The Go Team}},
+  year = {2022},
+  note = {\url{https://pkg.go.dev/cmd/trace}},
+  keywords = {1}
+}
+
+@inproceedings {Undead,
+  author = {J. Zhou and S. Silvestro and H. Liu and Y. Cai and T. Liu},
+  booktitle = {2017 32nd IEEE/ACM International Conference on Automated Software Engineering (ASE)},
+  title = {UNDEAD: Detecting and preventing deadlocks in production software},
+  year = {2017},
+  pages = {729-740},
+  doi = {10.1109/ASE.2017.8115684},
+  publisher = {IEEE Computer Society},
+  address = {Los Alamitos, CA, USA},
+  month = {11},
+  keywords  = "source",
+  keywords = {1}
+}
+
+@article{iGoodLock,
+author = {Joshi, Pallavi and Park, Chang-Seo and Sen, Koushik and Naik, Mayur},
+title = {A Randomized Dynamic Program Analysis Technique for Detecting Real Deadlocks},
+year = {2009},
+issue_date = {June 2009},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {44},
+number = {6},
+issn = {0362-1340},
+url = {https://doi.org/10.1145/1543135.1542489},
+journal = {SIGPLAN Not.},
+month = {jun},
+pages = {110–120},
+numpages = {11},
+keywords = "source",
+keywords = {1}
+}
+
+@inproceedings{Fidge,
+  title={Timestamps in Message-Passing Systems That Preserve the Partial Ordering},
+  author={Colin J. Fidge},
+  year={1988},
+  keywords = {2}
+}
+
+@misc{effectiveGo,
+title={Go},
+author={{The Go Team}},
+year={2022},
+note={\url{https://go.dev/}},
+keywords = {2}
+}
+
+@InProceedings{lock-tree,
+author="Agarwal, Rahul
+and Wang, Liqiang
+and Stoller, Scott D.",
+editor="Ur, Shmuel
+and Bin, Eyal
+and Wolfsthal, Yaron",
+title="Detecting Potential Deadlocks with Static Analysis and Run-Time Monitoring",
+booktitle="Hardware and Software, Verification and Testing",
+year="2006",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="191--207",
+abstract="Concurrent programs are notorious for containing errors that are difficult to reproduce and diagnose. A common kind of concurrency error is deadlock, which occurs when a set of threads is blocked each trying to acquire a lock held by another thread in that set. Static and dynamic (run-time) analysis techniques exist to detect deadlocks.",
+isbn="978-3-540-32605-2",
+keywords = {2}
+}
+
+@INPROCEEDINGS{gobench,
+  author={Yuan, Ting and Li, Guangwei and Lu, Jie and Liu, Chen and Li, Lian and Xue, Jingling},
+  booktitle={2021 IEEE/ACM International Symposium on Code Generation and Optimization (CGO)}, 
+  title={GoBench: A Benchmark Suite of Real-World Go Concurrency Bugs}, 
+  year={2021},
+  volume={},
+  number={},
+  pages={187-199},
+  doi={10.1109/CGO51591.2021.9370317},
+  note={\url{https://github.com/timmyyuan/gobench}},
+  keywords = {2}
+}
+
+@misc{sharedMemory,
+title={Share Memory By Communicating},
+author={Andrew Gerrand},
+year={2010},
+note={\url{https://go.dev/blog/codelab-share}},
+keywords = {2}}
+
+@article{numberBugs,
+author = {Ray, Baishakhi and Posnett, Daryl and Filkov, Vladimir and Devanbu, Premkumar},
+year = {2014},
+month = {11},
+pages = {155-165},
+title = {A large scale study of programming languages and code quality in github},
+isbn = {9781450330565},
+journal = {Proc. FSE 2014},
+doi = {10.1145/2635868.2635922},
+keywords = {2}
 }

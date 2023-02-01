@@ -73,6 +73,7 @@
 \usepackage{textcomp}
 \usepackage{gensymb}
 
+\usepackage{stmaryrd}
 
 \usepackage{rotating}
 
@@ -269,6 +270,24 @@
   \end{minipage}
 \end{frame}
 
+\begin{frame}{Channel - Select}
+  \begin{minipage}{0.49\textwidth}
+    \begin{itemize}
+      \item Wartet gleichzeitig auf mehrere Channel-Operationen
+      \item Erste ausführbare Funktion wird ausgeführt
+      \item Wenn mehrere gleichzeitig $\Rightarrow$ Zufälliger Case
+      \item Ohne Default $\Rightarrow$ blockiert
+    \end{itemize}
+  \end{minipage}
+  \hfill
+  \vrule{}
+  \hfill
+  \begin{minipage}{0.49\textwidth}
+    \lstinputlisting{code/select-example.txt}
+  \end{minipage}
+\end{frame}
+
+
 % ========== Main =============
 \begin{frame}{Analyse}
   \begin{itemize}
@@ -287,11 +306,20 @@
   \end{itemize}  
 \end{frame}
 
-\begin{frame}{Detektor - Trace}
-  \textcolor{red}{TODO: Trace}
+% ======== Trace ============ %
+
+\begin{frame}{Trace}
+  \begin{itemize}
+    \item Speichert Ablauf der notwendigen Informationen
+    \item Ein Trace pro Routine
+    \item Ermöglicht Rekonstruktion des Programmablaufs
+  \end{itemize}
 \end{frame}
 
-\begin{frame}{Detektor - Instrumentierung}
+
+% ============== Instrumentierung ====================
+
+\begin{frame}{Instrumentierung}
   \begin{itemize}
     \item Veränderung des Programmcodes
     \item Ersetze Mutexe/Channel durch eigene Objekte
@@ -305,60 +333,403 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Detektor - Select}
-  \begin{minipage}{0.49\textwidth}
+\begin{frame}{Instrumentierung - Fork}
+  \begin{tabular}{lcl}
+    go B & $\Rightarrow$ & nr := atomicInc(nR); ts := atomicInc(c); [ signal(ts, nr) ]$^\text{id}$;\\
+    & & [+]$^\text{nr}$; go \{ ts' := atomicInc(c); [ wait(ts, nr) ]$^\text{nr}$; B\};
+  \end{tabular}
+\end{frame}
+
+\begin{frame}{Instrumentierung - Mutex}
+  \begin{tabular}{lcl}
+    mu.(Try)Lock() & $\Rightarrow$ & ts := atomicInc(c);
+    [ lock(ts, mu.id, $\langle \text{-|t}\rangle$, $\langle \text{0|1}\rangle$) ]$^\text{id}$;\\
+    & & mu.(Try)Lock();\\
+  mu.Unlock() & $\Rightarrow$ & ts := atomicInc(c); mu.Unlock(); [ unlock(ts, mu.id) ]$^\text{id}$;\\
+  rmu.(Try)(R)Lock() & $\Rightarrow$ & ts := atomicInc(c); rmu.(Try)(R)Lock();\\
+    & & [ lock(ts, rmu.id, $\langle \text{-|t|r|tr}\rangle$, $\langle \text{0|1}\rangle$) ]$^\text{id}$;\\
+  rmu.RUnlock() & $\Rightarrow$ & ts := atomicInc(c); rmu.RUnlock(); [ unlock(ts, rmu.id) ]$^\text{id}$;
+  \end{tabular}  
+\end{frame}
+
+\begin{frame}{Instrumentierung - Channel}
+  \begin{tabular}{lcl}
+  ch <- i & $\Rightarrow$ & ts := atomicInc(c); [ pre(ts, ch.id, true) ]$^\text{id}$; ch <- \{i, id, ts\};\\
+    & & ts' := atomicInc(c); [ post(ts', ch.id, true, id) ]$^\text{id}$\\
+  <- ch & $\Rightarrow$ & ts := atomicInc(c); [ pre(ts, ch.id, false) ]$^\text{id}$;\\
+    & & \{i, id\_send, ts\_send\} := <-c; ts' := atomicInc(c);\\
+    & & [ post(ts', ch.id, false, id\_send, ts\_send) ]$^\text{id}$; return i;\\
+  close(ch) & $\Rightarrow$ & ts := atomicInc(c); close(ch); [ close(ts, ch.id) ]$^\text{id}$
+  \end{tabular}
+\end{frame}
+
+
+
+
+% \begin{frame}{Instrumentierung - Select}
+%   \begin{tabular}{lcl}
+%     select(e$_\text{i} \leadsto \text{B}_\text{i}$) & $\Rightarrow$ & ts := atomicInc(c); [ pre(ts, e$_1^*$, $\ldots$, e$_n^*$, false) ]$^\text{id}$;\\
+%     & & select(e$_\text{i} \leadsto$ \{ ts' := atomicInc(c);\\
+%     & & [ $\langle \text{post(ts, e$_\text{i}$.ch, false, e$_\text{i}^\text{m}$.id\_send, e$_\text{i}^\text{m}$.ts\_send)}\ |$ \\
+%     & & post(ts, e$_\text{i}$.ch, true, id) $\rangle$ ]$^\text{id}$ B$_\text{i}$\}) \\
+%   select(e$_\text{i} \leadsto \text{B}_\text{i}$ | B$_\text{def}$) & $\Rightarrow$ & ts := atomicInc(c); [ pre(ts, e$_1^*$, $\ldots$, e$_n^*$, false) ]$^\text{id}$;\\
+%     & & select(e$_\text{i} \leadsto$ \{ ts' := atomicInc(c);\\
+%     & & [ $\langle \text{post(ts, e$_\text{i}$.ch, false, e$_\text{i}^\text{m}$.id\_send, e$_\text{i}^\text{m}$.ts\_send)}\ |$ \\
+%     & & post(ts, e$_\text{i}$.ch, true, id) $\rangle$ ]$^\text{id}$ B$_\text{i}$\} |\\
+%     & & ts' := atomicInc(c); [ default(ts) ]$^\text{id}$; B$_\text{def}$) 
+%   \end{tabular}
+% \end{frame}
+
+\begin{frame}{Instrumentierung - Select}
+  \lstinputlisting{code/select-pre.txt}
+\end{frame}
+
+\begin{frame}{Instrumentierung - Select}
+  \begin{minipage}{0.55\textwidth}
+      \lstinputlisting{code/select-post1.txt}
+  \end{minipage}
+  \hfill
+  \vrule{}
+  \hfill
+  \begin{minipage}{0.43\textwidth}
+    \lstinputlisting{code/select-post2.txt}
+  \end{minipage}
+\end{frame}
+
+\begin{frame}{Instrumentierung}
+  \begin{itemize}
+    \item Funktionen in Package implementiert
+    \item Automatisierte Ersetzung im Programmcode
     \begin{itemize}
-      \item Wartet gleichzeitig auf mehrere Channel-Operationen
-      \item Erste ausführbare Funktion wird ausgeführt
-      \item Wenn mehrere gleichzeitig $\Rightarrow$ Zufälliger Case
-      \item Ohne Default $\Rightarrow$ Blockiert
+      \item Traversierend des AST
+      \item Veränderung des AST wenn notwendig
     \end{itemize}
+    \item Erzeugung einer neuen Main-Datei zur Ausführung
+  \end{itemize}
+\end{frame}
+
+% ================= Ausführung ==================
+
+\begin{frame}{Programm ausführen}
+  \begin{itemize}
+    \item Mehrfache Ausführung für verschiedene Select-Pfade
+    \item Zufällige Wahl der Pfade (ohne Doppelung)
+    \item Analyse nach jeder Ausführung
+    \item Konsolidierung der Ergebnisse am Ende
+    \item Automatischer Abbruch wenn Laufzeit zu lange
+  \end{itemize}
+\end{frame}
+
+% ================= Analyse =====================
+
+\begin{frame}{Analyse - Mutexe}
+  \begin{itemize}
+    \item Suche nach doppeltem Locking
+    \begin{itemize}
+      \item Lock-Operation als letztes Element in Trace
+      \item Traversiere Trace rückwerts
+      \item Wenn Lock auf selben Mutex vor Unlock auf selben Mutex $\Rightarrow$ doppeltes Locking
+      \item Kein Deadlock wenn beide RLock
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Analyse - Mutexe}
+  \begin{itemize}
+    \item Suche nach zyklischem Locking
+    \begin{itemize}
+      \item Aufbau von Lock-Bäumen
+      \item Suchen nach Zyklen in Lock-Bäumen
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Detektion von Deadlocks: Lock-Bäume}
+  \begin{minipage}{0.65\textwidth}
+      \lstinputlisting[multicols=2]{code/lock-tree.txt}
   \end{minipage}
   \hfill
   \vrule{}
   \hfill
-  \begin{minipage}{0.49\textwidth}
-    \lstinputlisting{code/select-example.txt}
+  \begin{minipage}{0.25\textwidth}
+      \begin{tikzpicture}[node distance={12mm}, thick, main/.style = {draw}] 
+          \node[main, draw=Red1, text=Red1, rectangle, visible on=<2>] (R1) {R1};
+          \node[main, rectangle, visible on=<3->] (R1) {R1};
+
+          \node[main, draw=Red1, text=Red1, circle, visible on=<3-4>] [below of=R1](y1) {y}; 
+          \node[main, circle, visible on=<5->] [below of=R1](y1) {y}; 
+
+
+          \node[main, draw=Red1, text=Red1, circle, visible on=<3>] [below of=y1](z1) {z};
+          \node[main, circle, visible on=<4->] [below of=y1](z1) {z};
+
+          \node[main, draw=Red1, text=Red1, circle, visible on=<4>] [right of=z1](x1) {x};
+          \node[main, circle, visible on=<5->] [right of=z1](x1) {x};
+
+
+          \node[main, draw=Red1, text=Red1, rectangle, visible on=<2>] [below of=z1](R2) {R2};
+          \node[main, rectangle, visible on=<3->] [below of=z1](R2) {R2};
+
+          \node[main, draw=Red1, text=Red1, circle, visible on=<5>] [below of=R2](z2) {x};
+          \node[main, circle, visible on=<6->] [below of=R2](z2) {x};
+
+          \node[main, draw=Red1, text=Red1, circle, visible on=<5>] [below of=z2](x2) {z};
+          \node[main, circle, visible on=<6->] [below of=z2](x2) {z};
+
+
+          \node[main, draw=Red1, text=Red1, rectangle, visible on=<2>] [below of=x1](R3) {R3};
+          \node[main, rectangle, visible on=<3->] [below of=x1](R3) {R3};
+
+          \node[main, draw=Red1, text=Red1, circle, visible on=<6>] [below of=R3](x3) {z};
+          \node[main, circle, visible on=<7->] [below of=R3](x3) {z};
+
+          \node[main, draw=Red1, text=Red1, circle, visible on=<6>] [below of=x3](y3) {y};
+          \node[main, circle, visible on=<7->] [below of=x3](y3) {y};
+
+
+          \draw[->, draw=Red1, visible on=<3>] (R1) to (y1);
+          \draw[->, visible on=<4->] (R1) to (y1);
+          
+
+          \draw[->, draw=Red1, visible on=<4>] (y1) to (x1);
+          \draw[->, draw=Red1, visible on=<7>] (y1) to (x1);
+          \draw[->, visible on=<5-6>] (y1) to (x1);
+
+          \draw[->, draw=Red1, visible on=<3>] (y1) to (z1);
+          \draw[->, visible on=<4->] (y1) to (z1);
+
+          \draw[->, draw=Red1, visible on=<5>] (R2) to (z2);
+          \draw[->, visible on=<6->] (R2) to (z2);
+
+          \draw[->, draw=Red1, visible on=<5>] (z2) to (x2);
+          \draw[->, draw=Red1, visible on=<7>] (z2) to (x2);
+          \draw[->, visible on=<6>] (z2) to (x2);
+
+
+          \draw[->, draw=Red1, visible on=<6>] (R3) to (x3);
+          \draw[->, visible on=<7->] (R3) to (x3);
+
+          \draw[->, draw=Red1, visible on=<6>] (x3) to (y3);
+          \draw[->, draw=Red1, visible on=<7>] (x3) to (y3);
+
+
+          \draw[dashed, draw=Red1, ->, visible on=<7>] (x1) to [out=180+45,in=45] (z2);
+          \draw[dashed, draw=Red1, ->, visible on=<7>] (x2) to [out=45,in=180+45] (x3);
+          \draw[dashed, draw=Red1, ->, visible on=<7>] (y3) to [out=45,in=0,looseness=1.4] (y1);
+      \end{tikzpicture}
   \end{minipage}
 \end{frame}
 
-\begin{frame}{Detektor - Select - Instrumentierung}
+\begin{frame}{Analyse - Mutex}
+  \begin{itemize}
+    \item Zyklus nur gültig wenn:
+    \begin{itemize}
+      \item keine zwei R-Lock hintereinander
+      \item Locks in Zyklus dürfen keine gemeinsamen Vorfahren haben, außer beide 
+        Vorfahren sind RLock
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Analyse - Channel}
+  \begin{itemize}
+    \item Suche nach potenziellem Ablauf mit 
+    \begin{itemize}
+      \item Send/Receive ohne Kommunikationspartner
+      \item potenzielles Send auf geschlossenem Channel
+    \end{itemize} 
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Analyse - Channel}
+  \begin{itemize}
+    \item Berechne Pre- und Post-Vectorclocks
+    \item Bestimme vectorclock-annotated Trace
+    \item Bestimme Operationen mit unvergleichbaren Vectorclocks
+    \item Betrachte potenzielle Abläufe 
+    \item Suche nach Send/Receive ohne Kommunikationspartner und Send auf Closed
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Analyse - Channel}
+  \lstinputlisting{code/vc-code.txt}  
+\end{frame}
+
+\begin{frame}{Analyse - Channel}
+  \begin{align*}
+    [&[signal(1, 2), signal(2, 3), pre(3, 1?), post(9, 1, 1?, 6)]\\
+    &[wait(5, 2), pre(6, 1!), post(7, 1, 1!), pre(8, 1?), post(12, 2, 1?, 10)]\\
+    &[wait(4, 3), pre(10, 1!), post(11, 2, 1!)]]
+  \end{align*}
+\end{frame}
+
+\begin{frame}{Analyse - Channel}
   \begin{minipage}{0.49\textwidth}
-    \begin{minipage}{0.49\textwidth}
-      \lstinputlisting{code/select-pre.txt}
+  \centering
+  \includegraphics[width=0.6\textwidth]{img/vc.eps}
+  \begin{tikzpicture}[overlay]
+    \node[fill=white, rectangle, minimum width=0.7cm, minimum height=0.04cm, visible on=<1>] at (-4.0, 5.80) (1) {};
+    \node[fill=white, rectangle, minimum width=0.7cm, minimum height=0.04cm, visible on=<1>] at (-2.4, 5.80) (2) {};
+    \node[fill=white, rectangle, minimum width=0.7cm, minimum height=0.04cm, visible on=<1>] at (-0.7, 5.80) (3) {};
+    \node[fill=white, rectangle, minimum width=0.7cm, minimum height=0.04cm, visible on=<-2>] at (-4.0, 4.84) (4) {};
+    \node[fill=white, rectangle, minimum width=0.7cm, minimum height=0.04cm, visible on=<-2>] at (-2.4, 4.84) (5) {};
+    \node[fill= white, rectangle, minimum width=0.7cm, minimum height=0.04cm, visible on=<-3>] at (-4.0, 3.885) (6) {};
+    \node[fill= white, rectangle, minimum width=0.7cm, minimum height=0.04cm, visible on=<-3>] at (-0.8, 3.885) (7) {};
+    \node[fill=white, rectangle, minimum width=0.7cm, minimum height=0.04cm, visible on=<-4>] at (-4.0, 2.93) (8) {};
+    \node[fill=white, rectangle, minimum width=0.7cm, minimum height=0.04cm, visible on=<-4>] at (-2.4, 2.93) (9) {};
+    \node[fill=white, rectangle, minimum width=0.7cm, minimum height=0.04cm, visible on=<-5>] at (-4.0, 1.97) (10) {};
+    \node[fill=white, rectangle, minimum width=0.7cm, minimum height=0.04cm, visible on=<-5>] at (-2.4, 1.97) (11) {};
+    \node[fill=white, rectangle, minimum width=0.7cm, minimum height=0.04cm, visible on=<-6>] at (-2.4, 1.01) (12) {};
+    \node[fill=white, rectangle, minimum width=0.7cm, minimum height=0.04cm, visible on=<-6>] at (-0.8, 1.01) (13) {};
+    \node[fill=white, rectangle, minimum width=0.7cm, minimum height=0.04cm, visible on=<-7>] at (-0.8, 0.05) (14) {};
+    \node[fill=white, rectangle, minimum width=0.7cm, minimum height=0.04cm, visible on=<-7>] at (-2.4, 0.05) (15) {};
+\end{tikzpicture}
+  \end{minipage}
+  \hfill
+  \uncover<9>{\vrule{}}
+  \hfill
+  \begin{minipage}{0.49\textwidth}
+    \uncover<9>{
+      \begin{align*}
+        [&[^{[2,0,0]}x?^{[3,2,0]}]\\
+        &[^{[1, 1, 0]}x!^{[1, 2, 0]}, ^{[1, 2, 0]}x?^{[2, 3, 2]}]\\
+        &[^{[2, 0, 1]}x!^{[2, 0, 2]}]]
+      \end{align*}
+    }
+  \end{minipage}
+\end{frame}
+
+\begin{frame}{Analyse - Channel}
+  \begin{itemize}
+    \item $x$ ist Ursache von $y$ wenn
+    \begin{itemize}
+      \item $x \to y \Leftrightarrow VC(x) < VC(y) \Leftrightarrow \forall z (VC(x)_z \leq VC(y)_z) \land \exists z' (VC(x)_{z'} < VC(y)_{z'})$  
+    \end{itemize}
+    \item $x$ ist nebenläufig/unvergleichbar mit $y$ wenn
+    \begin{itemize}
+      \item $ x || y \Leftrightarrow VC(x) \not \lessgtr VC(y) \Leftrightarrow VC(x) \nless VC(y) \land VC(y) \nless V(x)$
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Analyse - Channel}
+  \begin{itemize}
+    \item Potenzielle Kommunikationspartner auf ungebufferten Channels:
+    \begin{itemize}
+      \item Paar von Send-Receive auf selbem Channel
+      \item Pre- oder Post-Vectorclock unvergleichbar
+    \end{itemize}
+    \item Potenzielle Kommunikationspartner auf gebufferten Channels:
+    \begin{itemize}
+      \item Paar von Send-Receive auf selbem Channel
+      \item $\#s_< + \#s_{\not\lessgtr} \geq \# r_{<} + \#r_{\not \lessgtr}$\\
+      \item $\#s_< \leq \# r_{<} + \#r_{\not \lessgtr}$
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Analyse - Channel}
+  \begin{minipage}{0.49\textwidth}
+    \begin{align*}
+      [&[^{[2,0,0]}x_1?^{[3,2,0]}]\\
+      &[^{[1, 1, 0]}x_2!^{[1, 2, 0]}, ^{[1, 2, 0]}x_3?^{[2, 3, 2]}]\\
+      &[^{[2, 0, 1]}x_4!^{[2, 0, 2]}]]
+    \end{align*}
+    \uncover<2->{
+      \begin{align*}
+        &x_2! \to x_1?\\
+        &x_4! \to x_1?\\
+        &x_4! \to x_3?
+      \end{align*}
+    }
     \end{minipage}
-  \end{minipage}
-  \hfill
-  \vrule{}
-  \hfill
-  \begin{minipage}{0.49\textwidth}
-    \lstinputlisting{code/select-post.txt}
-  \end{minipage}
+    \hfill
+    \uncover<3->{\vrule{}}
+    \hfill
+    \begin{minipage}{0.24\textwidth}
+      \uncover<3->{
+        \begin{align*}
+          &x_2! \to x_1?\\
+          &x_4! \to x_3?
+        \end{align*}  
+      }
+      \uncover<4->{
+        \begin{align*}
+          &x_4! \to x_1?\\
+          &x_2! \to \lightning
+        \end{align*}  
+      }
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.24\textwidth}
+      \uncover<5->{
+        \begin{align*}
+          &x_1? \leftarrow x_2!\\
+          &x_3? \leftarrow x_4!
+        \end{align*}  
+      }
+      \uncover<6->{
+        \begin{align*}
+          &x_1? \leftarrow x_4!\\
+          &x_3? \leftarrow \lightning
+        \end{align*}  
+      }
+    \end{minipage}
 \end{frame}
 
-\begin{frame}{Detektor - Programm ausführen}
-  \textcolor{red}{TODO: Programm ausführen}
+\begin{frame}{Analyse - Channel}
+  \begin{itemize}
+    \item Potenzielles Send auf Closed Channel:
+    \begin{itemize}
+      \item Pre- oder Post-VC von Send unvergleichbar mit VC von Close
+      \item Wenn Send ist Ursache von Close $\Rightarrow$ Send auf Close tritt 
+      während Durchlauf auf $\Rightarrow$ erzeugt Laufzeitfehler
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Auswertung}
+  \textcolor{Red1}{Wenn genug Zeit: Auswertung}
+\end{frame}
+
+\begin{frame}{Probleme}
+  \textcolor{Red1}{Wenn genug Zeit: Probleme}
 \end{frame}
 
 
 
-\begin{frame}{Detektor - Analyse - Mutexe}
-  \textcolor{red}{TODO: Analyse Mutexe}
+\begin{frame}{Zusammenfassung}
+  \begin{itemize}
+    \item Dynamischer Detektor zur Erkennung von Concurrency-Bugs
+    \begin{itemize}
+      \item Mutex-Bugs mit Lock-Bäumen
+      \item Channel-Bugs mit Vectorclock
+    \end{itemize}
+    \item Implementierung für Instrumenter und Detektor:
+    \begin{itemize}
+      \item \url{https://github.com/ErikKassubek/GoChan}
+    \end{itemize}
+  \end{itemize}
 \end{frame}
 
-\begin{frame}{Detektor - Analyse - Channel}
-  \textcolor{red}{TODO: Analyse Channel}
-\end{frame}
+
 
 
 
 % ===== Quellen =====
 
-% \begin{frame}{Sources}
-%     \nocite{*}
-%     \AtNextBibliography{\tiny}
-%     \printbibliography[heading=none]
-% \end{frame}
+\begin{frame}{Sources}
+    \nocite{*}
+    \AtNextBibliography{\tiny}
+    \printbibliography[heading=none, keyword={1}]
+\end{frame}
+
+\begin{frame}{Sources}
+  \nocite{*}
+  \AtNextBibliography{\tiny}
+  \printbibliography[heading=none, keyword={2}]
+\end{frame}
+
 
 
 \end{document}

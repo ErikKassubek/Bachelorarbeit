@@ -1,0 +1,28 @@
+func lockTree(){
+	var x,y,z sync.Mutex
+
+	// R1
+	go func(){  
+		y.Lock()
+		z.Lock()
+		z.Unlock()
+		x.Lock()
+		x.Unlock()
+		y.Unlock()
+	}`\newpage`
+	// R2
+	go func(){   
+		x.Lock()
+		z.Lock()
+		z.Unlock()
+		x.Lock()
+	}
+
+	// R3
+	go func(){  
+		z.Lock()
+		y.Lock()
+		y.Unlock()
+		z.Unlock()
+	}
+}

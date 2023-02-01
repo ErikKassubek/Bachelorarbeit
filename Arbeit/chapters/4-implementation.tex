@@ -42,7 +42,16 @@ Auch die Ids für Channels und Mutexes werden durch laufende, atomare Zähler
 implementiert, welche in den Objekten für Channels und Mutexes gespeichert werden.
 
 \section{Mutex} \label{Chap:Implement-Sec:Mutex}
-Um potenzielle Deadlocks durch Mutexe erkennen zu können werden nun, wie in 
+Zuerst wird nach doppeltem Locking gesucht. Da ein doppeltes Locking immer 
+zu einer blockade führt, kann es nur auftreten, wenn das letzte Element in 
+dem Trace einer Routine eine Lock-Operation aber keine TryLock beschreibt. In diesem Fall wird 
+der entsprechende Trace rückwerts durchlaufen, bis eine Operation auf dem 
+selben Mutex gefunden wird. Handelt es sich dabei ebenfalls um eine 
+Lock-Operation auf dem selben Mutex, bedeutet dies, dass ein Deadlock durch 
+doppeltes Locking erkannt wurde. Dies ist allerdings nur der Fall, solange es 
+sich nicht bei beiden Operationen um RLock-Operationen handelt. Wurde ein 
+solcher Deadlock gefunden, wird eine eine entsprechende Nachricht zurückgegeben. 
+Um potenzielle zyklische Deadlocks durch Mutexe erkennen zu können werden nun, wie in 
 Kap.~\ref{Chap:Back-Sec:Prob-SubSec:Mutex} beschrieben, Lock-Bäume verwendet.
 Diese werden basierend auf dem aufgezeichneten Trace aufgebaut. Dazu werden die Traces der 
 einzelnen Routinen nacheinander durchlaufen. Für jede Routine wird eine Liste \texttt{currentLocks} aller 
@@ -61,11 +70,10 @@ Nachdem der Trace einer Routine durchlaufen wurde, wird überprüft ob sich noch
 des Programms noch nicht wieder freigegeben worden sind. Dies deutet darauf hin, dass die
 entsprechende Routine nicht beendet wurde, z.B. weil das Programm bzw.\ die Main-Routine beendet wurden.
 Dies kann einfach durch die entsprechende Logik des Programms zustande gekommen sein, es kann aber auch 
-auf einen tatsächlich auftretenden Deadlock, z.B. durch doppeltes Locking des selben Locks in einer Routine, ohne dass 
-es zwischenzeitlich wieder freigegeben wurde. In diesem Fall wird eine Warnung ausgegeben.\\
+auf einen tatsächlich auftretenden Deadlock. In diesem Fall wird eine Warnung ausgegeben.\\
 Ein potenzieller Deadlock gibt sich nun, wenn in diesem aus den Bäumen zusammengesetzten 
 Graph ein Zyklus existiert.
-Nicht alle Zyklen bilden dabei gültige Zyklen. zum Beispiel muss darauf 
+Nicht alle Zyklen bilden dabei gültige Zyklen. Bum Beispiel muss darauf 
 geachtet werden, dass nicht alle Kanten durch die selbe Routine erzeugt wurden, und dass in 
 zwei, in dem Kreis hintereinander folgende Kanten der gemeinsame Knoten nicht beides mal durch eine 
 R-Lock Operation durch Kanten verbunden wurde. Gültige Zyklen lassen sich durch 
@@ -94,23 +102,23 @@ dir folgenden Formeln charakterisieren.
   \label{Chap:Implement-Sec:Mutex.f}
 \end{align}
 Dabei bezeichnet $mi_i$ den Mutex $hs_i$ das holdingSet der $i$-ten 
-in dem Zyklus.\ \eqref{Chap:Implement-Sec:Mutex.a} stellt sicher, dass das selbe 
+in dem Zyklus.\ (\ref{Chap:Implement-Sec:Mutex.a}) stellt sicher, dass das selbe 
 Lock nicht in dem HoldingSet von zwei verschiedenen Routinen auftauchen kann.\
-\eqref{Chap:Implement-Sec:Mutex.b} und~\eqref{Chap:Implement-Sec:Mutex.c}
+(\ref{Chap:Implement-Sec:Mutex.b}) und~(\ref{Chap:Implement-Sec:Mutex.c})
 sorgen dafür, dass es sich bei der Kette tatsächlich um einen Zyklus handelt, 
 dass also das Lock einer Dependency immer in dem HoldingSet
 der nächsten Dependency enthalten ist und das Lock der letzten Routine 
 wiederum im HoldingSet der ersten Routine liegt, um den Zyklus zu schließen.
-\eqref{Chap:Implement-Sec:Mutex.d} bis \eqref{Chap:Implement-Sec:Mutex.f} 
+(\ref{Chap:Implement-Sec:Mutex.d}) bis (\ref{Chap:Implement-Sec:Mutex.f})
 beschäftigen sich mit dem Einfluss von RW-Locks auf die Gültigkeit von 
-Zyklen. Auch wenn \eqref{Chap:Implement-Sec:Mutex.a} bid~\eqref{Chap:Implement-Sec:Mutex.c} 
+Zyklen. Auch wenn (\ref{Chap:Implement-Sec:Mutex.a}) bis~(\ref{Chap:Implement-Sec:Mutex.c})
 erfüllt sind, ist dies dennoch keine gültige Kette, wenn sowohl
 der Mutex $mu_i$ als auch der Mutex $mu$ in $hs_{i+1}$, 
 für die $mu = mu_i$ gilt, beides Reader-Locks
 sind, also Locks welche durch eine RLock-Operation erzeugt worden sind. 
-Dass solche Pfade ausgeschlossen werden wird durch \eqref{Chap:Implement-Sec:Mutex.d} 
-und \eqref{Chap:Implement-Sec:Mutex.e} sichergestellt.
-\eqref{Chap:Implement-Sec:Mutex.f} beschäftigt sich mit Gate-Locks. 
+Dass solche Pfade ausgeschlossen werden wird durch (\ref{Chap:Implement-Sec:Mutex.d})
+und (\ref{Chap:Implement-Sec:Mutex.e}) sichergestellt.
+(\ref{Chap:Implement-Sec:Mutex.f}) beschäftigt sich mit Gate-Locks. 
 Dabei handelt es sich um Situationen, bei denen mehrere Teile des Programmcodes,
 welche zu einem Deadlock führen könnten durch ein Lock umschlossen sind, 
 in der Praxis also nicht gleichzeitig ausgeführt werden und somit einen Deadlock 
@@ -126,12 +134,12 @@ betrachteten Pfad. Anschließend werden schrittweise weitere Dependencies auf de
 Stack gelegt, wobei darauf geachtet wird, dass aus jeder Routine immer nur maximal 
 eine Dependency auf dem Stack liegt. Bevor eine Dependency zu dem Stack 
 hinzugefügt wird, wird überprüft ob der durch den Stack betrachtete Pfad 
-einen gültigen Pfad bilden würde, ob also \eqref{Chap:Implement-Sec:Mutex.a}, 
-\eqref{Chap:Implement-Sec:Mutex.b}, \eqref{Chap:Implement-Sec:Mutex.d} und 
-\eqref{Chap:Implement-Sec:Mutex.f} immer noch gelten würden. Ist dies nicht
+einen gültigen Pfad bilden würde, ob also (\ref{Chap:Implement-Sec:Mutex.a}), 
+(\ref{Chap:Implement-Sec:Mutex.b}), (\ref{Chap:Implement-Sec:Mutex.d}) und 
+(\ref{Chap:Implement-Sec:Mutex.f}) immer noch gelten würden. Ist dies nicht
 der Fall, so wird die Dependency nicht auf den Stack gelegt. Werden die 
 Regeln hingegen erfüllt, dann wird überprüft, um der Stack nun einen gültigen
-Zyklus enthält, also auch \eqref{Chap:Implement-Sec:Mutex.c} und \eqref{Chap:Implement-Sec:Mutex.e}
+Zyklus enthält, also auch (\ref{Chap:Implement-Sec:Mutex.c}) und (\ref{Chap:Implement-Sec:Mutex.e})
 gültig sind. In diesem Fall wurde ein potenzielles Deadlock gefunden, und dies 
 ausgegeben. Andernfalls werden weiter Dependency auf dem Stack hinzugefügt. 
 Dies wird wiederholt, bis es keine Dependency mehr gibt, die auf den Stack VaT
