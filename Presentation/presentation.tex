@@ -334,33 +334,51 @@
 \end{frame}
 
 \begin{frame}{Instrumentierung - Fork}
-  \begin{tabular}{lcl}
-    go B & $\Rightarrow$ & nr := atomicInc(nR); ts := atomicInc(c); [ signal(ts, nr) ]$^\text{id}$;\\
-    & & [+]$^\text{nr}$; go \{ ts' := atomicInc(c); [ wait(ts, nr) ]$^\text{nr}$; B\};
-  \end{tabular}
+    \begin{itemize}
+      \item \texttt{signal(ts, nr)} in Trace
+      \item Erzeuge neuen Trace
+      \item Starte der neuen Routine
+      \item \texttt{wait(ts, nr)} in neuen Trace
+      \item Ausführen der Routine
+    \end{itemize}
 \end{frame}
 
 \begin{frame}{Instrumentierung - Mutex}
-  \begin{tabular}{lcl}
-    mu.(Try)Lock() & $\Rightarrow$ & ts := atomicInc(c);
-    [ lock(ts, mu.id, $\langle \text{-|t}\rangle$, $\langle \text{0|1}\rangle$) ]$^\text{id}$;\\
-    & & mu.(Try)Lock();\\
-  mu.Unlock() & $\Rightarrow$ & ts := atomicInc(c); mu.Unlock(); [ unlock(ts, mu.id) ]$^\text{id}$;\\
-  rmu.(Try)(R)Lock() & $\Rightarrow$ & ts := atomicInc(c); rmu.(Try)(R)Lock();\\
-    & & [ lock(ts, rmu.id, $\langle \text{-|t|r|tr}\rangle$, $\langle \text{0|1}\rangle$) ]$^\text{id}$;\\
-  rmu.RUnlock() & $\Rightarrow$ & ts := atomicInc(c); rmu.RUnlock(); [ unlock(ts, rmu.id) ]$^\text{id}$;
-  \end{tabular}  
+  \begin{itemize}
+    \item (Try)(R)Lock:
+    \begin{itemize}
+      \item \texttt{lock(ts, mu.id, ⟨-|t|r|tr⟩, ⟨0|1⟩)}
+      \item Führe Lock aus
+    \end{itemize}
+    \item (Try)(R)Unlock:
+    \begin{itemize}
+      \item \texttt{unlock(ts, mu.id)} in Trace
+      \item Führe Lock aus
+    \end{itemize}
+  \end{itemize}
 \end{frame}
 
 \begin{frame}{Instrumentierung - Channel}
-  \begin{tabular}{lcl}
-  ch <- i & $\Rightarrow$ & ts := atomicInc(c); [ pre(ts, ch.id, true) ]$^\text{id}$; ch <- \{i, id, ts\};\\
-    & & ts' := atomicInc(c); [ post(ts', ch.id, true, id) ]$^\text{id}$\\
-  <- ch & $\Rightarrow$ & ts := atomicInc(c); [ pre(ts, ch.id, false) ]$^\text{id}$;\\
-    & & \{i, id\_send, ts\_send\} := <-c; ts' := atomicInc(c);\\
-    & & [ post(ts', ch.id, false, id\_send, ts\_send) ]$^\text{id}$; return i;\\
-  close(ch) & $\Rightarrow$ & ts := atomicInc(c); close(ch); [ close(ts, ch.id) ]$^\text{id}$
-  \end{tabular}
+  \begin{itemize}
+    \item Send: (c <- i):
+    \begin{itemize}
+      \item \texttt{pre(ts, c.id, true)} in Trace
+      \item \texttt{c <- \{i, r.id, ts\}}
+      \item \texttt{post(ts', c.id, true, ts)} in Trace
+    \end{itemize}
+    \item Receive (a := <- c):
+    \begin{itemize}
+      \item \texttt{pre(ts, c.id, false)} in Trace
+      \item \texttt{\{i, id\_send, ts\_send\} := <-c}
+      \item \texttt{post(ts', ch.id, false, id\_send, ts\_send)} in Trace
+      \item \texttt{a := i}
+    \end{itemize}
+    \item Close (close(c))
+    \begin{itemize}
+      \item \texttt{close(ts, c.id)} in Trace
+      \item \texttt{close(c)}
+    \end{itemize}
+  \end{itemize}
 \end{frame}
 
 
@@ -607,7 +625,7 @@
     \end{itemize}
     \item $x$ ist nebenläufig/unvergleichbar mit $y$ wenn
     \begin{itemize}
-      \item $ x || y \Leftrightarrow VC(x) \not \lessgtr VC(y) \Leftrightarrow VC(x) \nless VC(y) \land VC(y) \nless V(x)$
+      \item $ x || y \Leftrightarrow VC(x) \not \lessgtr VC(y) \Leftrightarrow VC(x) \nless VC(y) \land VC(y) \nless VC(x)$
     \end{itemize}
   \end{itemize}
 \end{frame}
@@ -623,7 +641,7 @@
     \begin{itemize}
       \item Paar von Send-Receive auf selbem Channel
       \item $\#s_< + \#s_{\not\lessgtr} \geq \# r_{<} + \#r_{\not \lessgtr}$\\
-      \item $\#s_< \leq \# r_{<} + \#r_{\not \lessgtr}$
+      \item $\#s_< \leq \# r_{<}$
     \end{itemize}
   \end{itemize}
 \end{frame}
@@ -687,15 +705,6 @@
     \end{itemize}
   \end{itemize}
 \end{frame}
-
-\begin{frame}{Auswertung}
-  \textcolor{Red1}{Wenn genug Zeit: Auswertung}
-\end{frame}
-
-\begin{frame}{Probleme}
-  \textcolor{Red1}{Wenn genug Zeit: Probleme}
-\end{frame}
-
 
 
 \begin{frame}{Zusammenfassung}

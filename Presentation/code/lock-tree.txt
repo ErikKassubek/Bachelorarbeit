@@ -15,7 +15,7 @@ func lockTree(){
 		x.Lock()
 		z.Lock()
 		z.Unlock()
-		x.Lock()
+		x.Unlock()
 	}
 
 	// R3

@@ -2,18 +2,18 @@ func main() {
   var m sync.RWMutex
 
   go func() {
-    x.RLock()
+    m.RLock()
     read()
-    x.RUnlock()
+    m.RUnlock()
   }()
 
   go func() {
-    x.RLock()
+    m.RLock()
     read()
-    x.RUnlock()
+    m.RUnlock()
   }()
 
-  x.Lock()
+  m.Lock()
   write()
-  x.Unlock()
+  m.Unlock()
 }
