@@ -38,15 +38,16 @@
   32 & Communication Deadlock & Channel & Ja \\ \hline
   33 & Communication Deadlock & Channel & Ja \\ \hline
   34 & Communication Deadlock & Channel & Ja \\ \hline
-  35 & Communication Deadlock & Channel & FP \\ \hline
-  36 & Communication Deadlock & Channel & Ja \\ \hline
-  37 & Mixed Deadlock & Channel\&Mutex & Ja \\ \hline
+  35 & Communication Deadlock & Channel & Ja \\ \hline
+  36 & Communication Deadlock & Channel & FP \\ \hline
+  37 & Communication Deadlock & Channel & Ja \\ \hline
   38 & Mixed Deadlock & Channel\&Mutex & Ja \\ \hline
-  39 & Mixed Deadlock & Channel\&Mutex & FP \\ \hline
-  40 & Mixed Deadlock & Channel\&Mutex & Ja \\ \hline
-  41 & Mixed Deadlock & Channel\&Mutex & FP \\ \hline
-  42 & Mixed Deadlock & Channel\&Mutex & Ja \\ \hline
+  39 & Mixed Deadlock & Channel\&Mutex & Ja \\ \hline
+  40 & Mixed Deadlock & Channel\&Mutex & FP \\ \hline
+  41 & Mixed Deadlock & Channel\&Mutex & Ja \\ \hline
+  42 & Mixed Deadlock & Channel\&Mutex & FP \\ \hline
   43 & Mixed Deadlock & Channel\&Mutex & Ja \\ \hline
+  44 & Mixed Deadlock & Channel\&Mutex & Ja \\ \hline
   \caption{Ergenisse für die betrachteten Standartsituationen. Ja bedeutet, 
   dass das Programm korrekt klassifiziert wurde. Bei FN handelte es sich 
   um ein False-Negative und bei FP um ein False-Positive. Die Beschreibungen
@@ -89,25 +90,26 @@
   27 & \makecell[l]{Keine Probleme bei [$R_0$: \{$c_1^1$$\leftarrow$1; $c_1^1$$\leftarrow$1\} , $R_1$: \{$\leftarrow$$c_1^1$\}, $R_2$: \{$\leftarrow$$c_1^1$\}]} & Ja \\ \hline
   28 & \makecell[l]{Kein Kommunikationspartner wenn Receive in Fork bei ungebuffertem Channel\\$[$$R_0$: \{$c_1^0$ $\leftarrow$ 1; fork $R_1$\}, $R_1$: \{$\leftarrow$ $c_1^0$\}$]$} & Ja \\ \hline
   29 & \makecell[l]{Mögliche Kommunikationspartner wenn Receive in Fork bei gebuffertem Channel\\$[$$R_0$: \{$c_1^1$ $\leftarrow$ 1; fork $R_1$\}, $R_1$: \{$\leftarrow$ $c_1^1$\}$]$} & Ja \\ \hline
-  30 & \makecell[l]{Deadlock bei Wahl eines bestimmten Select-Case\\$[$$R_0$: \{$\leftarrow$$c_3^0$\}, $R_1$: \{$c_1^0$ $\leftarrow$ 1\}, $R_2$: \{$c_2^0$ $\leftarrow$ 1\},\\$R_3$: \{select \{ case $\leftarrow$ $c_1^0$ $\Rightarrow$ \{$c_3^0$ $\leftarrow$ 1\}, case $\leftarrow$ $c_2^0$ $\Rightarrow$ \{$\leftarrow$ $c_3^0$\}\}\}$]$} & Ja \\ \hline
-  31 & \makecell[l]{Deadlock bei Wahl eines bestimmten Select-Case\\$[$$R_0$: \{$\leftarrow$$c_3^0$\}, $R_1$: \{$c_1^0$ $\leftarrow$ 1\}\\$R_2$: \{select \{ case $\leftarrow$ $c_1^0$ $\Rightarrow$ \{$c_3^0$ $\leftarrow$ 1\}; default $\Rightarrow$ \{$\leftarrow$ $c_3^0$\}\}\}$]$} & Ja \\ \hline
-  32 &Tatsächliches Send auf geschlossenen Channel & Ja \\ \hline
-  33 & Potenzielles aber nicht tatsächliches Send auf geschlossenen Channel Channel & Ja \\ \hline
-  34 & \makecell[l]{Kein Problem, wenn Channel erst nach letztem Send geschlossen werden\\kann [$R_0$: \{$c_1^0$ $\leftarrow$ 1; close($c_1^1$)\}, $R_1$: \{$\leftarrow$$c_1^1$\}]} & Ja \\ \hline
-  35 & \makecell[l]{Kein Problem, wenn Channel erst nach letztem Send geschlossen werden\\kann [$R_0$: \{$\leftarrow$$c_1^0$; close($c_1^0$)\}, $R_1$: \{$c_1^1$$\leftarrow$1\}]} & FP \\ \hline
-  36 & \makecell[l]{Korrekte Kommunikationspartner bei [$R_0$: \{$c_1^1$ $\leftarrow$ 1; $c_1^1$ $\leftarrow$ 1; $c_1^1$ $\leftarrow$ 1\},\\$R_1$: \{$\leftarrow$$x$; $\leftarrow$$x$\}] (letztes Send hat keinen Kommunikationspartner)} & Ja \\ \hline
-  37 & \makecell[l]{Deadlock, da gleichzeitiges Send und Receive durch Mutex Lock verhindert\\wird [$R_0$: \{$m_1$.Lock; $\leftarrow$$c_1^0$; $m_1$.Unlock\}, $R_1$: \{$m_1$.Lock; $c_1^0$ $\leftarrow$ 1; $m_1$.Unlock\}]} & Ja \\ \hline
-  38 & \makecell[l]{Kein Problem, da gleichzeitiges Send und Receive durch RWMutex R-Lock nicht\\verhindert wird\\$[$$R_0$: \{$m_1^r$.RLock; $\leftarrow$$c_1^0$; $m_1^r$.RUnlock\}, $R_1$: \{$m_1^r$.RLock; $c_1^0$ $\leftarrow$ 1; $m_1^r$.RUnlock\}$]$} & Ja \\ \hline
-  39 & \makecell[l]{Kein potenzielles zyklisches Locking da Operationen durch Channel-Operation\\getrennt sind [$R_0$: \{$\leftarrow$$c_1^0$; $m_1$.Lock; $m_2$.Lock; $m_2$.Unock; $m_1$.Unlock;\},\\$R_1$: \{$m_2$.Lock; $m_1$.Lock; $m_1$.Unock; $m_2$.Unlock; $c_1^0$ $\leftarrow$ 1\}]} & FP \\ \hline
-  40 & \makecell[l]{Tatsächlicher Deadlock, da Send durch Lock nicht erreicht werden kann\\$[$$R_0$: \{$m_1$.Lock; $c_1^0$$\leftarrow$1; $m_1$.Unlock\}, $R_1$: \{$m_1$.Lock; $\leftarrow$$c_1^0$; $m_1$.Unlock\}$]$} & Ja\\ \hline
-  41 & \makecell[l]{Potenzieller aber nicht tatsächlicher Deadlock ($R_1$ vor $R_2$), da Send durch Lock\\nicht erreicht werden könnte ($R_2$ vor $R_1$)\\$[$$R_0$: \{$m_1$.Lock; $c_1^0$$\leftarrow$1; $m_1$.Unlock\}, $R_1$: \{$m_1$.Lock; $\leftarrow$$c_1^0$; $m_1$.Unlock\}$]$} & FP \\ \hline
-  42 & \makecell[l]{Potenzielles zyklisches Locking bei Wahl eines Select-Cases\\$[$$R_0$: \{$m_1$.Lock; $m_2$.Lock; $m_2$.Unlock; $m_1$.Unlock\},\\$R_1$: \{select \{case $\leftarrow c_1^0 \Rightarrow$ \{$m_2$.Lock; $m_1$.Lock; $m_1$.Unlock; $m_2$.Unlock\}, default $\Rightarrow$ \{\}\};\\$R_2$: \{$c_1^0$ <- 1\}\}$]$} & Ja \\ \hline
-  43 & \makecell[l]{Potenzielles zyklisches Locking bei Wahl eines DefaultSelect-Cases\\$[$$R_0$: \{$m_1$.Lock; $m_2$.Lock; $m_2$.Unlock; $m_1$.Unlock\},\\$R_1$: \{select \{case $\leftarrow c_1^0 \Rightarrow$ \{\}, default $\Rightarrow$ \{$m_2$.Lock; $m_1$.Lock; $m_1$.Unlock; $m_2$.Unlock\}\};\\$R_2$: \{$c_1^0$ <- 1\}\}$]$} & Ja \\ \hline
+  30 & \makecell[l]{Potenzielles Blocking bei anderer Communikationsordnung,\\ohne auftreten des Blocking bei Durchlauf\\$[$ $R_0$: \{$\leftarrow c_1^0$\}, $R_1$: \{$c_1^0 \leftarrow 1$; $\leftarrow x_1^0$\}, $R_2$: \{$\leftarrow c_1^0$\} $]$} & Ja \\ \hline
+  31 & \makecell[l]{Deadlock bei Wahl eines bestimmten Select-Case\\$[$$R_0$: \{$\leftarrow$$c_3^0$\}, $R_1$: \{$c_1^0$ $\leftarrow$ 1\}, $R_2$: \{$c_2^0$ $\leftarrow$ 1\},\\$R_3$: \{select \{ case $\leftarrow$ $c_1^0$ $\Rightarrow$ \{$c_3^0$ $\leftarrow$ 1\}, case $\leftarrow$ $c_2^0$ $\Rightarrow$ \{$\leftarrow$ $c_3^0$\}\}\}$]$} & Ja \\ \hline
+  32 & \makecell[l]{Deadlock bei Wahl eines bestimmten Select-Case\\$[$$R_0$: \{$\leftarrow$$c_3^0$\}, $R_1$: \{$c_1^0$ $\leftarrow$ 1\}\\$R_2$: \{select \{ case $\leftarrow$ $c_1^0$ $\Rightarrow$ \{$c_3^0$ $\leftarrow$ 1\}; default $\Rightarrow$ \{$\leftarrow$ $c_3^0$\}\}\}$]$} & Ja \\ \hline
+  33 & Tatsächliches Send auf geschlossenen Channel & Ja \\ \hline
+  34 & Potenzielles aber nicht tatsächliches Send auf geschlossenen Channel Channel & Ja \\ \hline
+  35 & \makecell[l]{Kein Problem, wenn Channel erst nach letztem Send geschlossen werden\\kann [$R_0$: \{$c_1^0$ $\leftarrow$ 1; close($c_1^1$)\}, $R_1$: \{$\leftarrow$$c_1^1$\}]} & Ja \\ \hline
+  36 & \makecell[l]{Kein Problem, wenn Channel erst nach letztem Send geschlossen werden\\kann [$R_0$: \{$\leftarrow$$c_1^0$; close($c_1^0$)\}, $R_1$: \{$c_1^1$$\leftarrow$1\}]} & FP \\ \hline
+  37 & \makecell[l]{Korrekte Kommunikationspartner bei [$R_0$: \{$c_1^1$ $\leftarrow$ 1; $c_1^1$ $\leftarrow$ 1; $c_1^1$ $\leftarrow$ 1\},\\$R_1$: \{$\leftarrow$$x$; $\leftarrow$$x$\}] (letztes Send hat keinen Kommunikationspartner)} & Ja \\ \hline
+  38 & \makecell[l]{Deadlock, da gleichzeitiges Send und Receive durch Mutex Lock verhindert\\wird [$R_0$: \{$m_1$.Lock; $\leftarrow$$c_1^0$; $m_1$.Unlock\}, $R_1$: \{$m_1$.Lock; $c_1^0$ $\leftarrow$ 1; $m_1$.Unlock\}]} & Ja \\ \hline
+  39 & \makecell[l]{Kein Problem, da gleichzeitiges Send und Receive durch RWMutex R-Lock nicht\\verhindert wird\\$[$$R_0$: \{$m_1^r$.RLock; $\leftarrow$$c_1^0$; $m_1^r$.RUnlock\}, $R_1$: \{$m_1^r$.RLock; $c_1^0$ $\leftarrow$ 1; $m_1^r$.RUnlock\}$]$} & Ja \\ \hline
+  40 & \makecell[l]{Kein potenzielles zyklisches Locking da Operationen durch Channel-Operation\\getrennt sind [$R_0$: \{$\leftarrow$$c_1^0$; $m_1$.Lock; $m_2$.Lock; $m_2$.Unock; $m_1$.Unlock;\},\\$R_1$: \{$m_2$.Lock; $m_1$.Lock; $m_1$.Unock; $m_2$.Unlock; $c_1^0$ $\leftarrow$ 1\}]} & FP \\ \hline
+  41 & \makecell[l]{Tatsächlicher Deadlock, da Send durch Lock nicht erreicht werden kann\\$[$$R_0$: \{$m_1$.Lock; $c_1^0$$\leftarrow$1; $m_1$.Unlock\}, $R_1$: \{$m_1$.Lock; $\leftarrow$$c_1^0$; $m_1$.Unlock\}$]$} & Ja\\ \hline
+  42 & \makecell[l]{Potenzieller aber nicht tatsächlicher Deadlock ($R_1$ vor $R_2$), da Send durch Lock\\nicht erreicht werden könnte ($R_2$ vor $R_1$)\\$[$$R_0$: \{$m_1$.Lock; $c_1^0$$\leftarrow$1; $m_1$.Unlock\}, $R_1$: \{$m_1$.Lock; $\leftarrow$$c_1^0$; $m_1$.Unlock\}$]$} & FP \\ \hline
+  43 & \makecell[l]{Potenzielles zyklisches Locking bei Wahl eines Select-Cases\\$[$$R_0$: \{$m_1$.Lock; $m_2$.Lock; $m_2$.Unlock; $m_1$.Unlock\},\\$R_1$: \{select \{case $\leftarrow c_1^0 \Rightarrow$ \{$m_2$.Lock; $m_1$.Lock; $m_1$.Unlock; $m_2$.Unlock\},\\default $\Rightarrow$ \{\}\};\\$R_2$: \{$c_1^0$ <- 1\}\}$]$} & Ja \\ \hline
+  44 & \makecell[l]{Potenzielles zyklisches Locking bei Wahl eines DefaultSelect-Cases\\$[$$R_0$: \{$m_1$.Lock; $m_2$.Lock; $m_2$.Unlock; $m_1$.Unlock\},\\$R_1$: \{select \{case $\leftarrow c_1^0 \Rightarrow$ \{\},\\default $\Rightarrow$ \{$m_2$.Lock; $m_1$.Lock; $m_1$.Unlock; $m_2$.Unlock\}\};\\$R_2$: \{$c_1^0$ <- 1\}\}$]$} & Ja \\ \hline
   \caption{Beschreibung der für die Auswertung betrachteten 
   Standartsituationen. In den Fällen in denen 
   Teile des Programmcodes angegeben sind sei $R_0$ die Main-Routine. $c_i^j$
   sei ein Channel mit Kapazität $j$, $m_i$ ein Mutex und $m_i^r$ ein RWMutex.
-  Die Ergenbnisse und befinden sich in Tab.~\ref{App-Stand-Res}}
+  Die Ergebnisse und befinden sich in Tab.~\ref{App-Stand-Res}}
   \label{App-Stand-Des}
 \end{longtable}
 
@@ -167,10 +169,10 @@
 \chapter{Bespielprogramm}\label{Appendix-2}
 Man betrachte das folgende Beispielprogramm.
   \lstinputlisting{code/show.txt}
-Nach der Instrumentierung erhält man
-\lstinputlisting{code/show_inst.txt}
-sowie die neue Main-Datei
-\lstinputlisting{code/show_main.txt}
+% Nach der Instrumentierung erhält man
+% \lstinputlisting{code/show_inst.txt}
+% sowie die neue Main-Datei
+% \lstinputlisting{code/show_main.txt}
 
 Dieses Programm besitzt den folgenden Output:
 \begin{verbatim}
@@ -184,6 +186,24 @@ Finish Analysis
 
 Found Problems:
 
+Found while examine the following orders:   1,0
+Possible Send to Closed Channel:
+    Close: /home/.../output/show/main.go:48
+    Send: /home/.../output/show/main.go:112
+
+Found while examine the following orders:   1,1
+No communication partner for receive at /home/.../output/show/main.go:103 
+  when running the following communication:
+    /home/.../output/show/main.go:39 -> /home/.../output/show/main.go:41
+    /home/.../output/show/main.go:112 -> /home/.../output/show/main.go:65
+
+No communication partner for receive at /home/.../output/show/main.go:65 
+  when running the following communication:
+    /home/.../output/show/main.go:112 -> /home/.../output/show/main.go:103
+    /home/.../output/show/main.go:39 -> /home/.../output/show/main.go:41
+
+
+
 Found while examine the following orders:   1,0  1,1
 Potential Cyclic Mutex Locking:
 Lock: /home/.../output/show/main.go:109
@@ -194,22 +214,6 @@ Lock: /home/.../output/show/main.go:100
     /home/.../output/show/main.go:99
 
 
-Found while examine the following orders:   1,0
-Possible Send to Closed Channel:
-    Close: /home/.../output/show/main.go:48
-    Send: /home/.../output/show/main.go:112
-
-Found while examine the following orders:   1,1
-No communication partner for receive at /home/.../output/show/main.go:103 
-when running the following communication:
-    /home/.../output/show/main.go:112 -> /home/.../output/show/main.go:65
-    /home/.../output/show/main.go:39 -> /home/.../output/show/main.go:41
-
-No communication partner for receive at /home/.../output/show/main.go:65 
-when running the following communication:
-    /home/.../output/show/main.go:112 -> /home/.../output/show/main.go:103
-    /home/.../output/show/main.go:39 -> /home/.../output/show/main.go:41
+Note: The positions show the positions in the instrumented code!
 \end{verbatim}
-Die Pfade wurden dabei hier für eine bessere Lesbarkeit gekürzt.
-Die Positionsangaben beziehen sich dabei immer auf die Position im 
-instrumentieren Code.   
+Die Pfade wurden dabei hier für eine bessere Lesbarkeit gekürzt. 

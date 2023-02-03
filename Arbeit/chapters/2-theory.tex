@@ -152,63 +152,33 @@ Abb.~\ref{Chap:Analyze-Sec:Mutex-Fig:Double}.
 \end{figure}
 Der Mutex \texttt{x} soll hierbei mehrfach geschlossen werden, ohne dass 
 es zwischenzeitlich geöffnet wird. In diesem Fall blockiert die Routine
-endlos.\\\\
-In Go terminiert ein Programm, wenn dessen Main-Routine terminiert, unabhängig
-davon, ob andere Routinen noch laufen. Dies bedeutet, dass es nur zu einem 
-``echten'' Deadlock, bei welchem das gesamte Programm blockiert, kommen kann,
-wenn die Main-Routine in der Deadlock-Situation involviert ist. Sind nur 
-Nicht-Main-Routinen an dem Deadlock beteiligt, kann dass Programm dennoch
-terminieren. Man bezeichne Nicht-Main-Routinen, welche sich in einer blockenden 
-Deadlock Situation befinden, als hängende Routinen. Auch wenn diese nicht zu einer 
-nicht-terminierung des Programms führen können, handelt es sich bei ihnen dennoch 
-um ungewolltes Verhalten.
+endlos.
 
-\subsection{Channel}
-Wie Mutexe können auch Channels zu Deadlocks führen. Diese treten auf,
-wenn ein Channel auf eine Send- oder Receive-Operation wartet, ohne dass
-während der Laufzeit des Programms ein Kommunikationspartner für die 
-Operation gefunden wird.
+
+\subsection{Channel}\label{Chap:Back-Sec:Prob-SubSec:Channel}
+Der Detektor soll für Channels Situationen erkenne, in denen es 
+Channel-Operationen (Send oder Receive) gibt, welche keine möglichen Kommunikationspartner
+besitzen. 
 Man betrachte das Programm in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:ExDangling}.
 \begin{figure}[h!]
   \lstinputlisting{code/example-dangling-channel.txt}
   \caption{Beispielprogramm mit hängendem Channel}
   \label{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:ExDangling}
 \end{figure}
-Es gibt in diesem zwei mögliche Ausführungspfade. Man betrachtet zuerst den Fall, in dem 1 mit 3 synchronisiert. 
-Da eine go-Routine automatisch abgebrochen wird,  
-wenn die Main-Routine terminiert, entsteht hierbei kein ``echter" Deadlock. Anders ist es, wenn 1 mit 2 synchronisiert. 
-In diesem Fall wird die Main-Routine blockiert, ohne dass es eine Möglichkeit gibt, dass sie sich wieder 
-befreit. Es kann also, abhängig davon, ob 1 oder 2 die Nachricht erhält zu einem Deadlock kommen. Was 
-allerdings beide Fälle gemeinsam haben ist, dass sie eine Channel-Operation besitzen, welche zwar 
-gestartet, allerdings nie ausgeführt wird.\\
+Dieses besitzt zwei Receive aber nur eine Send-Operation. Unabhängig von der Ausführung 
+gibt es also eine Receive-Operation, welche nie ausgeführt werden wird. 
+Da ein Send oder Receive auf einem ungebufferten Channel, welche keinen 
+Kommunikationspartner besitzt dazu führt, dass die entsprechende Routine 
+ewig blockiert, führt dies somit zu einem Deadlock. 
 Anders als in ungebufferten Kanälen müssen in gepufferten Kanälen Send und 
-Receive einer Nachricht nicht gleichzeitig ablaufen. Hierbei kann es 
+Receive einer Nachricht nicht gleichzeitig ablaufen. Hierbei kann es aber 
 zu Situationen kommen, in dem eine Nachricht zwar erfolgreich gesendet, aber
-nie ausgelesen wird. Man betrachte dazu das Beispiel in 
-Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Buffered-Fig:Ex1}.
-\begin{figure}[h!]
-  \lstinputlisting{code/non-read-message.txt}
-  \caption{Beispielprogramm für nicht gelesenen Nachricht in gepuffertem Channel} 
-  \label{Chap:Analyze-Sec:Channel-SubSec:Buffered-Fig:Ex1}
-\end{figure}
-Es besitzt 2 Send- aber nur eine Receive-Operation. Wäre der Channel nicht 
-gepuffert, und hätte 1 mit 3 synchronisiert, würde 2 blockieren und es 
-würde zu einem Deadlock, bzw. dadurch dass 2 nicht in der Main-Routine liegt
-zu einer hängenden Operation kommen. Dadurch das der Channel allerdings gepuffert ist
-können sowohl 1 als auch 2 senden ohne zu blockieren. Hierbei kann es nur 
-zu einem blockierenden Deadlock kommen, wenn aus einem leeren Channel empfangen wird, 
-ohne dass es irgendwann zu einer sendenden Operation kommt, oder wenn auf 
-einem vollen Channel gesendet werden soll, ohne dass es zu einer Empfangenden
-Operation kommt.\\
-Anders als bei Mutexen, bei denen immer eine Lock-
-und eine Unlock-Operation fest zusammen gehören können Channel-Operationen
-je nach dem wie dass Programm genau anläuft verschieden Kommunikationspartner 
-haben. Die Wahl der Kommunikationspaar kann außerdem, vor allem in Select-Statements
-quasi non-deterministisch ablaufen, was eine Voraussage von Potenziellen 
-Deadlocks deutlich verkompliziert. Aus diesem Grund beschränken wir uns 
-hierbei darauf tatsächlich auftretende Probleme zu erkennen, sie zu analysieren 
-und dann, soweit möglich Hinweise über die Probleme zu liefern, welche die 
-Erkennung und manuelle Beseitigung der Probleme erleichtern.\\\\
+nie ausgelesen wird oder auf einem Channel öfter gelesen als 
+gesendet wird. Es führt also entweder zu einer nie gelesenen Nachricht 
+oder, wenn ein Receive ewig vor einem leeren Channel wartet ebenfalls zu einem 
+blockierenden Deadlock. Da es sich in diesen Fällen 
+nahezu immer um ungewünschtes verhalten handelt sucht der Detektor nach 
+Situationen, in denen so etwas auftreten kann.\\\\
 Ein weiterer möglicher kritischer Fehler bei Channels liegt in dem 
 Senden auf einem geschlossenen Channel. Man betrachte dazu das Beispiel in 
 Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Close-Fig:close}. 
@@ -435,7 +405,7 @@ wird nun mit der lokalen Vector-Clock $vc$ der empfangenden Routine, bzw. der Wa
 \texttt{q} verrechnet und ersetzt diese. Dabei gilt\\
 \begin{figure}[h]
   \centering
-  \lstinputlisting[frame=none, numbers=none, xleftmargin=0.35\textwidth, xrightmargin=0.35\textwidth]{code/vector-clock.txt}
+  \lstinputlisting[frame=none, numbers=none, xleftmargin=0.3\textwidth, xrightmargin=0.3\textwidth]{code/vector-clock.txt}
 \end{figure}\\
 wobei $n$ die Anzahl der Routinen ist.\\
 Für alle andern Elemente, z.B. Pre usw., wird einfach die lokale Vector-Clock der Routine übernommen, 
@@ -444,77 +414,39 @@ Send- und Receive-Trace-Element eine Pre- und eine Post-Vector-Clock zugeordnet 
 Dabei handelt es sich um die Vector-Clocks, die bei Erzeugung des Pre- bzw. Post-Events in 
 der Routine, in der die Operation ausgeführt wurde vorlag. Für hängende Operationen, 
 bei denen kein Post-Element existiert, werden alle Werte der Post-Vector-Clock auf 
-max(Int32) gesetzt.
-Man betrachte das Beispiel in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:PorgVC}.
-\begin{figure}[h!]
-  \centering
-  \lstinputlisting{code/example-vector-clock-prog.txt}
-  \caption{Beispielprogramm für die Betrachtung der Vector-Clocks}
-  \label{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:PorgVC}
-\end{figure}
-Man betrachte den Fall, in dem 3 mit 4 und dann 1 mit 5 synchronisiert und 2 eine hängende Operation bildet.
-In diesem Fall erhält man folgenden Trace:
-\begin{align*}
-  [&[signal(1, 2), signal(2, 3), pre(1, x?), post(7, 1, x?, 6), pre(8, x?), post(13, 1, x?, 11)]\\
-  &[wait(9, 2), pre(10, x!), post(11, 1, x!), pre(12, x?)]\\
-  &[wait(4, 3), pre(5, x!), post(6, 2, x!)]
-  ]
-\end{align*}
-Aus diesem Trace lassen sich nun die Vector-Clocks für die einzelnen Operationen berechnen.
-Der Ablauf des Programs, welcher dem Trace entspricht, inklusive der Vector-Clocks 
-ist in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:VC} gegeben.
-\begin{figure}[h!]
-  \centering
-  \includegraphics[width=0.5\textwidth]{img/vector_clock_graph.eps}
-  \caption{Ablaufdiagramm mit Vector-Clocks für das Beispiel in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:PorgVC}}
-  \label{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:VC}
-\end{figure}
-Von diesen lassen sich nun die Pre- und Post-Vector-Clocks direkt ablesen.
-Für den Vectorclock-Annotierte-Trace (VAT) werden diese in der Form $^{vc}a^{vc'}$ 
-mit der Pre-Vector-Clock $vc$ und der 
-Post-Vector-Clock $vc'$ und der Channel-Operation $a$ angegeben. Für Close gilt, 
+max(Int32) gesetzt. Für Close gilt, 
 dass die Pre-Vectorclock gleich der Post-Vectorclock ist. Andere Elemente 
 werden in den VAT nicht aufgenommen, da sie 
-für die anschließende Analyse nicht benötigt werden.
-Der VAT gibt sich in diesem Fall also als
-\begin{align*}
-  [&[^{[2,0,0]}x?^{[3,0,2]}, ^{[3,0,2]}x?^{[4,2,2]}]\\
-  &[^{[1, 1, 0]}x!^{[1, 2, 0]}, ^{[1, 2, 0]}x?^{[\max, \max, \max]}]\\
-  &[^{[2, 0, 1]}x!^{[2, 0, 2]}]]
-\end{align*}
-Man bezeichne zwei Vector-Clocks $vc$ und $vc'$ als vergleichbar, wenn
-$\forall i: vc[i] \leq vc'[i]$ oder $\forall i: vc[i] \geq vc'[i]$. Man 
-schreibe in diesem Fall $vc \leq vc$ bzw. $vc \geq vc$ bzw.~allgemein 
-$vc \lessgtr vc'$. Andernfalls 
-bezeichnen man $vc$ und $vc'$ als unvergleichbar $vc \not\lessgtr vc'$. 
+für die anschließende Analyse nicht benötigt werden. \\\\
+
+Basierend auf Vectorclocks gilt, dass $x$ ist eine Ursache von $y$ ist ($x < y$), wenn gilt dass 
+\begin{align}
+  VC(x) < VC(y) \Leftrightarrow \forall z (VC(x)[z] \leq VC(y)[z]) \land \exists z' (VC(x)[{z'}] < VC(y)_[{z'}]),
+\end{align}
+wobei $VC(x)[z]$ das $z$-te Element der Vectorclock von $x$ bezeichnet.
+Man bezeichne $x$ und $y$ als unvergleichbar ($x \not\lessgtr y$), wenn 
+$x \not< y $ und $y \not< x$.
 Sind zwei Vector-Clocks 
 unvergleichbar, sind sie unabhängig und können somit gleichzeitig auftreten. 
 Man erkennt also zwei Operationen, welche eine mögliche Kommunikation durchführen 
 können daran, dass sie auf dem selben Channel definiert sind, eine Send-
 und eine Receive-Operation definieren und dass 
- ihre Pre- oder Vector-Clocks unvergleichbar sind.
+ ihre Pre- oder Vector-Clocks unvergleichbar sind.\\
 Um alternative Kommunikationspartner für hängende Kanäle zu finden, werden also
 die Pre- und Post-Vector-Clocks der Channels mit dem selben Channel verglichen.\\
-Man betrachte die hängende Receive-Operation in dem obigen Beispiel. Es gibt 
-in dem Programm 2 Send-Operationen, welche als Kommunikationspartner für 
-die hängende Operation $r$ in Frage kommen. Vergleicht man die Vector-Clocks der 
-Send-Operationen mit denen der hängenden Operation wird aber klar, dass nur 
-eine der beiden Operationen tatsächlich möglich ist. Für die Send-Operation 
-in der 2. Routine (der selben wie die hängende Operation) $s_1$ gilt 
-$s_{1, pre} \leq r_{pre}$ und $s_{1, post} \leq r_{pre}$.  
-Für die andere Send-Operation $s_2$ in Routine 3 hingegen gilt 
-$s_{1, pre} \not\lessgtr r_{pre}$. Sie kann also gleichzeitig mit der 
-hängenden Operation ausgeführt werden und bildet somit einen potenziellen 
-Kommunikation. Hierbei wird auch klar, warum es nicht nur ausreicht einen 
-Trace aufzuzeichnen, wenn eine Operation ausgeführt wird. Da für die 
-Post-Vector-Clocks gilt, dass $s_{2, post} \geq r_{post}$, kann allein aus der 
-Post-Vector-Clock nicht auf eine mögliche oder unmögliche Kommunikation geschlossen werden.\\\\
+Führt man dies auf dem obigen VAT aus, erkennt man schnell, dass 1 mit 4 und 3 
+sowohl mit 2 als auch 4 kommunizieren kann. Man erkennt hierbei auch die 
+Notwendigkeit sowohl die Pre- als auch die Post-Vectorclocks zu betrachten.
+Bei der Kommunikation zwischen 1 und 4 sind nur die Pre-Vectorclocks 
+unvergleichbar, nicht aber die Post-Vectorclocks. Bei der Kommunikation zwischen 
+3 und 4 sind nur die Post-Vectorclocks unvergleichbar. \\\\
+
 In gebufferten Channels ist nicht notwendig, dass Send und Receive gleichzeitig
 ausgeführt werden.
 \begin{figure}[h!]
   \centering
   \lstinputlisting{code/buffered_not_possible.txt}
-  \caption{Beispielprogramm für die Betrachtung der Vector-Clocks}
+  \caption{Beispielprogramm für unmögliche Synchronisation auf gebuffertem Channel}
   \label{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:BufferedNoSync}
 \end{figure}
 Theoretisch ist es einem gebufferten Channel möglich bei einem Send mit 
@@ -545,9 +477,6 @@ also eine mögliche Kommunikation bilden muss gelten, dass
 \end{align}
 
 
-
-
-
 Nachdem nun alle möglichen Kommunikationspartner ermittelt wurden, 
 können die möglichen Ausführungspfade betrachtet werden, um zu überprüfen, 
 ob diese zu Problemen führen. Der Detektor geht dazu alle vorhandenen Send-Operationen 
@@ -566,17 +495,70 @@ mit den entsprechenden Informationen ausgegeben. Das selbe wird auch umgekehrt d
 versucht jeder Receive-Operation eine Send-Operation zuzuordnen. 
 Auch hier kann eine Situation, in welcher keine gültige Zuordnung für eine
 der Operationen möglich ist, zu einem Bug führen.\\
-Nicht alle so betrachteten Ordnungen bilden gültige Ordnungen. Man betrachte 
-dazu erneut Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:PorgVC}. 
-Es ist hierbei prinzipiell möglich, dass 2 mit 6 kommuniziert. Wenn 
-allerdings 3 mit 5 kommuniziert ist dies nicht möglich, da 1 vor 2 kommunizieren 
-muss und daher eine Kommunikation zwischen 2 und 6 nicht mehr möglich ist. 
-Eine Ausführungsordnung sei daher nur dann gültig, wenn für jede Operation $O$ 
+Nicht alle so betrachteten Ordnungen bilden gültige Ordnungen.
+Da die Operationen innerhalb einer Routine sequenziell abgearbeitet werden, 
+müssen sei eine Zuordnung nur dann gültig, wenn für jede Operation $O$ 
 welche in der Ordnung betrachtet wird auch alle anderen Operationen aus 
-der selben Routine, welche vor $O$ ausgeführt werden in der Ausführungsordnung 
+der selben Routine, welche vor $O$ ausgeführt werden in der Zuordnung 
 vorhanden sind.
 
-
+Man betrachte als Beispiel das Programm in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:PorgVC}.
+\begin{figure}[h!]
+  \centering
+  \lstinputlisting{code/example-vector-clock-prog.txt}
+  \caption{Beispielprogramm für die Betrachtung der Vector-Clocks}
+  \label{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:PorgVC}
+\end{figure}
+Zuerst betrachte man den Fall, in dem 1 mit 4 und dann 3 mit 2 synchronisiert.
+In diesem Fall erhält man folgenden Trace:
+\begin{align*}
+  [&[signal(1, 2), signal(2, 3), pre(3, 1?), post(9, 1, 1?, 6)]\\
+  &[wait(5, 2), pre(6, 1!), post(7, 1, 1!), pre(8, 1?), post(12, 2, 1?, 10)]\\
+  &[wait(4, 3), pre(10, 1!), post(11, 2, 1!)]]
+\end{align*}
+Bei diesem Ablauf besitzen alle Operationen einen gültigen 
+Kommunikationspartner. Es tritt also kein Bug auf.
+Aus diesem Trace lassen sich nun die Vector-Clocks für die einzelnen Operationen berechnen.
+Der Ablauf des Programs, welcher dem Trace entspricht, inklusive der Vector-Clocks 
+ist in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:VC} gegeben.
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.5\textwidth]{img/vc.eps}
+  \caption{Ablaufdiagramm mit Vector-Clocks für das Beispiel in Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:PorgVC}}
+  \label{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:VC}
+\end{figure}
+Von diesen lassen sich nun die Pre- und Post-Vector-Clocks direkt ablesen.
+Für den Vectorclock-Annotierte-Trace (VAT) werden diese in der Form $^{vc}a^{vc'}$ 
+mit der Pre-Vector-Clock $vc$ und der 
+Post-Vector-Clock $vc'$ und der Channel-Operation $a$ angegeben.
+Der VAT gibt sich in diesem Fall also als
+\begin{align*}
+  [&[^{[2,0,0]}x_4?^{[3,2,0]}]\\
+  &[^{[1, 1, 0]}x_1!^{[1, 2, 0]}, ^{[1, 2, 0]}x_2?^{[2, 3, 2]}]\\
+  &[^{[2, 0, 1]}x_3!^{[2, 0, 2]}]]
+\end{align*}
+Basierend auf den Vectorclocks wird nun klar, dass 1 mit 4 und 3 sowohl mit 
+2 als auch 4 kommunizieren kann. Basierend darauf lassen sich nun für die 
+von Send-Operationen ausgehenden Ordnungen die Kommunikationen als
+  \begin{align*}
+    x_1! &\to x_4? \phantom{aaaaaaaaaaaaaaaaaaaa} x_3! \to x_4?\\
+    x_3! &\to x_2? \phantom{aaaaaaaaaaaaaaaaaaaa} x_1! \to \lightning
+  \end{align*}\\
+und für die von Receive-Operationen ausgehenden Ordnungen als
+  \begin{align*}
+    x_4? &\leftarrow x_1! \phantom{aaaaaaaaaaaaaaaaaaaa} x_4? \leftarrow x_3?\\
+    x_2? &\leftarrow x_3? \phantom{aaaaaaaaaaaaaaaaaaaa} x_2? \leftarrow \lightning
+  \end{align*}
+$\lightning$ bedeutet hierbei, das kein gültiger Kommunikationspartner möglich ist.
+Bei ungebufferten Channels führen solche Situationen zu einer blockierenden Routine
+oder gegebenenfalls sogar zur zu einer Blockades des gesamten Programms.
+Bei gebufferten Channels führen sie entweder zu einer Blockade oder zumindest 
+zu einer nie gelesenen Nachricht. All diese Fälle werden als Bug Betrachtet
+und werden somit von dem Detektor als potenzielle Bug angegeben.\\\\
+Das betrachtete Beispiel zeigt gut den Vorteil der Verwendung von Vectorclocks.
+Bei dem Durchlaufen des Programms sind keine Bugs aufgetreten. Dennoch 
+ist es mit den Vectorclocks möglich alternative Kommunikationsabläufe 
+zu betrachten und potenzielle Bugs in diesen zu finden.  
 
 \subsubsection{Close}
 Versuch ein Programm auf einem geschlossenen Channel zu senden kommt es zu einem Laufzeitfehler, 
