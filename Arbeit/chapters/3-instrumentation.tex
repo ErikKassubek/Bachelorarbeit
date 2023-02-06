@@ -14,7 +14,8 @@ selbst implementiert und basiert nicht auf dem Go-Runtime-Tracer~\cite{GoRunTrac
 Dies ermöglicht es, den Tracer genau auf die benötigten Informationen zuzuschneiden
 und so einen geringeren negativen Einfluss auf die Laufzeit des Programms zu erreichen.
 
-Um diesen Trace zu erzeugen, werden die Standartobjekte und Operationen auf Go durch Objekte und Operationen 
+Um diesen Trace zu erzeugen, werden die Standartobjekte und Operationen auf 
+Go durch Objekte und Operationen 
 des Tracers ersetzt. Die Funktionsweisen dieser Ersetzungen sind im folgenden 
 angegeben. Dabei werden nur solche Ersetzungen angegeben, welche direkt 
 für die Erzeugung
@@ -354,9 +355,9 @@ Projekt und der Verteilung der Mutex- und Channel-Operationen in dem Code ab.\\
   \begin{tabular}{|c|c|c|c|c|}
   \hline
   Projekt & LOC & Nr. Dateien & Nr. Ersetzungen & Zeit {[}s{]} \\ \hline
-  ht-cat & $733$ & $7$ & $233$ & $0.013 \pm 0.006$ \\ \hline
-  go-dsp & $2229$ & $18$ & $600$ & $0.029 \pm 0.009$ \\ \hline
-  goker & $9783$ & $103$ & $4928$ & $0.09 \pm 0.03$ \\ \hline
+  ht-cat~\cite{htcat} & $733$ & $7$ & $233$ & $0.013 \pm 0.006$ \\ \hline
+  go-dsp~\cite{go-dsp} & $2229$ & $18$ & $600$ & $0.029 \pm 0.009$ \\ \hline
+  goker~\cite{gobench} & $9783$ & $103$ & $4928$ & $0.09 \pm 0.03$ \\ \hline
   \end{tabular}
   \caption{Laufzeit des Instrumenters für ausgewählte Programme}
   \label{Chap:Tracer-Sec:Laufzeit-Tab:LaufzeitInstrumenter}
