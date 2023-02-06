@@ -3,51 +3,52 @@ Go ist eine seit 2007 von Google entwickelte Programmiersprache, welche sich
 in den letzten Jahren zu einer der beliebtesten Programmiersprachen entwickelt 
 hat~\cite{ranking}. Ein Fokus der Sprache liegt dabei auf der Erstellung
 sicherer und effizienter nebenläufiger Programme. Go stellt verschiedene 
-Funktionen für die Erstellung solcher nebenläufiger Programme zur Verfügung.
-Die wichtigsten sind dieser Funktionen sind dabei Go-Routinen, Mutexe und 
+Funktionen für die Erstellung solcher Programme zur Verfügung.
+Die wichtigsten dieser Funktionen sind dabei Go-Routinen, Mutexe und 
 Channels.\\Go-Routinen erlauben das nebenläufige Ausführen mehrerer Codeteile.
 Mutexe erlauben die Synchronisation von Routinen, sowie die Lösung des Problems 
 des kritischen Ausschlusses. 
 Channel können ebenfalls für die Synchronisation verwendet werden,
-können aber zusätzlich für eine Kommunikation, bzw.\ das Senden von Daten zwischen 
-Routinen verwendet werden. Programmierer werden dabei angehalten, Channel
-anstelle von gemeinsamen Variablen zu verwenden, da bei diesen die Wahrscheinlichkeit
+es ist aber auch möglich mit ihnen Daten zwischen Routinen zu versenden. 
+Programmierer werden dabei angehalten, Channel
+anstelle von globalen Variablen zu verwenden, da bei diesen die Wahrscheinlichkeit
 für das Auftreten von Concurrency-Bugs geringer ist~\cite{sharedMemory}.\\
-Solche Bugs (z.B. Deadlocks), welche durch die Nebenläufigkeit von Programmen sowie ihrer 
-Synchronisationsmechanismen entstehen sind in der Praxis aber dennoch sehr weit 
+Solche blockenden Bugs, welche durch die Nebenläufigkeit von Programmen sowie ihrer 
+Synchronisationsmechanismen entstehen, sind in der Praxis aber dennoch sehr weit 
 verbreitet~\cite{numberBugs}.
 
 Diese Arbeit beschäftigt sich mit der Entwicklung und Implementierung
 eines dynamischen Detektors ``GoChan'' für die automatische Erkennung
-von Problemen, welche durch die Verwendung von Mutexen und Channels 
+von blockenden Bugs, welche durch die Verwendung von Mutexen und Channels 
 in nebenläufigen Go-Programmen entstehen. Der größte Fokus wird dabei 
-auf die Erkennung und Analyse von Deadlock-Situationen, sowie das vorzeitige 
-schließen von Channels gelegt, da diese zu einem Absturz eines Programms 
-führen können. Der Detektor vereinigt dabei verschiedene Methoden aus 
+auf die Erkennung und Analyse von Deadlock-Situationen, sowie das Senden 
+auf geschlossenen Channels gelegt, da diese zu einem Absturz eines Programms 
+führen können. Der Detektor vereinigt und erweitert dabei verschiedene Methoden aus 
 iGoodLock~\cite{iGoodLock} und UNDEAD~\cite{Undead} sowie 
 Gopherlyzer-GoScout~\cite{PPDP18} und GFuzz~\cite{gfuzz} zur 
 Erkennung und Analyse von 
 durch Mutenxen und Channels erzeugten Bugs.\\
 GoChan basiert dabei aus zwei Programmen, einem Instrumenter und einem 
 Analyzer, für welche jeweils eine 
-Implementierung vorliegt. Für die Analyze wird das zu analysierende Programm 
+Implementierung vorliegt.
+Für die Analyze wird das zu analysierende Programm 
 mehrfach durchlaufen. Bei jedem Durchlauf zeichnet der Analyzer relevante 
 Situationen auf und führt anschließend, basieren auf dem so erstellten Trace 
 eine Analyse aus, um Probleme zu erkennen. Die Analyse wird mehrfach wiederholt, 
 um verschiedene Ausführungspfade zu analysiere, welche durch die Verwendung 
-verschiedener Pfade in Select-Operationen erzeugt werden. Um den Trace eines 
+verschiedener Cases in Select-Operationen erzeugt werden. Um den Trace eines 
 Programmdurchlaufs aufzeichnen zu können und bei Select-Operationen verschiedene 
 Ausführungspfade zu erzwingen, muss der zu analysierende Programmcode 
 verändert werden. Dies kann durch den Instrumenter automatisiert erfolgen.
 
-Der Aufbau dieser Arbeit ist wie folgt. Zuerst wird in Abschnitt~\ref{chap:background}
-die theoretische Funktionsweise des Detektors beschrieben und dargelegt, 
-welche Art von Situationen der Detektor erkennen soll. 
+Die Arbeit ist folgendermaßen aufgebaut. Zuerst wird in Abschnitt~\ref{chap:background}
+dargelegt, welche Situationen der Detektor erkennen soll und
+die theoretische Funktionsweise des Detektors beschrieben. 
 Abschnitt~\ref{Chap:Instrumenter} geht auf die Funktionsweise und Implementierung 
 des Instrumenters und Abschnitt~\ref{Chap:Implement} auf die Implementierung 
 des Analyzers ein. In Abschnitt~\ref{Chap:Eval} wird der Detektor auf 
 konstruierte und tatsächliche Programme angewandt, um zu überprüfen, 
-wie gut er in der Lage ist, Probleme richtig einzusätzen. Für die 
+wie gut er in der Lage ist, Probleme richtig einzuschätzen. Für die 
 tatsächlichen Programme werden dabei Programme aus GoBench~\cite{gobench}
 verwendet, welche eine Sammlung von Programmen mit Concurrency-Bugs aus 
 mehreren großen open-source Programmen besitzt. Zuletzt werden die 
