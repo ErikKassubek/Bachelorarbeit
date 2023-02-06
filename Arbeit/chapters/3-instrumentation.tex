@@ -12,7 +12,8 @@ Anders als in vielen anderen Programmen, welche den Trace von Go-Programmen
 analysieren, wie z.B.~\cite{GoAt2} oder~\cite{GoVis} wird dabei der Tracer 
 selbst implementiert und basiert nicht auf dem Go-Runtime-Tracer~\cite{GoRunTrace}. 
 Dies ermöglicht es, den Tracer genau auf die benötigten Informationen zuzuschneiden
-und so einen geringeren negativen Einfluss auf die Laufzeit des Programms zu erreichen.\\\\
+und so einen geringeren negativen Einfluss auf die Laufzeit des Programms zu erreichen.
+
 Um diesen Trace zu erzeugen, werden die Standartobjekte und Operationen auf Go durch Objekte und Operationen 
 des Tracers ersetzt. Die Funktionsweisen dieser Ersetzungen sind im folgenden 
 angegeben. Dabei werden nur solche Ersetzungen angegeben, welche direkt 
@@ -135,7 +136,7 @@ auswirken kann, ist es in vielen Situationen nicht erwünscht, ihn in den
 eigentlichen Release-Code einzubauen, sondern eher in eine eigenständige 
 Implementierung, welche nur für die Analyse verwendet wird. Um dies zu
 automatisieren wurde ein Programm implementiert, welches in der 
-Lage ist, den Tracer in normalen Go-Code einzufügen.\\\\
+Lage ist, den Tracer in normalen Go-Code einzufügen.
 
 Der automatische Instrumenter besteht aus zwei Teilen. 
 Zum einen werden alle 
@@ -197,7 +198,9 @@ die Anzahl der bereits erfolgreich durchgeführten Send und Receive Operationen
 sowie Informationen über die Position der Erzeugung des Channels im Code
 und ein Boolean zur Speicherung ob der Channel geschlossen wurde
 speichert. Die Definition dieses Struct wird, wie die Funktionen auf diesem 
-Objekt durch GoChan definiert.\\\\Auch die Erzeugung von neuen Go-Routinen 
+Objekt durch GoChan definiert.
+
+Auch die Erzeugung von neuen Go-Routinen 
 wird hier instrumentiert. Ein Beispiel zur Instrumentierung der Erzeugung einer 
 neuen Go-Routine findet sich in Abb.~\ref{Chap:Instrumenter-Sec:Instrumenter-Fig:GoRoutine}.
 \begin{figure}[h!]
@@ -215,7 +218,8 @@ neuen Go-Routine findet sich in Abb.~\ref{Chap:Instrumenter-Sec:Instrumenter-Fig
 und gibt außerdem die Id der erzeugenden Routine zurück, welche in \texttt{SpawnPost}
 für die Erzeugung des \texttt{wait} Elements benötigt wird. Das umschließen 
 des Ganzen mit einer weiteren Funktion erleichtert die Implementierung 
-des Instrumenters, ist aber nicht unbedingt notwendig.\\\\
+des Instrumenters, ist aber nicht unbedingt notwendig.
+
 Zusätzlich werden hier auch die Select-Statements instrumentiert. 
 Zum einen wird hier das Select-Statement wie in~\ref{Chap:Back-Sec:Select} 
 beschrieben durch ein Switch-Statement mit mehreren Select-Statements 
@@ -276,7 +280,7 @@ einfache direkte Ersetzung der Operationen möglich. Die Objekte, welche die
 Mutexe dabei ersetzen speichern dabei den eigentlichen Mutex, welcher 
 das Locking tatsächlich ausführt, Informationen über die Position der Erzeugung des 
 Mutex im Programmcode sowie die Id des Mutex. Für Mutex und RW-Mutex 
-ist dabei jeweils ein eigenes Objekt definiert.\\\\
+ist dabei jeweils ein eigenes Objekt definiert.
 
 In Go 
 müssen alle importierten Bibliotheken verwendet werden. Andernfalls kommt es 

@@ -1,7 +1,7 @@
 case 1:
 	select {
-	case d.GetChan() <- sel_RAjWwhTH:
-		d.Post(false, sel_RAjWwhTH)
+	default:
+		goChan.PostDefault()
 		func2()
 	case <-time.After(time.Second):
 		....

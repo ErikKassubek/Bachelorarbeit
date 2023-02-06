@@ -20,13 +20,15 @@ Dabei wurde überprüft, ob der Detektor in der Lage ist, das in dem
 Programm erhaltene Problem richtig zu erkennen, bzw.~zu erkennen wenn 
 die vorliegende Situation nicht zu einem Problem führen kann. Eine 
 tabellarische Beschreibung der betrachteten Situationen, sowie der Ergebnisse 
-des Detektors ist in Tab.~\ref{App-Stand-Res} in Anhang~\ref{Appendix-1} aufgeführt.\\\\
+des Detektors ist in Tab.~\ref{App-Stand-Res} in Anhang~\ref{Appendix-1} aufgeführt.
+
 Von den 44 Programmen konnten 40 korrekt kategorisiert werden. Dabei 
 bestehen 18 Probleme aus Problemen mit Mutexen,
 19 aus Problemen mit Channel und 7 mit einem 
 Mix aus Mutexen und Channel. Abbildungen~\ref{Chap:Eval-Sec:Stand-Fig:Total}
 bis~\ref{Chap:Eval-Sec:Stand-Fig:Mix} geben an, welcher Anteil der 
-Betrachteten Standartprobleme korrekt erkannt wurde.\\\\
+Betrachteten Standartprobleme korrekt erkannt wurde.
+
 Für Programme, bei denen der Fehler auf die Verwendung von Mutexen 
 basiert, konnten 17 der 18 Probleme richtig kategorisiert werden. 
 Dies entspricht ca. $94.4\%$. 1 Problem bildet hierbei ein False-Negative.
@@ -139,18 +141,19 @@ bei denen dies der Fall war wurden für die Analyse nicht betrachtet.
   \label{Chap:Eval-Sec:Goker-Fig:Mix}
 \end{minipage}
 
-% \section{Note}
-% Ein Problem des Detektors liegt darin, dass aufgrund des dynamischen 
-% Ansatz Probleme nur erkannt werden, wenn der entsprechende Programmteil 
-% auch ausgeführt wird. Die Betrachtung des Switch-Statements in dem Detektor 
-% versucht diesem ein etwas entgegenzuwirken, da durch diese mehr Teile 
-% des Programmcodes betrachtet werden können, befindet sich ein potenzielles 
-% Problem allerdings z.B. in einer If-Bedingung und ist diese während dem 
-% Durchlauf immer False, ist es nicht möglich diese Probleme zu erkennen, 
-% selbst wenn der Detektor prinzipiell in der Lage wäre, solche Situationen 
-% zu erkennen.\\
-% Aufgrund der Funktionsweise des Implementers und der Analyse kann der Detektor 
-% momentan nur auf Probleme angewendet werden, welche durch 
-% \texttt{go build} kompiliert und anschließend direkt ausgeführt werden können.
-% Aus diesem Grund ist die direkte Anwendung des Detektors auf viele größere Programm 
-% in seinem momentanen Stand nicht möglich. 
+\section{Vergleich zu anderen Detektoren}
+Der Detektor vereinigt und erweitert Funktionsweisen aus verschiedenen 
+Detektoren, und besitzt daher die Vorteile mehrerer Ansätze. Während sich 
+einige Detektoren, wie z.B. UNDEAD~\cite{Undead} nur auf die Erkennung 
+von Bugs, welche durch eine Art von Synchronisationsmechanismen ausgelöst werden 
+spezialisier, z.B. nur auf Mutexe,
+vereinigt der entwickelte Detektor Methoden zur Erkennung von Problemen 
+durch sowohl Mutexe als auch Channels. Er ist außerdem, anders als z.B. 
+GFuzz~\cite{gfuzz} nicht nur in der Lage Situationen zu erkennen, welche 
+bei dem betrachteten Durchlauf tatsächlich zu einem blockenden 
+Deadlock führen, sondern ist auch in der Lage zu erkennen, wenn es in einem 
+Programm durch eine andere Ausführungsordnung potenziell zu einem 
+Bug kommen kann. Bei gebufferten Channels ist es hierbei auch in der Lage
+Kommunikationen zu erkennen, welche zwar nicht zu einem blockenden 
+Bug führen, welche aber dennoch keine vollständig ausgeführte Kommunikation 
+bilden. 

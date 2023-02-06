@@ -91,11 +91,13 @@ des $k+C$-ten Send auf dem Channel synchronisiert wird~\cite{memModel}.
 In der Praxis verhält sich der Buffer eines Channels allerdings wie eine FIFO-Queue,
 das heißt, es wird bei einem Receive immer die ältest in dem
 Buffer vorhandene Nachricht ausgegeben. Im Folgenden wird daher immer von diesem 
-Verhalten ausgegangen.\\\\
+Verhalten ausgegangen.
+
 Sowohl bei gebufferten als auch bei ungebufferten Channels kann es zu 
 Situationen kommen, in denen mehrere Routinen gleichzeitig auf dem selben 
 Channel auf eine Nachricht warten. Wird nun auf diesem Channel gesendet 
-wird eine der Routinen pseudo-zufällig ausgewählt, um die Nachricht zu empfangen.\\\\
+wird eine der Routinen pseudo-zufällig ausgewählt, um die Nachricht zu empfangen.
+
 Go macht es mit der Select-Operation möglich, auf die erste von mehreren 
 erfolgreichen Channel-Operationen gleichzeitig zu warten. Ein Beispiel für solch 
 ein Select befindet sich in Abb.~\ref{Chan:Analyze-Sec:Channel-Fig:SelectEx}.
@@ -113,7 +115,8 @@ die Operation, sowie der darunter stehende Block (Print-Statement) ausgeführt.
 Der Default-Case wird ausgeführt, wenn keiner der anderen Cases ausgeführt 
 werden kann. Er ist allerdings nicht notwendig. Besitzt das Select-Statement 
 keinen Default-Case, dann blockiert die Routine so lange, bis einer der Cases 
-ausgeführt werden kann.\\\\
+ausgeführt werden kann.
+
 Channel können vorzeitig durch eine \texttt{close} Operation geschlossen werden.
 In diesem Fall kann auf diesem Channel nicht mehr gesendet werden. Versucht 
 das Program auf einem geschlossenen Channel zu senden kommt es zu einem 
@@ -141,7 +144,8 @@ Zeile 7 und 14 gleichzeitig ausgeführt werden, also Lock \texttt{y} von Routine
 von Routine 1 gehalten wird. In diesem Fall kann in keiner der Routinen die nächste Zeile ausgeführt werden,
 da das jeweilige Locks, welches beansprucht werden soll bereits durch die andere Routine gehalten wird. 
 Da sich diese Situation auch nicht von alleine auflösen kann, blockiert dass Programm, befindet sich also 
-in einem zyklischen Deadlock.\\\\
+in einem zyklischen Deadlock.
+
 Neben zyklischem Locking kann es auch durch doppeltes Locking von Mutexen 
 zu Deadlocks kommen. Ein Beispiel dazu findet sich in 
 Abb.~\ref{Chap:Analyze-Sec:Mutex-Fig:Double}.
@@ -178,7 +182,8 @@ gesendet wird. Es führt also entweder zu einer nie gelesenen Nachricht
 oder, wenn ein Receive ewig vor einem leeren Channel wartet ebenfalls zu einem 
 blockierenden Deadlock. Da es sich in diesen Fällen 
 nahezu immer um ungewünschtes verhalten handelt sucht der Detektor nach 
-Situationen, in denen so etwas auftreten kann.\\\\
+Situationen, in denen so etwas auftreten kann.
+
 Ein weiterer möglicher kritischer Fehler bei Channels liegt in dem 
 Senden auf einem geschlossenen Channel. Man betrachte dazu das Beispiel in 
 Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Close-Fig:close}. 
@@ -328,7 +333,8 @@ Lock-Bäume, sowie der enthaltene Zyklus graphisch dargestellt. Es sei allerding
 festzuhalten, dass besonders bei der Verwendung von RW-Locks, nicht jeder 
 Zyklus auch direkt zu einem potenziellen Deadlock führen kann. Wie solche 
 False-Positives verhinder werden können, wird in dem Abschnitt zur Implementierung
-des Detektors (Abs.~\ref{Chap:Implement-Sec:Mutex}) noch genauer betrachtet.\\\\
+des Detektors (Abs.~\ref{Chap:Implement-Sec:Mutex}) noch genauer betrachtet.
+
 \begin{figure}[h!]
   \centering
   \includegraphics[width=0.5\textwidth]{img/tree_example.eps}
@@ -365,8 +371,7 @@ keinen Send-Partner) wird die entsprechende Routine bei der Terminierung
 der Main-Routine automatisch abgebrochen. Man bezeichne einen solchen Fall 
 als hängende Routine. Mit gebufferten Channels kann es passieren, 
 das eine Send-Operation zwar erfolgreich ausgeführt wird, die entsprechende
-Nachricht aber nie ausgelesen wird.\\\\
-
+Nachricht aber nie ausgelesen wird.
 
 Um solche Situationen zu erkennen werden alle möglichen Paaren von Kommunikationspartner,
 betrachtet, und dabei überprüft, ob diese Zuordnung zu Send- oder Receive-Operationen führt, 
@@ -384,7 +389,8 @@ aber nur eine Send-Operation gibt, kommt es zu einem hängenden Channel. Betrach
 Channel \texttt{x} könnte man davon ausgehen, dass 1 nach 2 senden kann, was zu einem Deadlock
 führen würde. Dies ist aber nicht möglich. Da der Channel \texttt{y} in 1 nach \texttt{x} sendet, 
 in 2 allerdings von \texttt{x} empfangen muss, ist eine Synchronisierung auf \texttt{x} von 1 nach 
-2 nicht möglich. Die beiden Operationen bilden demnach keine möglichen Kommunikationspartner.\\\\
+2 nicht möglich. Die beiden Operationen bilden demnach keine möglichen Kommunikationspartner.
+
 Um mögliche Kommunikationspartner zu erkennen, nicht mögliche Kommunikationspartner wie in 
 Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:NoSync} aber auszuschließen, werden
 Vector-Clocks verwendet. Die grundlegende Idee basiert auf~\cite{PPDP18}.\\
@@ -417,7 +423,7 @@ bei denen kein Post-Element existiert, werden alle Werte der Post-Vector-Clock a
 max(Int32) gesetzt. Für Close gilt, 
 dass die Pre-Vectorclock gleich der Post-Vectorclock ist. Andere Elemente 
 werden in den VAT nicht aufgenommen, da sie 
-für die anschließende Analyse nicht benötigt werden. \\\\
+für die anschließende Analyse nicht benötigt werden.
 
 Basierend auf Vectorclocks gilt, dass $x$ ist eine Ursache von $y$ ist ($x < y$), wenn gilt dass 
 \begin{align}
@@ -439,7 +445,7 @@ sowohl mit 2 als auch 4 kommunizieren kann. Man erkennt hierbei auch die
 Notwendigkeit sowohl die Pre- als auch die Post-Vectorclocks zu betrachten.
 Bei der Kommunikation zwischen 1 und 4 sind nur die Pre-Vectorclocks 
 unvergleichbar, nicht aber die Post-Vectorclocks. Bei der Kommunikation zwischen 
-3 und 4 sind nur die Post-Vectorclocks unvergleichbar. \\\\
+3 und 4 sind nur die Post-Vectorclocks unvergleichbar. 
 
 In gebufferten Channels ist nicht notwendig, dass Send und Receive gleichzeitig
 ausgeführt werden.
@@ -467,15 +473,36 @@ werden muss ist aber aus den Vectorclocks ablesbar. Um zu überprüfen,
 ob eine Kommunikation möglich werden daher für jede Send $s$ Operation 
 die Anzahl der Send Operationen auf dem selben Channel bestimmt, welche streng vor $s_i$ 
 ausgeführt werden ($\#s_{i, <}$) sowie die Anzahl der Operationen, welche nebenläufig mit $s_i$ 
-ausgeführt werden ($\#s_{i, \not\lessgtr}$). Das selbe wird auch für jedes Receive-Statements $r_i$
-bestimmt ($\#r_{i, <}, \#r_{i, \not\lessgtr}$). Damit ein Send-Receive Paar $s_i - r_j$ auf 
+ausgeführt werden ($\#s_{i, \not\lessgtr}$). Das selbe wird analog auch 
+für jedes Receive $r_i$ ($\#r_{i, <}, \#s_{i, \not\lessgtr}$) bestimmt. 
+Damit ein Send-Receive Paar $s_i - r_j$ auf 
 einem gebufferten Channel nun basierend auf der FIFO-Queue möglich ist, 
 also eine mögliche Kommunikation bilden muss gelten, dass 
 \begin{align}
-  \#s_{i, <} + \#s_{i, \not\lessgtr} &\geq \#r_{j, <} + \#r_{j, \not\lessgtr} \label{Form:1}\\
-  \#s_{i, <} & \leq \#r_{j, <} \label{Form:2}
+  \#s_{i, <} &\leq \#r_{j, <} + \#r_{i, \not\lessgtr}\label{Form:1}\\
+  \#s_{i, <} + \#s_{i, \not\lessgtr} &\geq \#r_{j, <}\label{Form:2}
 \end{align}
-
+Die Motivation für diese Formeln wird klar, wenn man das Beispiel in 
+Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:BufferForm} betrachtet.
+\begin{figure}[h!]
+  \centering
+  \lstinputlisting{code/buffered_form.txt}
+  \caption{Beispielprogramm als Motivation für Formeln~(\ref{Form:1}) und~(\ref{Form:2})}
+  \label{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:BufferForm}
+\end{figure}
+Man suche nun nach möglichen Kommunikationspartnern für das Send in 2. 
+Da der Buffer eines Channels in Go praktisch wie eine FIFO-queue implementiert
+ist, ist es nicht möglich, dass 2 mit 5 kommuniziert, da dies das erste 
+Receive ist, das Send in 1 aber vor dem in 2 ausgeführt wird. Dass diese 
+Kommunikation nicht möglich ist, wird durch Formel~\ref{2} sicher gestellt.
+Auch die Kommunikation mit dem Receive in 8 ist nicht möglich. Nur die Send in 
+1 und 4 können vor dem Send in 2 ausgeführt werden. Das bedeutet, das das 
+Send in 2 maximal das 3. Send in dem Programm darstellt. Dies bedeutet, 
+dass ein möglicher Kommunikationspartner maximal 2 andere Receives vor einem 
+möglichen Kommunikationspartner ausgeführt werden müssen. Da 8 aber in jedem 
+Fall das 4. Receive darstellt, ist eine Kommunikation zwischen 2 und 8 nicht mögliche.
+Formel~\ref{Form:2} sorgt dafür, dass solche Paare nicht fälschlicherweise 
+als Kommunikationspartner gesehen werden.
 
 Nachdem nun alle möglichen Kommunikationspartner ermittelt wurden, 
 können die möglichen Ausführungspfade betrachtet werden, um zu überprüfen, 
@@ -554,7 +581,8 @@ Bei ungebufferten Channels führen solche Situationen zu einer blockierenden Rou
 oder gegebenenfalls sogar zur zu einer Blockades des gesamten Programms.
 Bei gebufferten Channels führen sie entweder zu einer Blockade oder zumindest 
 zu einer nie gelesenen Nachricht. All diese Fälle werden als Bug Betrachtet
-und werden somit von dem Detektor als potenzielle Bug angegeben.\\\\
+und werden somit von dem Detektor als potenzielle Bug angegeben.
+
 Das betrachtete Beispiel zeigt gut den Vorteil der Verwendung von Vectorclocks.
 Bei dem Durchlaufen des Programms sind keine Bugs aufgetreten. Dennoch 
 ist es mit den Vectorclocks möglich alternative Kommunikationsabläufe 
@@ -597,7 +625,8 @@ ist es nicht möglich jede mögliche Kombination von Select-Cases auszuführen.
 Aus diesem Grund sammelt GFuzz während der Ausführung einer Ordnung Informationen 
 über diese, um die Qualität einer Ordnung abzuschätzen. Aus diesen wird 
 eine Wertung für die durchlaufenden Ordnung bestimmt, über welche die 
-Anzahl der Mutationen bestimmt werden. \\\\
+Anzahl der Mutationen bestimmt werden. 
+
 Die Betrachtung von verschiedenen Pfaden von Select wird auch für GoChan 
 verwendet. Für jeden Durchlauf wird 
 der Trace aufgezeichnet und dieser

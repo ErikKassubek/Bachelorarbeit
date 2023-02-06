@@ -126,7 +126,8 @@ verhindern.
 Die Regel besagt nun, dass wenn es einen Mutex gibt,
 der in den HoldingSets zweier verschiedener Dependencies in dem Pfad vorkommt, so müssen
 beide diese Mutexe Reader-Locks sein. Sind sie es nicht, handelt es sich um Gate-Locks, und
-der entsprechende Pfad kann somit nicht zu einem Deadlock führen.\\\\
+der entsprechende Pfad kann somit nicht zu einem Deadlock führen.
+
 Für die Suche nach solchen Zyklen wird eine Depth-First-Search auf den gesammelten 
 Dependencies ausgeführt. Dazu wird zuerst eine Dependency auf einen Stack gelegt. 
 Der Stack entspricht immer dem momentan
@@ -174,7 +175,8 @@ ein Counter für die Anzahl der bereits erfolgreich abgeschlossenen Send- bzw.
 Receive-Operationen bei der Ausführung des Send- oder Receive (bei Close -1), 
 die Position der Operation im Programmcode
 sowie die Pre- und Post-Vectorclocks der Operation. Eine Close Operation 
-wird dabei dadurch erkannt, dass die Pre- und Post-Vectorclocks übereinstimmen.\\\\
+wird dabei dadurch erkannt, dass die Pre- und Post-Vectorclocks übereinstimmen.
+
 Bevor der eigentliche VAT erzeugt wird werden erst die Vectorclocks zu allen
 Zeitpunkten bestimmt. Dazu wird für jede Routine eine Vectorclock initialisiert. 
 Anschließend werden die Elemente in der Reihenfolge durchlaufen, in der sie 
@@ -198,7 +200,8 @@ Die Vectorclock der Send- bzw. Signal-Operation kann also immer eindeutig bestim
 werden und die Vectorclock somit wie in Kap.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling}
 beschrieben aktualisiert werden.\\
 Für alle anderen Element, also alle Pre-Elemente, Close-Operationen und Mutex-Operationen 
-werden die Vectorclocks lediglich kopiert.\\\\
+werden die Vectorclocks lediglich kopiert.
+
 Nach der Berechnung der Vectorclocks kann nun der VAT bestimmt werden. 
 Dazu wird nun der Trace für die einzelnen Routinen durchlaufen. Bei jedem 
 Pre- und PreSelect-Element wird eine \texttt{vcn} erzeugt. Dazu wird der restliche Trace 
@@ -249,8 +252,8 @@ dies der Fall ist.
 Für die Bestimmung der potenziellen Kommunikationspartner wird nun 
 für jedes Paar von Send-Receive-Operationen auf dem selben Channel 
 überprüft, 
-ob die Formeln~\eqref{Form:1} und~\eqref{Form:2} 
-erfüllt sind. In diesem Fall wird angenommen, dass die beiden Operationen
+ob die Formeln~(\eqref{Form:1}) und~(\eqref{Form:2}) 
+erfüllt. In diesem Fall wird angenommen, dass die beiden Operationen
 miteinander Kommunizieren können.\\
 Basierend auf diesen möglichen Kommunikationspartnern werden nun alle möglichen
 Kommunikationsabläufe betrachtet. Für die Betrachtung aller Abläufe 

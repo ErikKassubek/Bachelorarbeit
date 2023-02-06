@@ -1,6 +1,5 @@
 goChan.PreSelect(false, c.GetIdPre(true), 
-                 d.GetIdPre(false))
-sel_RAjWwhTH := goChan.BuildMessage(1)
+                 d.GetIdPre(true))
 switch goChanFetchOrder[1] {
 case 0:
 	select {

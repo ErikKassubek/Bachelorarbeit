@@ -2,7 +2,7 @@ go func() {
   select {
     case a := <- c:
       func1(a)
-    case d <- 1:
+    default:
       func2()
   }
 }()

@@ -15,7 +15,8 @@ anstelle von gemeinsamen Variablen zu verwenden, da bei diesen die Wahrscheinlic
 für das Auftreten von Concurrency-Bugs geringer ist~\cite{sharedMemory}.\\
 Solche Bugs (z.B. Deadlocks), welche durch die Nebenläufigkeit von Programmen sowie ihrer 
 Synchronisationsmechanismen entstehen sind in der Praxis aber dennoch sehr weit 
-verbreitet~\cite{numberBugs}.\\\\
+verbreitet~\cite{numberBugs}.
+
 Diese Arbeit beschäftigt sich mit der Entwicklung und Implementierung
 eines dynamischen Detektors ``GoChan'' für die automatische Erkennung
 von Problemen, welche durch die Verwendung von Mutexen und Channels 
@@ -37,7 +38,8 @@ um verschiedene Ausführungspfade zu analysiere, welche durch die Verwendung
 verschiedener Pfade in Select-Operationen erzeugt werden. Um den Trace eines 
 Programmdurchlaufs aufzeichnen zu können und bei Select-Operationen verschiedene 
 Ausführungspfade zu erzwingen, muss der zu analysierende Programmcode 
-verändert werden. Dies kann durch den Instrumenter automatisiert erfolgen.\\\\
+verändert werden. Dies kann durch den Instrumenter automatisiert erfolgen.
+
 Der Aufbau dieser Arbeit ist wie folgt. Zuerst wird in Abschnitt~\ref{chap:background}
 die theoretische Funktionsweise des Detektors beschrieben und dargelegt, 
 welche Art von Situationen der Detektor erkennen soll. 

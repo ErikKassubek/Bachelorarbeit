@@ -1,14 +1,14 @@
 func main() {
-  c := make(chan int, 1)
+  c := make(chan int, 2)
   d := make(chan int)
 
   go func() {
     c <- 1
-    c <- 1
     d <- 1
+    c <- 1
   }()
 
+  <- c
+  <- c
   <- d
-  <- c
-  <- c
 }
