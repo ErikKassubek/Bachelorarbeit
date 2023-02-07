@@ -157,3 +157,31 @@ Bug kommen kann. Bei gebufferten Channels ist es hierbei auch in der Lage
 Kommunikationen zu erkennen, welche zwar nicht zu einem blockenden 
 Bug führen, welche aber dennoch keine vollständig ausgeführte Kommunikation 
 bilden. 
+
+\section{Probleme und Verbesserungsmöglichkeiten}
+Der Detektor besitzt das selbe Problem wie alle dynamischen Ansätze. Er 
+kann nur Probleme in den ausgeführten Programmteilen erkennen. Befinden sich 
+tatsächlich oder potentielle Probleme teilweise oder vollständig in Bereichen, 
+welche nicht ausgeführt wurden, z.B. auf Grund eines If-Statements, 
+kann das entsprechende Problem nicht erkannt werden.
+
+Das zweite größere Problem liegt in der Tatsache, dass die Kombination 
+von Mutexen und Channels dazu führen kann, dass Bugs auftreten können
+bzw.~dass Situationen, die bei der Betrachtung von nur Mutexen oder nur 
+Channels zu Bugs führen könnten, welche durch die Kombination aber nicht auftreten 
+können. Da Mutexe und Channel durch den Detektor getrennt voneinander betrachtet
+werden, können demnach False-Positives oder False-Negatives entstehen. Durch eine andere 
+Vereinigung der Methoden, bzw.~dem Betrachten der anderen Objekte in den 
+Methoden wäre es prinzipiell möglich die Anzahl dieser Fehler zu reduzieren.
+
+Als letztes geben sich außerdem Einschränkungen aus der Implementierung. 
+Reine Go-Programme können einfach mit \texttt{go build} compiliert und anschließend 
+das Executable direkt ausgeführt werden. Bei größeren Programmen ist dies 
+häufig nicht direkt möglich. In diesen Fällen ist eine Anwendung des 
+Detektors in seinem momentanen Stand nur sehr umständlich möglich. Ein anderes 
+Problem besteht darin, dass importierte Libraries nicht instrumentiert werden.
+Dies bedeutet, dass Library-Funktionen, welche Channels oder Mutexe als 
+Parameter oder Rückgabewerte besitzen mit der momentanen Instrumentierung
+zu Compiler-Fehlern führen. Um dies zu beheben wäre es möglich auch die 
+entsprechenden Bibliotheken zu instrumentieren und diese dann einzubinden. 
+Dies ist momentan allerdings noch nicht (automatisiert) möglich.
