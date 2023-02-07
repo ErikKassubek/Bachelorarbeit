@@ -171,7 +171,7 @@
 \title[Dynamic Analysis of Concurrent Go-Programs]{Dynamic Analysis of Concurrent Go-Programs}
 \subtitle{Bachelorarbeit - Kolloquium}
 \institute[]{Institut für Informatik\\Albert-Ludwigs-Universität Freiburg}
-\date{14.02.2023}
+\date{15.02.2023}
 
 \begin{document}
 
@@ -488,6 +488,7 @@
           \draw[->] (R2) to (z2);
           \draw[->] (z2) to (x2);
           \draw[->] (R3) to (x3);
+          \draw[->] (x3) to (y3);
 
           \draw[->, draw=Red1, visible on=<2>] (x3) to (y3);
           \draw[->, draw=Red1, visible on=<2>] (y1) to (x1);
@@ -593,6 +594,10 @@
       \item $\#s_{i, <} + \#s_{i, \not\lessgtr} \geq \#r_{j, <}$
     \end{itemize}
   \end{itemize}
+\end{frame}
+
+\begin{frame}{Analyse - Channel}
+  \lstinputlisting{code/buffered_form.txt}
 \end{frame}
 
 % TODO: beispiel für erklärung von Formel
