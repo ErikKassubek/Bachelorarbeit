@@ -214,7 +214,9 @@ Wird kein Post-Element gefunden, handelt es sich also um ein hängendes Event,
 wird die Pre-Vectorclock auf die Vectorclock des Pre-Events und alle Elemente 
 der Post-Vectorclock auf \texttt{maxInt}, als den maximal möglichen Wert 
 gesetzt. In diesem Fall wird der entsprechende Channel außerdem in die Liste der
-hängenden Channels aufgenommen. 
+hängenden Channels aufgenommen.\\
+Bei der Erzeugung der \texttt{vcn} wird außerdem gespeichert, welche Mutexe 
+von der entsprechenden Routine momentan gehalten werden.     
 \\
 Für Close-Elemente gibt es nur ein Element in dem Trace. Aus diesem Grund 
 besitzt das Element nur eine Vectorclock. Pre- und Post-Vectorclock werden 
@@ -237,7 +239,8 @@ ausgeführt werden und eines der
 Elemente ein Send- und das andere eine Receive-Operation ist. Zwei Operationen
 werden als potenzielle Kommunikationspartner angesehen, wenn die Pre- oder
 Vectorclocks der beiden 
-Operationen unvergleichbar sind.\\
+Operationen unvergleichbar sind und die Listen der zur Zeit der 
+Ausführung von der Routine gehaltenen Mutexe keine gemeinsamen Mutexe beinhaltet.\\
 Für den gebufferten Channel müssen Send- und Receive nicht 
 gleichzeitig ausgeführt werden. Aus diesem Grund müssen die Vectorclocks 
 nicht unvergleichbar sein. Um mögliche Kommunikationspartner zu erkennen 

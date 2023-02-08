@@ -10,8 +10,8 @@ großen open-source Anwendungen wie z.B. Kubernetes und Moby.
 Beschreibungen der Probleme, sowie die Ergebnisse des Detektors befinden in 
 Anhang~\ref{Appendix-1}.
 
-\section{Standardprogramme}
-Für die Analyse wurden insgesamt 44 Standartprobleme betrachtet. 
+\section{Standardprobleme}
+Für die Analyse wurden insgesamt 44 Standardprobleme betrachtet. 
 Dabei handelt es sich um konstruierte Programme, welche bestimmte 
 Situationen beinhalten, die durch den Detektor erkannt werden sollen, 
 bzw. Situationen, welche mit einer problematischen Situation verwechselt 
@@ -22,12 +22,12 @@ die vorliegende Situation nicht zu einem Problem führen kann. Eine
 tabellarische Beschreibung der betrachteten Situationen, sowie der Ergebnisse 
 des Detektors ist in Tab.~\ref{App-Stand-Res} in Anhang~\ref{Appendix-1} aufgeführt.
 
-Von den 44 Programmen konnten 40 korrekt kategorisiert werden. Dabei 
+Von den 44 Programmen konnten 41 korrekt kategorisiert werden. Dabei 
 bestehen 18 Probleme aus Problemen mit Mutexen,
 19 aus Problemen mit Channel und 7 mit einem 
 Mix aus Mutexen und Channel. Abbildungen~\ref{Chap:Eval-Sec:Stand-Fig:Total}
 bis~\ref{Chap:Eval-Sec:Stand-Fig:Mix} geben an, welcher Anteil der 
-Betrachteten Standartprobleme korrekt erkannt wurde.
+Betrachteten Standardprobleme korrekt erkannt wurde.
 
 Für Programme, bei denen der Fehler auf die Verwendung von Mutexen 
 basiert, konnten 17 der 18 Probleme richtig kategorisiert werden. 
@@ -38,15 +38,9 @@ Bei den Programmen, bei welchen es durch Channel zu Problemen kommen kann,
 lag der Detektor bei 18 der 19 Programme ($94.7\%$) richtig. Bei dem 
 Programm, welches nicht korrekt erkannt wurde handelt es sich um ein False-Positive.\\
 Bei Programmen, welche sowohl Mutexe als auch Channels verwenden liegt 
-die Erfolgsquote mit 5 aus 7 ($71.4\%$) am niedrigstem. Da der Detektor 
-zwei verschiedene Methoden verwendet, um Probleme mit Mutexen und Probleme 
-mit Channels zu erkenne, ist es nicht immer möglich zu erkennen, wenn die 
-Anwesenheit eines Mutexes das Blocken auf einem Channel unmöglich macht, 
-oder ein Channel verhindert, das die Mutexe zu einem Deadlock führen können.
-Aus diesem Grund ist es nicht verwunderlich, das hierbei eine nicht
-zu vernachlässigende Menge an False-Positives entstehen. \\
+die Erfolgsquote bei 6  aus 7 ($85.7\%$). \\
 Insgesamt hat der Detektor für die betrachteten Programme eine 
-Trefferwahrscheinlichkeit von $90.9\%$. \\
+Trefferwahrscheinlichkeit von $93.2\%$. \\
 Es sei noch dazu gesagt, dass die betrachteten Programme immer so implementiert 
 worden sind, dass die entsprechenden Situationen auch in dem Durchlauf 
 auftreten. Es ist allerdings auch möglich, dass Situationen bei den Durchläufen 

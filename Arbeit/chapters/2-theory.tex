@@ -439,14 +439,13 @@ Man erkennt also zwei Operationen, welche eine mögliche Kommunikation durchfüh
 können daran, dass sie auf dem selben Channel definiert sind, eine Send-
 und eine Receive-Operation definieren und dass 
  ihre Pre- oder Vector-Clocks unvergleichbar sind.\\
-Um alternative Kommunikationspartner für hängende Kanäle zu finden, werden also
-die Pre- und Post-Vector-Clocks der Channels mit dem selben Channel verglichen.\\
-Führt man dies auf dem obigen VAT aus, erkennt man schnell, dass 1 mit 4 und 3 
-sowohl mit 2 als auch 4 kommunizieren kann. Man erkennt hierbei auch die 
-Notwendigkeit sowohl die Pre- als auch die Post-Vectorclocks zu betrachten.
-Bei der Kommunikation zwischen 1 und 4 sind nur die Pre-Vectorclocks 
-unvergleichbar, nicht aber die Post-Vectorclocks. Bei der Kommunikation zwischen 
-3 und 4 sind nur die Post-Vectorclocks unvergleichbar. 
+Um alternative Kommunikationspartner für Channel zu finden, werden also
+die Pre- und Post-Vector-Clocks des VAT mit dem selben Channel verglichen um
+solche Paare zu finden.\\ Wenn sich eine Send- und Receive-Operation, 
+welche bezüglich der Vector-Clocks zwar kommunizieren könnten so von Mutexen 
+umschlossen werden, das die Operationen nicht gleichzeitig ausgeführt werden 
+können, bilden sie keine gültige Kommunikation.
+
 
 In gebufferten Channels ist nicht notwendig, dass Send und Receive gleichzeitig
 ausgeführt werden.
