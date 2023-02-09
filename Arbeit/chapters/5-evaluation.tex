@@ -44,7 +44,7 @@ Trefferwahrscheinlichkeit von $93.2\%$. \\
 Es sei noch dazu gesagt, dass die betrachteten Programme immer so implementiert 
 worden sind, dass die entsprechenden Situationen auch in dem Durchlauf 
 auftreten. Es ist allerdings auch möglich, dass Situationen bei den Durchläufen 
-nicht durchlaufen werden, z.B. wenn sie sich ein einem Konditionellen 
+nicht durchlaufen werden, z.B. wenn sie sich ein einem konditionellen 
 Block (If) befinden, bei welchem die Bedingung während keinem der Durchläufe 
 wahr wird. Da die entsprechenden Operationen somit nicht aufgezeichnet 
 werden können, ist es demnach logischerweise auch nicht möglich, dass der 
@@ -95,7 +95,7 @@ stimmen dabei in etwa mit denen der Standardprogramme überein.
 Für die Analyse wurden dabei nur solche Programme ausgewählt,
 welche basieren auf ihrer Beschreibung für den Detektor theoretisch erkennbare 
 Situation enthielt. Situationen, welche sich auf andere Concurrency-Bugs,
-z.B. Race-Conditions bezogen wurden nicht betrachtet. 
+z.B. Race-Conditions bezogen, wurden nicht betrachtet. 
 Die Betrachtung der Programme aus Goker hat einen Nachteil der hier 
 verwendeten Methode, bzw. der Implementierung deutlich gemacht.
 Der Instrumenter ist nur in der Lage den vorliegenden Code zu instrumentieren. 
@@ -105,7 +105,7 @@ Rückgabewerte besitzen. Da bei der Instrumentierung Mutexe und Channel
 durch eingens implementierte Objekte ersetzt werden, externe Funktionen 
 aber nicht entsprechend Instrumentiert werden können kommt es 
 hierbei zu Compiler-Fehlern. Die entsprechenden Programme sind daher nicht 
-Lauffähig und können somit auch nicht analysiert werden. Programme aus GoKer, 
+lauffähig und können somit auch nicht analysiert werden. Programme aus GoKer, 
 bei denen dies der Fall war wurden für die Analyse nicht betrachtet. 
 
 \begin{minipage}{0.45\textwidth}
@@ -140,7 +140,7 @@ Der Detektor vereinigt und erweitert Funktionsweisen aus verschiedenen
 Detektoren, und besitzt daher die Vorteile mehrerer Ansätze. Während sich 
 einige Detektoren, wie z.B. UNDEAD~\cite{Undead} nur auf die Erkennung 
 von Bugs, welche durch eine Art von Synchronisationsmechanismen ausgelöst werden 
-spezialisier, z.B. nur auf Mutexe,
+spezialisiert, z.B. nur auf Mutexe,
 vereinigt der entwickelte Detektor Methoden zur Erkennung von Problemen 
 durch sowohl Mutexe als auch Channels. Er ist außerdem, anders als z.B. 
 GFuzz~\cite{gfuzz} nicht nur in der Lage Situationen zu erkennen, welche 

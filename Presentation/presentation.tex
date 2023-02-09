@@ -586,13 +586,15 @@
     \begin{itemize}
       \item Paar von Send-Receive auf selbem Channel
       \item Pre- oder Post-Vectorclock unvergleichbar
+      \item Keine gemeinsamen gehaltenen Mutexe bei Ausführung
     \end{itemize}
-    \item Potenzielle Kommunikationspartner auf gebufferten Channels:
+    \uncover<2>{\item Potenzielle Kommunikationspartner auf gebufferten Channels:
     \begin{itemize}
       \item Paar von Send-Receive auf selbem Channel
       \item $\#s_{i, <} \leq \#r_{j, <} + \#r_{i, \not\lessgtr}$
       \item $\#s_{i, <} + \#s_{i, \not\lessgtr} \geq \#r_{j, <}$
     \end{itemize}
+    }
   \end{itemize}
 \end{frame}
 

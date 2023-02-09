@@ -1,7 +1,7 @@
 \chapter{Zusammenfassung}\label{chap:conclusion}
 Ziel dieser Arbeit war es einen Detektor für von Mutexen 
 und Channels erzeugte Concurrency-Bugs zu entwickeln und zu implementieren.\\
-Der implementierte Detektor vereinigt und erweitert dabei verschiedene Methoden 
+Der implementierte Detektor vereinigt und erweitert verschiedene Methoden 
 zur Erkennung solcher Probleme.\\
 Der Tracer und Analyzer wird dabei in den originalen Programmcode eingefügt.
 Dazu wurde ein Programm entwickelt, welches in der Lage ist diese Instrumentierung
@@ -10,7 +10,7 @@ Der Detektor erzeugt dynamisch einen Trace
 eines vorliegenden Programms, welcher im Anschluss analysiert werden kann.\\
 Für Deadlocks durch Mutexe werden dabei Lock-Bäume zur Erkennung von zyklischem 
 Locking verwendet, sowie nach doppeltem Locking gesucht.\\
-Für Communication-Bugs, welche durch Mutexe erzeugt werden
+Für Communication-Bugs, welche durch Channels erzeugt werden
 werden Pre- und Post-Vectorclocks bestimmt, welche eine Berechnung
 von potenziellen Kommunikationspartnern ermöglicht. Mit diesen lässt sich 
 durch die Unordnung der Kommunikationspartner nach Programmabläufen suchen, 

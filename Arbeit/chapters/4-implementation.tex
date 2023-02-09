@@ -1,13 +1,13 @@
 
 \chapter{Analyzer} \label{Chap:Implement}
 
-Das folgende Kapitel soll sich nun mit der Implementierung der Analyze des in 
+Das folgende Kapitel beschreibt die Implementierung der Analyze des in 
 Kap.~\ref{Chap:Instrumenter-Sec:Trace} erstellten 
-Trace befassen.
+Trace.
 
 \section{Ablauf}
 Um das Programm zu Analysieren wird der instrumentierte Code ausgeführt.
-Besitzt er Select-Statements, dann wird es mehrfach durchgeführt, 
+Besitzt er Select-Statements, wird er mehrfach durchgeführt, 
 wobei jeweils eine andere, zufällige Ordnung für die Select-Cases 
 betrachtet wird. Die betrachteten Ordnungen werden vor dem Durchlaufen 
 der Programme erzeugt. Dabei kann vom Nutzer eine maximale 
@@ -27,24 +27,25 @@ Fehler aufgetreten sind. Nach Abschluss aller Durchläufe werden die
 gesammelten Fehler vollständig ausgegeben.
 
 \section{Aufzeichnung des Trace}
-Der Trace wird wie in Kap.~\ref{Chap:Instrumenter-Sec:Trace}
+Der Trace wird wie in Abschnitt.~\ref{Chap:Instrumenter-Sec:Trace}
 beschriebenen erzeugt. Er wird dabei durch ein Slice von Slices 
 gespeichert, wobei jeder Slice den Trace einer Routine 
 speichert. Dazu wird für jedes Trace-Element ein Struct definiert, 
 welches alle notwendigen Informationen speichert. Über ein Interface 
 wird dafür gesorgt, dass diese Elemente alle in das Slice des Trace eingefügt
-werden kann. Dabei wird über einen Mutex dafür gesorgt, dass nicht 
+werden können. Dabei wird über einen Mutex dafür gesorgt, dass nicht 
 zwei Routinen gleichzeitig ein Element in den Trace einfügen können\\
-Jeder Routine wird ein fortlaufender Wert eines atomaren Zählers zugeordnet. 
-Um die interne Id einer Routine zu erhalten, und auf die dem Trace zugeordnete 
-Id zuzuordnen wird eine externe Bibliothek GoId~\cite{goid} verwendet.\\
+Jeder Routine wird ein fortlaufender Wert eines atomaren Zählers als Id zugeordnet. 
+Um die Id der Routine zu erhalten wird eine externe Bibliothek GoId~\cite{goid} verwendet.
+Diese gibt eine interne Id für jede Routine aus, welche dann auf die Id der Routine 
+gemappt wird.
 Auch die Ids für Channels und Mutexes werden durch laufende, atomare Zähler 
 implementiert, welche in den Objekten für Channels und Mutexes gespeichert werden.
 
 \section{Mutex} \label{Chap:Implement-Sec:Mutex}
 Zuerst wird nach doppeltem Locking gesucht. Da ein doppeltes Locking immer 
-zu einer blockade führt, kann es nur auftreten, wenn das letzte Element in 
-dem Trace einer Routine eine Lock-Operation aber keine TryLock beschreibt. In diesem Fall wird 
+zu einer Blockade führt, kann es nur auftreten, wenn das letzte Element in 
+dem Trace einer Routine eine Lock- aber keine TryLock-Operation beschreibt. In diesem Fall wird 
 der entsprechende Trace rückwerts durchlaufen, bis eine Operation auf dem 
 selben Mutex gefunden wird. Handelt es sich dabei ebenfalls um eine 
 Lock-Operation auf dem selben Mutex, bedeutet dies, dass ein Deadlock durch 
@@ -60,10 +61,9 @@ Routine werden nun durchlaufen. Handelt es sich dabei um ein Lock Event eines Lo
 wird eine s.g. \texttt{Dependendency} erzeugt und gespeichert. Diese beinhaltet 
 das Lock \texttt{x} sowie eine Liste aller von der Routine momentan gehaltenen 
 Locks, dem s.g. \texttt{holdingSet hs}. Dieses entspricht gerade \texttt{currentLocks}. 
-Diese \texttt{Dependendency} stellt also 
-eine Menge von Kanten von in dem Lockgraphen der Routine da. 
+Aus diesen \texttt{Dependencies} lassen sich also die Kanten in den Lockbäumen erschließen.
 Anschließend wird \texttt{x} in \texttt{currentLocks} eingefügt.
-Ist das handelt es sich bei dem Element um ein unlock Event auf dem Lock \texttt{x}, dann wird das 
+Handelt es sich bei dem Element um ein Unlock-Event auf dem Lock \texttt{x}, dann wird das 
 letzte Vorkommen von \texttt{x} auf \texttt{currentLocks} entfernt.\\
 Nachdem der Trace einer Routine durchlaufen wurde, wird überprüft ob sich noch Elemente in 
 \texttt{currentLocks} befinden. Ist dies der Fall, handelt es sich um Locks, welche zum Zeitpunkt der Terminierung 
@@ -73,7 +73,7 @@ Dies kann einfach durch die entsprechende Logik des Programms zustande gekommen 
 auf einen tatsächlich auftretenden Deadlock. In diesem Fall wird eine Warnung ausgegeben.\\
 Ein potenzieller Deadlock gibt sich nun, wenn in diesem aus den Bäumen zusammengesetzten 
 Graph ein Zyklus existiert.
-Nicht alle Zyklen bilden dabei gültige Zyklen. Bum Beispiel muss darauf 
+Nicht alle Zyklen bilden dabei gültige Zyklen. Zum Beispiel muss darauf 
 geachtet werden, dass nicht alle Kanten durch die selbe Routine erzeugt wurden, und dass in 
 zwei, in dem Kreis hintereinander folgende Kanten der gemeinsame Knoten nicht beides mal durch eine 
 R-Lock Operation durch Kanten verbunden wurde. Gültige Zyklen lassen sich durch 
@@ -101,7 +101,8 @@ dir folgenden Formeln charakterisieren.
   \tag{\ref{Chap:Implement-Sec:Mutex}.f}
   \label{Chap:Implement-Sec:Mutex.f}
 \end{align}
-Dabei bezeichnet $mi_i$ den Mutex $hs_i$ das holdingSet der $i$-ten 
+Dabei bezeichnet $mu_i$ den Mutex und $hs_i$ das \texttt{holdingSet} der $i$-ten 
+Lock-Operation
 in dem Zyklus.\ (\ref{Chap:Implement-Sec:Mutex.a}) stellt sicher, dass das selbe 
 Lock nicht in dem HoldingSet von zwei verschiedenen Routinen auftauchen kann.\
 (\ref{Chap:Implement-Sec:Mutex.b}) und~(\ref{Chap:Implement-Sec:Mutex.c})
@@ -114,15 +115,15 @@ beschäftigen sich mit dem Einfluss von RW-Locks auf die Gültigkeit von
 Zyklen. Auch wenn (\ref{Chap:Implement-Sec:Mutex.a}) bis~(\ref{Chap:Implement-Sec:Mutex.c})
 erfüllt sind, ist dies dennoch keine gültige Kette, wenn sowohl
 der Mutex $mu_i$ als auch der Mutex $mu$ in $hs_{i+1}$, 
-für die $mu = mu_i$ gilt, beides Reader-Locks
+für das $mu = mu_i$ gilt, beides Reader-Locks
 sind, also Locks welche durch eine RLock-Operation erzeugt worden sind. 
 Dass solche Pfade ausgeschlossen werden wird durch (\ref{Chap:Implement-Sec:Mutex.d})
 und (\ref{Chap:Implement-Sec:Mutex.e}) sichergestellt.
 (\ref{Chap:Implement-Sec:Mutex.f}) beschäftigt sich mit Gate-Locks. 
-Dabei handelt es sich um Situationen, bei denen mehrere Teile des Programmcodes,
-welche zu einem Deadlock führen könnten durch ein Lock umschlossen sind, 
-in der Praxis also nicht gleichzeitig ausgeführt werden und somit einen Deadlock 
-verhindern.
+Dabei handelt es sich um Mutexe, welche mehrere Teile des Programmcodes,
+welche bei gleichzeitiger Ausführung zu einem Deadlock führen könnten 
+so umschließen, dass sie nicht gleichzeitig ausgeführt werden können und somit das Deadlock 
+verhindert wird.
 Die Regel besagt nun, dass wenn es einen Mutex gibt,
 der in den HoldingSets zweier verschiedener Dependencies in dem Pfad vorkommt, so müssen
 beide diese Mutexe Reader-Locks sein. Sind sie es nicht, handelt es sich um Gate-Locks, und
@@ -143,10 +144,10 @@ Regeln hingegen erfüllt, dann wird überprüft, um der Stack nun einen gültige
 Zyklus enthält, also auch (\ref{Chap:Implement-Sec:Mutex.c}) und (\ref{Chap:Implement-Sec:Mutex.e})
 gültig sind. In diesem Fall wurde ein potenzielles Deadlock gefunden, und dies 
 ausgegeben. Andernfalls werden weiter Dependency auf dem Stack hinzugefügt. 
-Dies wird wiederholt, bis es keine Dependency mehr gibt, die auf den Stack VaT
+Dies wird wiederholt, bis es keine Dependency mehr gibt, die auf den Stack
 gelegt werden könnte. In diesem Fall werden per Backtracking Dependencies 
 von dem Stack entfernt, so dass andere Pfade ausprobiert werden können.
-Dies wird so lange durchgeführt. Bis alle gültigen Kombinationen durchprobiert 
+Dies wird so lange durchgeführt bis alle gültigen Kombinationen durchprobiert 
 worden sind.
 
 \section{Channels}\label{Chap:Analyse-Sec:Channel}
@@ -163,16 +164,15 @@ Receives auf geschlossenen Channels werden nicht betrachtet, da diese
 lediglich einen Null-Wert zurückgeben und nicht blocken, somit also nicht 
 zu Laufzeitfehlern führen. 
 
-\paragraph{Bestimmung des vectorclock-annotierten Trace VAT}
+\subsection{Bestimmung des vectorclock-annotierten Trace (VAT)}
 Basierend auf dem aufgezeichneten Trace soll nun ein vectorclock-annotierter Trace 
 (VAT) erzeugt werden. Dieser besteht aus einer Reihe von \texttt{vcn}'s, 
 welche jeweils eine Send-, Receive- oder Close-Operation repräsentieren.
 Andere Operation, wie z.B. signal-wait werden zwar bei der Berechnung der Vectorclocks 
 beachtet, allerdings nicht in den VAT aufgenommen, da sie für die weitere 
 Analyse nicht benötigt werden. Ein \texttt{vcn} beinhaltet dabei die Channel-Id,
-die Routine, ob es sich um Send- oder Receive handelt (bei Close beliebig gesetzt),
-ein Counter für die Anzahl der bereits erfolgreich abgeschlossenen Send- bzw.
-Receive-Operationen bei der Ausführung des Send- oder Receive (bei Close -1), 
+die Routine auf welcher die Operation ausgeführt wurde, 
+ob es sich um Send- oder Receive handelt (bei Close beliebig gesetzt), 
 die Position der Operation im Programmcode
 sowie die Pre- und Post-Vectorclocks der Operation. Eine Close Operation 
 wird dabei dadurch erkannt, dass die Pre- und Post-Vectorclocks übereinstimmen.
@@ -205,10 +205,10 @@ der Id der Send-Routine um 1 bestimmen.
 Die Vectorclock dann wie in Abschnitt.~\ref{Chap:Theo-Sec:Analyze-SubSec:Channel}
 beschrieben aktualisiert werden.\\
 Für alle anderen Element, also alle Pre-Elemente, Close-Operationen und Mutex-Operationen 
-werden die Vectorclocks lediglich kopiert.
+werden die Vectorclocks nicht verändert.
 
 Nach der Berechnung der Vectorclocks kann nun der VAT bestimmt werden. 
-Dazu wird nun der Trace für die einzelnen Routinen durchlaufen. Bei jedem 
+Dazu werden die Traces für die einzelnen Routinen durchlaufen. Bei jedem 
 Pre- und PreSelect-Element wird eine \texttt{vcn} erzeugt. Dazu wird der restliche Trace 
 der selben Routine durchlaufen um das zugehörige Post-Element zu finden. 
 Wird diese gefunden wird 
@@ -217,9 +217,8 @@ Zeitstempel der Pre- und Post-Elemente aus der Liste der Vectorclocks
 übernommen wird.
 Wird kein Post-Element gefunden, handelt es sich also um ein hängendes Event, 
 wird die Pre-Vectorclock auf die Vectorclock des Pre-Events und alle Elemente 
-der Post-Vectorclock auf \texttt{maxInt}, als den maximal möglichen Wert 
-gesetzt. In diesem Fall wird der entsprechende Channel außerdem in die Liste der
-hängenden Channels aufgenommen.\\
+der Post-Vectorclock auf \texttt{maxInt}, als den maximal möglichen Wert, 
+gesetzt.\\
 Bei der Erzeugung der \texttt{vcn} wird außerdem gespeichert, welche Mutexe 
 von der entsprechenden Routine momentan gehalten werden.     
 \\
@@ -227,11 +226,11 @@ Für Close-Elemente gibt es nur ein Element in dem Trace. Aus diesem Grund
 besitzt das Element nur eine Vectorclock. Pre- und Post-Vectorclock werden 
 dabei auf die gleiche Vectorclock gesetzt.
 
-\paragraph{Erkennung pottenzieller Communication-Bugs}
+\subsection{Erkennung potenzieller Communication-Bugs}
 Basierend auf dem VAT können nun tatsächlich aufgetretene oder potenzielle 
 Communication-Bugs erkannt werden. Dabei wird nach Channel-Operationen 
 gesucht, welche bei bestimmten Abläufen keine gültigen Kommunikationspartner
-besitzen. Dies führt zu einem blocken Bug, durch das warten auf 
+besitzen. Dies führt zu einem blocken Bug durch das Warten auf 
 Sends oder Receives oder das Senden von Nachrichten auf gebufferten 
 Channels, ohne das die Nachricht jemals ausgelesen wird.\\  
 Zuerst werden basierend auf dem VAT alle potenziellen Kommunikationspartner 
@@ -260,9 +259,11 @@ dies der Fall ist.
 Für die Bestimmung der potenziellen Kommunikationspartner wird nun 
 für jedes Paar von Send-Receive-Operationen auf dem selben Channel 
 überprüft, 
-ob die Formeln~(\eqref{Form:1}) und~(\eqref{Form:2}) 
+ob die Formeln~(\ref{Form:1}) und~(\ref{Form:2}) 
 erfüllt. In diesem Fall wird angenommen, dass die beiden Operationen
-miteinander Kommunizieren können.\\
+miteinander kommunizieren können.\\
+Basierend auf diesen Informationen wird für jede Send- und jede Receive-Operation
+eine Liste von potenziellen Kommunikationspartnern erstellt.\\
 Basierend auf diesen möglichen Kommunikationspartnern werden nun alle möglichen
 Kommunikationsabläufe betrachtet. Für die Betrachtung aller Abläufe 
 wird Backtracking verwendet. Zuerst wird schrittweise rekursiv für jede Send-Operation 
@@ -270,7 +271,7 @@ in dem Trace eine potenzielle Receive-Operation als Kommunikationspartner
 in einen partiellen Kommunikationsablauf eingefügt, sofern die 
 Receive-Operation einen gültigen Kommunikationspartner bildet. Ein Receive 
 ist ein potenzieller Kommunikationspartner, wenn eine Kommunikation 
-basierend auf dem VAT möglich ist, die Receive-Operation noch von keiner 
+basierend auf dem VAT möglich ist und die Receive-Operation noch von keiner 
 anderen Send-Operation als Partner verwendet wird. Besitzt ein solcher Pfad 
 einen Kommunikationspartner für jedes Send-Statement in dem Trace, bedeutet dies, 
 dass der entsprechende Ablauf nicht zu einem Bug führen kann. Ist es hingegen 
@@ -291,7 +292,7 @@ Das Ganze wird anschließenden ein zweites Mal ausgeführt, wobei die Rollen
 von Send und Receive hierbei vertauscht sind. Es wird also für jedes Receive 
 eine Send-Operation gesucht. 
 
-\paragraph{Erkennung von potenziellem Senden auf geschlossenem Channel}
+\subsection{Erkennung von potenziellem Senden auf geschlossenem Channel}
 Für die Suche nach Situationen, die dazu führen können, dass auf einem 
 geschlossenen Channel gesendet wird, werden die Vectorclock aller in dem 
 Trace vorhandenen Close-Operationen mit den Vectorclocks aller Send-Operationen
