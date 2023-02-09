@@ -176,44 +176,39 @@ Man betrachte das folgende Beispielprogramm.
 
 Dieses Programm besitzt den folgenden Output:
 \begin{verbatim}
-Determine switch execution order
-Start Program Analysis
-Analyse Program:   0%   1,0
-Analyse Program:  50%   1,1
-Analyse Program: 100%
-
-Finish Analysis
-
-Found Problems:
-
-Found while examine the following orders:   1,0
-Possible Send to Closed Channel:
-    Close: /home/.../output/show/main.go:48
-    Send: /home/.../output/show/main.go:112
-
-Found while examine the following orders:   1,1
-No communication partner for receive at /home/.../output/show/main.go:103 
-  when running the following communication:
-    /home/.../output/show/main.go:39 -> /home/.../output/show/main.go:41
-    /home/.../output/show/main.go:112 -> /home/.../output/show/main.go:65
-
-No communication partner for receive at /home/.../output/show/main.go:65 
-  when running the following communication:
-    /home/.../output/show/main.go:112 -> /home/.../output/show/main.go:103
-    /home/.../output/show/main.go:39 -> /home/.../output/show/main.go:41
-
-
-
-Found while examine the following orders:   1,0  1,1
-Potential Cyclic Mutex Locking:
-Lock: /home/.../output/show/main.go:109
-  Hs:
-    /home/.../output/show/main.go:108
-Lock: /home/.../output/show/main.go:100
-  Hs:
-    /home/.../output/show/main.go:99
-
-
-Note: The positions show the positions in the instrumented code!
+  Determine switch execution order
+  Start Program Analysis
+  Analyse Program:   0%   1,1
+  Analyse Program:  50%   1,0
+  Analyse Program: 100%
+  
+  Finish Analysis
+  
+  Found Problems:
+  
+  Found while examine the following orders:   1,1  1,0
+  Potential Cyclic Mutex Locking:
+  Lock: /home/.../output/show/main.go:109
+      /home/.../output/show/main.go:108
+  Lock: /home/.../output/show/main.go:100
+      /home/.../output/show/main.go:99
+  
+  
+  Found while examine the following orders:   1,1
+  No communication partner for receive at /home/.../output/show/main.go:103 
+    when running the following communication:
+      /home/.../output/show/main.go:39 -> /home/.../output/show/main.go:41
+      /home/.../output/show/main.go:112 -> /home/.../output/show/main.go:65
+  
+  No communication partner for receive at /home/.../output/show/main.go:65 
+    when running the following communication:
+      /home/.../output/show/main.go:112 -> /home/.../output/show/main.go:103
+      /home/.../output/show/main.go:39 -> /home/.../output/show/main.go:41
+  
+  
+  Found while examine the following orders:   1,0
+  Possible Send to Closed Channel:
+      Close: /home/.../output/show/main.go:48
+      Send: /home/.../output/show/main.go:112  
 \end{verbatim}
 Die Pfade wurden dabei hier für eine bessere Lesbarkeit gekürzt. 
