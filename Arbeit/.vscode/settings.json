@@ -3,8 +3,11 @@
     "Beanspruchungsversuch",
     "Gopherlyzer",
     "Instrumenter",
+    "Instrumenters",
     "lmodern",
     "Sulzmann",
+    "ungebufferten",
+    "Vectorclock",
     "Vectorclocks"
   ]
 }

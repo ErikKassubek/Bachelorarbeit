@@ -197,7 +197,12 @@ gespeichert sind, ist eine eindeutige Zuordnung der Send- und Receive-Statements
 möglich. Für die Signal- und Wait-Elemente ist jeweils die Id der neu erzeugten 
 Routine gespeichert. Es ist also auch hier eine eindeutige Zuordnung möglich. 
 Die Vectorclock der Send- bzw. Signal-Operation kann also immer eindeutig bestimmt 
-werden und die Vectorclock somit wie in Kap.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling}
+werden. Da bei Send-Receive immer der Timestamp des Pre-Elements mitgesendet
+wird, erhält man mit diesem zuerst die Vector-Clock des Pre-Elements. Die 
+Vectorclock des Post-Elements, welche für die Aktualisierung der Receive-Vectorclock
+benötigt wird lässt sich aus dieser durch erhöhen des Wertes an der Stelle 
+der Id der Send-Routine um 1 bestimmen.
+Die Vectorclock dann wie in Abschnitt.~\ref{Chap:Theo-Sec:Analyze-SubSec:Channel}
 beschrieben aktualisiert werden.\\
 Für alle anderen Element, also alle Pre-Elemente, Close-Operationen und Mutex-Operationen 
 werden die Vectorclocks lediglich kopiert.
