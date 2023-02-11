@@ -1,8 +1,8 @@
 go func() {
   select {
-    case a := <- c:
+    case <- c:
       func1(a)
-    default:
+    case d <- 1:
       func2()
   }
 }()

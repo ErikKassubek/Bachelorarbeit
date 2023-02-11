@@ -264,16 +264,16 @@ kommuniziert.
 Das 1 vor 2 ausgeführt 
 werden muss ist aus den Vectorclocks ablesbar. Um zu überprüfen, 
 ob eine Kommunikation möglich ist, werden daher für jede Send $s$ Operation 
-die Anzahl der Send Operationen auf dem selben Channel bestimmt, welche streng vor $s_i$ 
-ausgeführt werden ($\#s_{i, <}$) sowie die Anzahl der Operationen, welche nebenläufig mit $s_i$ 
-ausgeführt werden ($\#s_{i, \not\lessgtr}$). Das selbe wird analog auch 
-für jedes Receive $r_i$ ($\#r_{i, <}, \#r_{i, \not\lessgtr}$) bestimmt. 
-Damit ein Send-Receive Paar $s_i - r_j$ auf 
+die Anzahl der Send Operationen auf dem selben Channel bestimmt, welche streng vor $s$ 
+ausgeführt werden ($\#s_{<}$) sowie die Anzahl der Operationen, welche nebenläufig mit $s$ 
+ausgeführt werden ($\#s_{\not\lessgtr}$). Das Selbe wird analog auch 
+für jedes Receive $r$ ($\#r_{ <}, \#r_{\not\lessgtr}$) bestimmt. 
+Damit ein Send-Receive Paar $s - r$ auf 
 einem gebufferten Channel nun basierend auf der FIFO-Queue möglich ist, 
 also eine mögliche Kommunikation bilden muss gelten, dass 
 \begin{align}
-  \#s_{i, <} &\leq \#r_{j, <} + \#r_{i, \not\lessgtr}\label{Form:1}\\
-  \#s_{i, <} + \#s_{i, \not\lessgtr} &\geq \#r_{j, <}\label{Form:2}
+  \#s_{<} &\leq \#r_{<} + \#r_{\not\lessgtr}\label{Form:1}\\
+  \#s_{<} + \#s_{\not\lessgtr} &\geq \#r_{<}\label{Form:2}
 \end{align}
 Die Motivation für diese Formeln wird klar, wenn man das Beispiel in 
 Abb.~\ref{Chap:Analyze-Sec:Channel-SubSec:Dangling-Fig:BufferForm} betrachtet.
@@ -389,7 +389,12 @@ und werden somit von dem Detektor als potenzielle Bug angegeben.
 Das betrachtete Beispiel zeigt gut den Vorteil der Verwendung von Vectorclocks.
 Bei dem Durchlaufen des Programms sind keine Bugs aufgetreten. Dennoch 
 ist es mit den Vectorclocks möglich alternative Kommunikationsabläufe 
-zu betrachten und potenzielle Bugs in diesen zu finden.  
+zu betrachten und potenzielle Bugs in diesen zu finden. Es zeigt außerdem 
+die Notwendigkeit der Betrachtung von sowohl Pre- als auch Post-Vectorclocks.
+Betrachtet man nur die Post-Vectorclocks, dann scheint es, as würde $x_1!$
+streng vor $x_4?$ ausgeführt werden und somit keinen gültigen Kommunikationspartner
+für $x_1!$ bilden. Es ist aber leicht zu sehen, dass dies nicht der Fall ist. 
+Durch die zusätzliche Betrachtung der Pre-Vectorclocks kann dies korrekt erkannt werden.
 
 \subsection{Close}
 Versuch ein Programm auf einem geschlossenen Channel zu senden kommt es zu einem Laufzeitfehler, 

@@ -5,10 +5,9 @@ func main() {
   go func() {
     c <- 1
     d <- 1
-    c <- 1
   }()
 
-  <- c
-  <- c
   <- d
+  <- c
+  <- c
 }

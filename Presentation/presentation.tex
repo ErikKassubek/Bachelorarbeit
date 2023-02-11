@@ -169,7 +169,7 @@
 
 \author[Erik Kassubek]{Erik Kassubek} 
 \title[Dynamic Analysis of Concurrent Go-Programs]{Dynamic Analysis of Concurrent Go-Programs}
-\subtitle{Bachelorarbeit - Kolloquium}
+\subtitle{Bachelorarbeit}
 \institute[]{Institut für Informatik\\Albert-Ludwigs-Universität Freiburg}
 \date{15.02.2023}
 
@@ -333,53 +333,53 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Instrumentierung - Fork}
-    \begin{itemize}
-      \item \texttt{signal(ts, nr)} in Trace
-      \item Erzeuge neuen Trace
-      \item Starte der neuen Routine
-      \item \texttt{wait(ts, nr)} in neuen Trace
-      \item Ausführen der Routine
-    \end{itemize}
-\end{frame}
+% \begin{frame}{Instrumentierung - Fork}
+%     \begin{itemize}
+%       \item \texttt{signal(ts, nr)} in Trace
+%       \item Erzeuge neuen Trace
+%       \item Starte der neuen Routine
+%       \item \texttt{wait(ts, nr)} in neuen Trace
+%       \item Ausführen der Routine
+%     \end{itemize}
+% \end{frame}
 
-\begin{frame}{Instrumentierung - Mutex}
-  \begin{itemize}
-    \item (Try)(R)Lock:
-    \begin{itemize}
-      \item \texttt{lock(ts, mu.id, ⟨-|t|r|tr⟩, ⟨0|1⟩)}
-      \item Führe Lock aus
-    \end{itemize}
-    \item (Try)(R)Unlock:
-    \begin{itemize}
-      \item \texttt{unlock(ts, mu.id)} in Trace
-      \item Führe Lock aus
-    \end{itemize}
-  \end{itemize}
-\end{frame}
+% \begin{frame}{Instrumentierung - Mutex}
+%   \begin{itemize}
+%     \item (Try)(R)Lock:
+%     \begin{itemize}
+%       \item \texttt{lock(ts, mu.id, ⟨-|t|r|tr⟩, ⟨0|1⟩)}
+%       \item Führe Lock aus
+%     \end{itemize}
+%     \item (Try)(R)Unlock:
+%     \begin{itemize}
+%       \item \texttt{unlock(ts, mu.id)} in Trace
+%       \item Führe Lock aus
+%     \end{itemize}
+%   \end{itemize}
+% \end{frame}
 
-\begin{frame}{Instrumentierung - Channel}
-  \begin{itemize}
-    \item Send: (c <- i):
-    \begin{itemize}
-      \item \texttt{pre(ts, c.id, true)} in Trace
-      \item \texttt{c <- \{i, r.id, ts\}}
-      \item \texttt{post(ts', c.id, true, ts)} in Trace
-    \end{itemize}
-    \item Receive (a := <- c):
-    \begin{itemize}
-      \item \texttt{pre(ts, c.id, false)} in Trace
-      \item \texttt{\{i, id\_send, ts\_send\} := <-c}
-      \item \texttt{post(ts', ch.id, false, id\_send, ts\_send)} in Trace
-      \item \texttt{a := i}
-    \end{itemize}
-    \item Close (close(c))
-    \begin{itemize}
-      \item \texttt{close(ts, c.id)} in Trace
-      \item \texttt{close(c)}
-    \end{itemize}
-  \end{itemize}
-\end{frame}
+% \begin{frame}{Instrumentierung - Channel}
+%   \begin{itemize}
+%     \item Send: (c <- i):
+%     \begin{itemize}
+%       \item \texttt{pre(ts, c.id, true)} in Trace
+%       \item \texttt{c <- \{i, r.id, ts\}}
+%       \item \texttt{post(ts', c.id, true, ts)} in Trace
+%     \end{itemize}
+%     \item Receive (a := <- c):
+%     \begin{itemize}
+%       \item \texttt{pre(ts, c.id, false)} in Trace
+%       \item \texttt{\{i, id\_send, ts\_send\} := <-c}
+%       \item \texttt{post(ts', ch.id, false, id\_send, ts\_send)} in Trace
+%       \item \texttt{a := i}
+%     \end{itemize}
+%     \item Close (close(c))
+%     \begin{itemize}
+%       \item \texttt{close(ts, c.id)} in Trace
+%       \item \texttt{close(c)}
+%     \end{itemize}
+%   \end{itemize}
+% \end{frame}
 
 
 
@@ -403,15 +403,7 @@
 \end{frame}
 
 \begin{frame}{Instrumentierung - Select}
-  \begin{minipage}{0.55\textwidth}
-      \lstinputlisting{code/select-post1.txt}
-  \end{minipage}
-  \hfill
-  \vrule{}
-  \hfill
-  \begin{minipage}{0.43\textwidth}
-    \lstinputlisting{code/select-post2.txt}
-  \end{minipage}
+  \lstinputlisting{code/select-post.txt}
 \end{frame}
 
 \begin{frame}{Instrumentierung}
@@ -591,8 +583,8 @@
     \uncover<2>{\item Potenzielle Kommunikationspartner auf gebufferten Channels:
     \begin{itemize}
       \item Paar von Send-Receive auf selbem Channel
-      \item $\#s_{i, <} \leq \#r_{j, <} + \#r_{i, \not\lessgtr}$
-      \item $\#s_{i, <} + \#s_{i, \not\lessgtr} \geq \#r_{j, <}$
+      \item $\#s_{<} \leq \#r_{<} + \#r_{\not\lessgtr}$
+      \item $\#s_{<} + \#s_{\not\lessgtr} \geq \#r_{<}$
     \end{itemize}
     }
   \end{itemize}
@@ -658,7 +650,7 @@
     \item Potenzielles Send auf Closed Channel:
     \begin{itemize}
       \item Pre- oder Post-VC von Send unvergleichbar mit VC von Close
-      \item Wenn Send ist Ursache von Close $\Rightarrow$ Send auf Close tritt 
+      \item Wenn Close ist Ursache von Send $\Rightarrow$ Send auf Close tritt 
       während Durchlauf auf $\Rightarrow$ erzeugt Laufzeitfehler
     \end{itemize}
   \end{itemize}
