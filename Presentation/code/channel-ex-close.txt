@@ -2,10 +2,10 @@ func main() {
   c := make(chan int)
   
   go func() {
-    c <- 1
+    c <- 1   // 1
   }()
   go func() {
-    <- c
+    <- c     // 2
   }()
-  close(c)
+  close(c)   // 3
 }

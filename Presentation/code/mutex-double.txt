@@ -1,6 +1,6 @@
 func main() {
   var m sync.Mutex
 
-  m.Lock()
-  m.Lock()
+  m.Lock()  // 1 
+  m.Lock()  // 2
 }

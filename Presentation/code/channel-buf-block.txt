@@ -3,11 +3,11 @@ func main() {
   d := make(chan int)
 
   go func() {
-    c <- 1
-    d <- 1
+    c <- 1   // 1
+    d <- 1   // 2
   }()
 
-  <- d
-  <- c
-  <- c
+  <- d       // 3
+  <- c       // 4
+  <- c       // 5
 }

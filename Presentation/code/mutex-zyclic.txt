@@ -3,14 +3,14 @@ func main() {
   n sync.Mutex
 
   go func() {
-    m.Lock()
-    n.Lock()
+    m.Lock()    // 1
+    n.Lock()    // 2
     n.Unlock()
     m.Unlock()
   }()
 
-  n.Lock()
-  m.Lock()
+  n.Lock()      // 3
+  m.Lock()      // 4
   m.Unlock()
   n.Unlock()
 }
