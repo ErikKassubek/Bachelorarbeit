@@ -230,7 +230,7 @@ dabei auf die gleiche Vectorclock gesetzt.
 Basierend auf dem VAT können nun tatsächlich aufgetretene oder potenzielle 
 Communication-Bugs erkannt werden. Dabei wird nach Channel-Operationen 
 gesucht, welche bei bestimmten Abläufen keine gültigen Kommunikationspartner
-besitzen. Dies führt zu einem blocken Bug durch das Warten auf 
+besitzen. Dies führt zu einem blockierenden Bug durch das Warten auf 
 Sends oder Receives oder das Senden von Nachrichten auf gebufferten 
 Channels, ohne das die Nachricht jemals ausgelesen wird.\\  
 Zuerst werden basierend auf dem VAT alle potenziellen Kommunikationspartner 
