@@ -4,7 +4,5 @@ go func() {
       func1()
     case a := <- d:
       func2(a)
-    default:
-      func3()
   }
 }()
