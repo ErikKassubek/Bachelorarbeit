@@ -334,78 +334,7 @@
   \end{itemize}
 \end{frame}
 
-% \begin{frame}{Instrumentierung - Fork}
-%     \begin{itemize}
-%       \item \texttt{signal(ts, nr)} in Trace
-%       \item Erzeuge neuen Trace
-%       \item Starte der neuen Routine
-%       \item \texttt{wait(ts, nr)} in neuen Trace
-%       \item Ausführen der Routine
-%     \end{itemize}
-% \end{frame}
 
-% \begin{frame}{Instrumentierung - Mutex}
-%   \begin{itemize}
-%     \item (Try)(R)Lock:
-%     \begin{itemize}
-%       \item \texttt{lock(ts, mu.id, ⟨-|t|r|tr⟩, ⟨0|1⟩)}
-%       \item Führe Lock aus
-%     \end{itemize}
-%     \item (Try)(R)Unlock:
-%     \begin{itemize}
-%       \item \texttt{unlock(ts, mu.id)} in Trace
-%       \item Führe Lock aus
-%     \end{itemize}
-%   \end{itemize}
-% \end{frame}
-
-% \begin{frame}{Instrumentierung - Channel}
-%   \begin{itemize}
-%     \item Send: (c <- i):
-%     \begin{itemize}
-%       \item \texttt{pre(ts, c.id, true)} in Trace
-%       \item \texttt{c <- \{i, r.id, ts\}}
-%       \item \texttt{post(ts', c.id, true, ts)} in Trace
-%     \end{itemize}
-%     \item Receive (a := <- c):
-%     \begin{itemize}
-%       \item \texttt{pre(ts, c.id, false)} in Trace
-%       \item \texttt{\{i, id\_send, ts\_send\} := <-c}
-%       \item \texttt{post(ts', ch.id, false, id\_send, ts\_send)} in Trace
-%       \item \texttt{a := i}
-%     \end{itemize}
-%     \item Close (close(c))
-%     \begin{itemize}
-%       \item \texttt{close(ts, c.id)} in Trace
-%       \item \texttt{close(c)}
-%     \end{itemize}
-%   \end{itemize}
-% \end{frame}
-
-
-
-
-% \begin{frame}{Instrumentierung - Select}
-%   \begin{tabular}{lcl}
-%     select(e$_\text{i} \leadsto \text{B}_\text{i}$) & $\Rightarrow$ & ts := atomicInc(c); [ pre(ts, e$_1^*$, $\ldots$, e$_n^*$, false) ]$^\text{id}$;\\
-%     & & select(e$_\text{i} \leadsto$ \{ ts' := atomicInc(c);\\
-%     & & [ $\langle \text{post(ts, e$_\text{i}$.ch, false, e$_\text{i}^\text{m}$.id\_send, e$_\text{i}^\text{m}$.ts\_send)}\ |$ \\
-%     & & post(ts, e$_\text{i}$.ch, true, id) $\rangle$ ]$^\text{id}$ B$_\text{i}$\}) \\
-%   select(e$_\text{i} \leadsto \text{B}_\text{i}$ | B$_\text{def}$) & $\Rightarrow$ & ts := atomicInc(c); [ pre(ts, e$_1^*$, $\ldots$, e$_n^*$, false) ]$^\text{id}$;\\
-%     & & select(e$_\text{i} \leadsto$ \{ ts' := atomicInc(c);\\
-%     & & [ $\langle \text{post(ts, e$_\text{i}$.ch, false, e$_\text{i}^\text{m}$.id\_send, e$_\text{i}^\text{m}$.ts\_send)}\ |$ \\
-%     & & post(ts, e$_\text{i}$.ch, true, id) $\rangle$ ]$^\text{id}$ B$_\text{i}$\} |\\
-%     & & ts' := atomicInc(c); [ default(ts) ]$^\text{id}$; B$_\text{def}$) 
-%   \end{tabular}
-% \end{frame}
-
-% \begin{frame}{Instrumentierung - Select}
-%   \lstinputlisting{code/select-pre.txt}
-% \end{frame}
-
-% \begin{frame}{Instrumentierung - Select}
-%   \lstinputlisting{code/select-post.txt}
-% \end{frame}
 
 \begin{frame}{Instrumentierung}
   \begin{itemize}
@@ -686,6 +615,82 @@
   \printbibliography[heading=none, keyword={2}]
 \end{frame}
 
+
+
+% ========== Appendix ==========
+
+\begin{frame}[noframenumbering]{Instrumentierung - Fork}
+    \begin{itemize}
+      \item \texttt{signal(ts, nr)} in Trace
+      \item Erzeuge neuen Trace
+      \item Starte der neuen Routine
+      \item \texttt{wait(ts, nr)} in neuen Trace
+      \item Ausführen der Routine
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[noframenumbering]{Instrumentierung - Mutex}
+  \begin{itemize}
+    \item (Try)(R)Lock:
+    \begin{itemize}
+      \item \texttt{lock(ts, mu.id, ⟨-|t|r|tr⟩, ⟨0|1⟩)}
+      \item Führe Lock aus
+    \end{itemize}
+    \item (Try)(R)Unlock:
+    \begin{itemize}
+      \item \texttt{unlock(ts, mu.id)} in Trace
+      \item Führe Lock aus
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[noframenumbering]{Instrumentierung - Channel}
+  \begin{itemize}
+    \item Send: (c <- i):
+    \begin{itemize}
+      \item \texttt{pre(ts, c.id, true)} in Trace
+      \item \texttt{c <- \{i, r.id, ts\}}
+      \item \texttt{post(ts', c.id, true, ts)} in Trace
+    \end{itemize}
+    \item Receive (a := <- c):
+    \begin{itemize}
+      \item \texttt{pre(ts, c.id, false)} in Trace
+      \item \texttt{\{i, id\_send, ts\_send\} := <-c}
+      \item \texttt{post(ts', ch.id, false, id\_send, ts\_send)} in Trace
+      \item \texttt{a := i}
+    \end{itemize}
+    \item Close (close(c))
+    \begin{itemize}
+      \item \texttt{close(ts, c.id)} in Trace
+      \item \texttt{close(c)}
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+
+
+
+\begin{frame}[noframenumbering]{Instrumentierung - Select}
+  \begin{tabular}{lcl}
+    select(e$_\text{i} \leadsto \text{B}_\text{i}$) & $\Rightarrow$ & ts := atomicInc(c); [ pre(ts, e$_1^*$, $\ldots$, e$_n^*$, false) ]$^\text{id}$;\\
+    & & select(e$_\text{i} \leadsto$ \{ ts' := atomicInc(c);\\
+    & & [ $\langle \text{post(ts, e$_\text{i}$.ch, false, e$_\text{i}^\text{m}$.id\_send, e$_\text{i}^\text{m}$.ts\_send)}\ |$ \\
+    & & post(ts, e$_\text{i}$.ch, true, id) $\rangle$ ]$^\text{id}$ B$_\text{i}$\}) \\
+  select(e$_\text{i} \leadsto \text{B}_\text{i}$ | B$_\text{def}$) & $\Rightarrow$ & ts := atomicInc(c); [ pre(ts, e$_1^*$, $\ldots$, e$_n^*$, false) ]$^\text{id}$;\\
+    & & select(e$_\text{i} \leadsto$ \{ ts' := atomicInc(c);\\
+    & & [ $\langle \text{post(ts, e$_\text{i}$.ch, false, e$_\text{i}^\text{m}$.id\_send, e$_\text{i}^\text{m}$.ts\_send)}\ |$ \\
+    & & post(ts, e$_\text{i}$.ch, true, id) $\rangle$ ]$^\text{id}$ B$_\text{i}$\} |\\
+    & & ts' := atomicInc(c); [ default(ts) ]$^\text{id}$; B$_\text{def}$) 
+  \end{tabular}
+\end{frame}
+
+\begin{frame}[noframenumbering]{Instrumentierung - Select}
+  \lstinputlisting{code/select-pre.txt}
+\end{frame}
+
+\begin{frame}[noframenumbering]{Instrumentierung - Select}
+  \lstinputlisting{code/select-post.txt}
+\end{frame}
 
 
 \end{document}
